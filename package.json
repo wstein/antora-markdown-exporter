@@ -1,15 +1,51 @@
 {
-  "name": "antora-markdown-exporter",
+  "name": "@wsmy/antora-markdown-exporter",
+  "version": "0.1.0",
+  "description": "Antora Assembler based Markdown exporter with semantic IR and multi-flavor rendering",
   "license": "MIT",
-  "module": "antora-markdown-exporter.ts",
   "type": "module",
+  "main": "./dist/index.cjs",
+  "module": "./dist/index.js",
+  "types": "./dist/index.d.ts",
+  "bin": {
+    "antora-markdown-exporter": "./bin/antora-markdown-exporter.js"
+  },
+  "exports": {
+    ".": {
+      "types": "./dist/index.d.ts",
+      "import": "./dist/index.js",
+      "require": "./dist/index.cjs"
+    },
+    "./extension": {
+      "types": "./dist/extension/index.d.ts",
+      "import": "./dist/extension/index.js",
+      "require": "./dist/extension/index.cjs"
+    }
+  },
+  "files": [
+    "dist",
+    "bin",
+    "README.md",
+    "LICENSE"
+  ],
+  "scripts": {
+    "build": "tsup --dts --format esm,cjs --out-dir dist src/index.ts src/extension/index.ts",
+    "test": "vitest run --coverage",
+    "test:watch": "vitest",
+    "lint": "biome check .",
+    "format": "biome format --write .",
+    "check": "biome check . && vitest run --coverage",
+    "prepublishOnly": "npm run build && npm run check"
+  },
+  "publishConfig": {
+    "access": "public"
+  },
   "devDependencies": {
-    "@types/bun": "latest",
-    "vitest": "^4"
-  },
-  "peerDependencies": {
-    "typescript": "^6"
-  },
-  "dependencies": {
+    "@types/node": "^20.11.0",
+    "@vitest/coverage-v8": "^1.0.0",
+    "biome": "^1.0.0",
+    "tsup": "^6.0.0",
+    "typescript": "^6.0.0",
+    "vitest": "^4.0.0"
   }
 }

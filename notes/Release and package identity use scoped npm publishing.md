@@ -10,7 +10,7 @@ tags:
   - release
   - repository
 ---
-The package identity uses scoped npm publishing under the `@wsmy` namespace and the repository should behave like a publishable TypeScript package instead of a Bun-init application. Tooling, exports, and release checks must reinforce that identity.
+The package identity uses scoped npm publishing under `@wsmy/antora-markdown-exporter` and the repository should behave like a publishable TypeScript package instead of a Bun-init application. Tooling, exports, and release checks must reinforce that identity.
 
 
 ## What
@@ -19,7 +19,7 @@ The package identity uses scoped npm publishing under the `@wsmy` namespace and 
 The repository publishes as `@wsmy/antora-markdown-exporter`.
 
 
-The package exposes a library-first API and may also ship a small CLI entrypoint for local export workflows. Release validation should confirm built contents, exports, and package metadata before publication.
+The package exposes a library-first API and also ships a small CLI entrypoint for local export workflows. Release validation should confirm built contents, exports, and package metadata before publication.
 
 
 ## Why

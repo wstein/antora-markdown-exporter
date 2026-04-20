@@ -1,15 +1,38 @@
-# antora-markdown-exporter
+# @wsmy/antora-markdown-exporter
 
-To install dependencies:
+Antora Assembler based Markdown exporter with semantic IR and multi-flavor rendering.
 
-```bash
-bun install
-```
-
-To run:
+## Install
 
 ```bash
-bun run antora-markdown-exporter.ts
+npm install @wsmy/antora-markdown-exporter
 ```
 
-This project was created using `bun init` in bun v1.3.13. [Bun](https://bun.com) is a fast all-in-one JavaScript runtime.
+## Usage
+
+### Library
+
+```ts
+import { registerAntoraExtension } from "@wsmy/antora-markdown-exporter";
+
+const extension = registerAntoraExtension();
+console.log(extension.name);
+```
+
+### CLI
+
+```bash
+npx antora-markdown-exporter --help
+```
+
+## Development
+
+```bash
+npm install
+npm run build
+npm run test
+```
+
+## Package
+
+This repository is shaped as a library-first package with a small CLI entrypoint. The published package exposes the core module API and the Antora extension entrypoint under `./extension`.
