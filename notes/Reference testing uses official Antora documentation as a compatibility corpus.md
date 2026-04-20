@@ -8,7 +8,7 @@ Reference testing uses the official Antora documentation project as a compatibil
 
 ## What
 
-The repository uses a curated subset of the official Antora documentation project as a reference-testing corpus.
+The repository uses a curated subset of the official Antora documentation project as a reference-testing corpus, stored as provenance-locked local snapshots under `tests/reference/fixtures/**`.
 
 This corpus is separate from the repository’s local golden fixtures. It exists to validate that the exporter can process realistic Antora content and preserve core semantics across representative pages and assembled outputs.
 
@@ -20,7 +20,7 @@ Using the official docs also reduces the risk of tuning the exporter only for se
 
 ## How
 
-Create a curated reference fixture area under `tests/reference/antora-docs/**` or an equivalent managed snapshot directory.
+Create a curated reference fixture area under `tests/reference/fixtures/**` or an equivalent managed snapshot directory.
 
 Store provenance for each imported reference case, including source repository, source path, revision, and any local normalization applied for testing.
 
@@ -30,5 +30,5 @@ Do not treat the external corpus as a byte-for-byte golden snapshot source. Use 
 
 - [[Testing relies on golden fixtures and deterministic snapshots]] - Golden fixtures remain the exact-output authority.
 - [[Exporter pipeline uses Assembler and a direct TypeScript converter]] - Reference testing validates the pipeline on real Antora material.
-- tests/reference/antora-docs - Curated external compatibility corpus.
+- tests/reference/fixtures - Curated external compatibility corpus.
 - tests/integration/reference-antora.test.ts - Compatibility test entrypoint.

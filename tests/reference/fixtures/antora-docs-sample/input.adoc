@@ -1,0 +1,16 @@
+== Antora navigation
+
+See https://docs.antora.org[Antora docs] for contributor guidance.
+
+* Define modules clearly
+* Keep page names stable
+
+[source,sh]
+----
+antora antora-playbook.yml
+----
+
+[quote]
+____
+Docs are part of the product.
+____

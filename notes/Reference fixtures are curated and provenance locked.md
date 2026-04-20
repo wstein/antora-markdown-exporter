@@ -8,7 +8,7 @@ Reference fixtures are curated and provenance locked so the repository can benef
 
 ## What
 
-The repository keeps reference fixtures as curated snapshots rather than live pulls from upstream documentation repositories.
+The repository keeps reference fixtures as curated snapshots rather than live pulls from upstream documentation repositories. The current provenance registry lives in `tests/reference/manifest.json` and records the local snapshot path plus a locked `sha256`.
 
 Each fixture records at least:
 - source project
@@ -25,7 +25,7 @@ Curation also keeps the corpus compact and high-signal.
 
 ## How
 
-Store fixture metadata beside each reference case, for example in `case.json` or a small manifest file.
+Store fixture metadata beside each reference case, for example in `case.json` or a small manifest file. Keep the current repository contract in `tests/reference/manifest.json`.
 
 Require review whenever a reference snapshot is refreshed. Refreshes should explain semantic differences, not only file diffs.
 
@@ -36,4 +36,4 @@ Do not import large upstream trees without selection criteria.
 - [[Reference testing uses official Antora documentation as a compatibility corpus]] - Defines why the external corpus exists.
 - [[Testing relies on golden fixtures and deterministic snapshots]] - Provenance locking complements deterministic local fixtures.
 - tests/reference/manifest.json - Reference fixture provenance registry.
-- tests/reference/antora-docs - Curated snapshot storage.
+- tests/reference/fixtures - Curated snapshot storage.

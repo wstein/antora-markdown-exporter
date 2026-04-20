@@ -1,0 +1,12 @@
+[
+	{
+		"id": "antora-docs-sample",
+		"sourceProject": "antora/docs.antora.org",
+		"sourceUrl": "https://gitlab.com/antora/docs.antora.org",
+		"sourcePath": "modules/ROOT/pages/navigation.adoc",
+		"sourceCapturedAt": "2026-04-20",
+		"localPath": "tests/reference/fixtures/antora-docs-sample/input.adoc",
+		"sha256": "fa3c6f050ae0fdc25c42d34cb9da5f4d789eedd700308c76356251b5421d44a1",
+		"rationale": "Exercises heading, inline links, unordered lists, fenced source blocks, and quote blocks in one provenance-locked reference snapshot."
+	}
+]

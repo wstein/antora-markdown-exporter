@@ -14,6 +14,7 @@ Reference tests assert durable properties such as:
 - links and images are preserved or degraded explicitly
 - unsupported constructs emit visible fallback markers
 - selected semantic counts or markers remain stable
+- the local reference snapshot still matches the locked provenance hash
 
 These tests may also compare normalized summaries instead of full rendered files.
 

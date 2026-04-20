@@ -64,6 +64,8 @@ make PM=npm install
 
 Each target is a thin delegate to the matching package-manager script.
 
+Integration tests cover both byte-exact local golden fixtures and provenance-locked semantic compatibility cases.
+
 ## Release
 
 ```bash
