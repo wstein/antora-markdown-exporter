@@ -162,7 +162,7 @@
 		"coverage": ["admonitions", "inline-formatting", "xrefs"],
 		"rationale": "Exercises note-style admonitions with inline emphasis, strong text, and xrefs so compatibility checks cover common documentation guidance patterns.",
 		"expectations": {
-			"nodeTypes": ["heading", "blockquote"],
+			"nodeTypes": ["heading", "admonition"],
 			"renderedContains": [
 				"> **NOTE:** Keep *docs* and **code** aligned.",
 				"> **TIP:** Review [the style guide](style-guide.adoc) before publishing."

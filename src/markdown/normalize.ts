@@ -1,5 +1,6 @@
 import type {
 	MarkdownBlock,
+	MarkdownCalloutListItem,
 	MarkdownDocument,
 	MarkdownInline,
 	MarkdownListItem,
@@ -94,6 +95,15 @@ function normalizeListItem(item: MarkdownListItem): MarkdownListItem {
 	};
 }
 
+function normalizeCalloutListItem(
+	item: MarkdownCalloutListItem,
+): MarkdownCalloutListItem {
+	return {
+		...item,
+		children: item.children.map(normalizeBlock),
+	};
+}
+
 function normalizeTableCell(cell: MarkdownTableCell): MarkdownTableCell {
 	return {
 		...cell,
@@ -117,6 +127,7 @@ function normalizeBlock(block: MarkdownBlock): MarkdownBlock {
 				children: normalizeInlineChildren(block.children),
 			};
 		case "blockquote":
+		case "admonition":
 			return {
 				...block,
 				children: block.children.map(normalizeBlock),
@@ -125,6 +136,11 @@ function normalizeBlock(block: MarkdownBlock): MarkdownBlock {
 			return {
 				...block,
 				items: block.items.map(normalizeListItem),
+			};
+		case "calloutList":
+			return {
+				...block,
+				items: block.items.map(normalizeCalloutListItem),
 			};
 		case "table":
 			return {

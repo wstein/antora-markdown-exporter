@@ -72,6 +72,7 @@ describe("Markdown IR boundary", () => {
 				expect.objectContaining({ type: "thematicBreak" }),
 				expect.objectContaining({ type: "codeBlock", language: "ts" }),
 				expect.objectContaining({ type: "blockquote" }),
+				expect.objectContaining({ type: "admonition", kind: "note" }),
 				expect.objectContaining({ type: "table" }),
 			]),
 		);
@@ -87,6 +88,14 @@ describe("Markdown IR boundary", () => {
 				expect.objectContaining({
 					type: "codeBlock",
 					callouts: [1],
+				}),
+				expect.objectContaining({
+					type: "calloutList",
+					items: [
+						expect.objectContaining({
+							ordinal: 1,
+						}),
+					],
 				}),
 				expect.objectContaining({
 					type: "paragraph",

@@ -1,8 +1,10 @@
 import { existsSync, readFileSync } from "node:fs";
 import { dirname, resolve } from "node:path";
 import type {
+	MarkdownAdmonition,
 	MarkdownBlock,
 	MarkdownBlockQuote,
+	MarkdownCalloutList,
 	MarkdownCodeBlock,
 	MarkdownDocument,
 	MarkdownHeading,
@@ -347,9 +349,8 @@ function parseListMarker(line: string): ParsedListMarker | undefined {
 function parseCalloutList(
 	lines: string[],
 	startIndex: number,
-): { block?: MarkdownList; nextIndex: number } {
-	const items: MarkdownList["items"] = [];
-	let start: number | undefined;
+): { block?: MarkdownCalloutList; nextIndex: number } {
+	const items: MarkdownCalloutList["items"] = [];
 	let index = startIndex;
 
 	while (index < lines.length) {
@@ -363,8 +364,8 @@ function parseCalloutList(
 			break;
 		}
 
-		start ??= Number(rawNumber);
 		items.push({
+			ordinal: Number(rawNumber),
 			children: [
 				<MarkdownParagraph>{
 					type: "paragraph",
@@ -382,9 +383,7 @@ function parseCalloutList(
 	return {
 		nextIndex: index,
 		block: {
-			type: "list",
-			ordered: true,
-			start,
+			type: "calloutList",
 			items,
 		},
 	};
@@ -538,7 +537,7 @@ function parseTable(
 	};
 }
 
-function parseAdmonition(line: string): MarkdownBlockQuote | undefined {
+function parseAdmonition(line: string): MarkdownAdmonition | undefined {
 	const match = line.match(admonitionPattern);
 	if (match === null) {
 		return undefined;
@@ -550,18 +549,12 @@ function parseAdmonition(line: string): MarkdownBlockQuote | undefined {
 	}
 
 	return {
-		type: "blockquote",
+		type: "admonition",
+		kind: kind.toLowerCase() as MarkdownAdmonition["kind"],
 		children: [
 			{
 				type: "paragraph",
-				children: [
-					{
-						type: "strong",
-						children: [{ type: "text", value: `${kind}:` }],
-					},
-					{ type: "text", value: " " },
-					...parseInline(content),
-				],
+				children: [...parseInline(content)],
 			},
 		],
 	};

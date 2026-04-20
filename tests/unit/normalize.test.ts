@@ -127,6 +127,63 @@ describe("normalizeMarkdownIR", () => {
 		});
 	});
 
+	it("normalizes admonition and callout list content recursively", () => {
+		const normalized = normalizeMarkdownIR({
+			type: "document",
+			children: [
+				{
+					type: "admonition",
+					kind: "tip",
+					children: [
+						{
+							type: "paragraph",
+							children: [{ type: "text", value: "  Keep   it   tidy. " }],
+						},
+					],
+				},
+				{
+					type: "calloutList",
+					items: [
+						{
+							ordinal: 2,
+							children: [
+								{
+									type: "paragraph",
+									children: [{ type: "text", value: "  Second   note  " }],
+								},
+							],
+						},
+					],
+				},
+			],
+		});
+
+		expect(normalized.children[0]).toMatchObject({
+			type: "admonition",
+			kind: "tip",
+			children: [
+				{
+					type: "paragraph",
+					children: [{ type: "text", value: "Keep it tidy." }],
+				},
+			],
+		});
+		expect(normalized.children[1]).toMatchObject({
+			type: "calloutList",
+			items: [
+				{
+					ordinal: 2,
+					children: [
+						{
+							type: "paragraph",
+							children: [{ type: "text", value: "Second note" }],
+						},
+					],
+				},
+			],
+		});
+	});
+
 	it("normalizes rich inline and block metadata for new markdown nodes", () => {
 		const normalized = normalizeMarkdownIR({
 			type: "document",

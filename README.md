@@ -27,7 +27,7 @@ console.log(renderGfm(normalized));
 console.log(renderMarkdown(normalized, "commonmark"));
 ```
 
-Current scaffold coverage includes headings, paragraphs, inline links, xrefs, images, ordered and unordered lists, nested lists, thematic breaks, tables, raw HTML nodes, footnote placeholders, fenced code blocks with callout metadata, block quotes, admonition-to-blockquote conversion, and recursive include inlining when source-path context is available.
+Current scaffold coverage includes headings, paragraphs, inline links, xrefs, images, ordered and unordered lists, nested lists, thematic breaks, tables, raw HTML nodes, footnote placeholders, fenced code blocks with dedicated callout-list nodes, block quotes, dedicated admonition nodes, and recursive include inlining when source-path context is available.
 
 ### Extension scaffold
 

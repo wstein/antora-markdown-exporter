@@ -103,6 +103,12 @@ export type MarkdownBlockQuote = {
 	children: MarkdownBlock[];
 };
 
+export type MarkdownAdmonition = {
+	type: "admonition";
+	kind: "note" | "tip" | "important" | "caution" | "warning";
+	children: MarkdownBlock[];
+};
+
 export type MarkdownListItem = {
 	children: MarkdownBlock[];
 };
@@ -130,6 +136,16 @@ export type MarkdownTable = {
 	rows: MarkdownTableRow[];
 };
 
+export type MarkdownCalloutListItem = {
+	ordinal: number;
+	children: MarkdownBlock[];
+};
+
+export type MarkdownCalloutList = {
+	type: "calloutList";
+	items: MarkdownCalloutListItem[];
+};
+
 export type MarkdownHtmlBlock = {
 	type: "htmlBlock";
 	value: string;
@@ -147,8 +163,10 @@ export type MarkdownBlock =
 	| MarkdownThematicBreak
 	| MarkdownCodeBlock
 	| MarkdownBlockQuote
+	| MarkdownAdmonition
 	| MarkdownList
 	| MarkdownTable
+	| MarkdownCalloutList
 	| MarkdownHtmlBlock
 	| MarkdownFootnoteDefinition
 	| MarkdownUnsupported;

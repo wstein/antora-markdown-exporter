@@ -209,4 +209,45 @@ describe("renderGfm", () => {
 			].join("\n"),
 		);
 	});
+
+	it("renders dedicated admonition and callout list nodes deterministically", () => {
+		const rendered = renderGfm({
+			type: "document",
+			children: [
+				{
+					type: "admonition",
+					kind: "warning",
+					children: [
+						{
+							type: "paragraph",
+							children: [{ type: "text", value: "Review generated links." }],
+						},
+					],
+				},
+				{
+					type: "calloutList",
+					items: [
+						{
+							ordinal: 2,
+							children: [
+								{
+									type: "paragraph",
+									children: [{ type: "text", value: "Second observation" }],
+								},
+							],
+						},
+					],
+				},
+			],
+		});
+
+		expect(rendered).toBe(
+			[
+				"> **WARNING:** Review generated links.",
+				"",
+				"2. Second observation",
+				"",
+			].join("\n"),
+		);
+	});
 });

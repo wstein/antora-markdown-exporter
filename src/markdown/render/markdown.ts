@@ -77,6 +77,10 @@ function renderListItem(
 		.join("\n");
 }
 
+function renderAdmonitionLabel(kind: string): string {
+	return kind.toUpperCase();
+}
+
 function renderBlock(block: MarkdownBlock, flavor: MarkdownFlavorSpec): string {
 	switch (block.type) {
 		case "heading":
@@ -96,6 +100,47 @@ function renderBlock(block: MarkdownBlock, flavor: MarkdownFlavorSpec): string {
 				.split("\n")
 				.map((line) => (line.length > 0 ? `> ${line}` : ">"))
 				.join("\n");
+		case "admonition": {
+			const [first, ...rest] = block.children;
+			const firstParagraph =
+				first?.type === "paragraph"
+					? {
+							...first,
+							children: [
+								{
+									type: "strong" as const,
+									children: [
+										{
+											type: "text" as const,
+											value: `${renderAdmonitionLabel(block.kind)}:`,
+										},
+									],
+								},
+								{ type: "text" as const, value: " " },
+								...first.children,
+							],
+						}
+					: {
+							type: "paragraph" as const,
+							children: [
+								{
+									type: "strong" as const,
+									children: [
+										{
+											type: "text" as const,
+											value: `${renderAdmonitionLabel(block.kind)}:`,
+										},
+									],
+								},
+							],
+						};
+			return [firstParagraph, ...rest]
+				.map((child) => renderBlock(child, flavor))
+				.join("\n\n")
+				.split("\n")
+				.map((line) => (line.length > 0 ? `> ${line}` : ">"))
+				.join("\n");
+		}
 		case "list":
 			return block.items
 				.map((item, index) =>
@@ -106,6 +151,12 @@ function renderBlock(block: MarkdownBlock, flavor: MarkdownFlavorSpec): string {
 							: "-",
 						flavor,
 					),
+				)
+				.join("\n");
+		case "calloutList":
+			return block.items
+				.map((item) =>
+					renderListItem(item.children, `${item.ordinal}.`, flavor),
 				)
 				.join("\n");
 		case "table": {
