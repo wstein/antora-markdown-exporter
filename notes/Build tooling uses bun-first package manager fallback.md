@@ -4,11 +4,11 @@ aliases: ["explicit package manager policy", "Makefile package manager setting",
 tags: ["tooling", "build", "package-manager", "notes"]
 target: v0.1
 ---
-Build tooling uses one explicit package manager setting. The Makefile defaults to Bun, and developers can override it with npm when needed. This keeps the repository focused without carrying lockfile-detection branches or extra compatibility paths.
+Build tooling uses one explicit package manager setting. The Makefile defaults to Bun as the primary development path, and developers can override it with npm when needed. This keeps the repository focused without carrying lockfile-detection branches or extra compatibility paths.
 
 ## What
 
-The Makefile uses `PM ?= bun` and routes install, build, test, unit, check, lint, format, fix, and release through that one setting. Each target is a thin delegate to the matching package-manager command. When a different package manager is needed, invoke Make with `PM=npm`.
+The Makefile uses `PM ?= bun` and routes install, build, test, unit, check, lint, format, fix, and release through that one setting. Bun is the primary development toolchain, while npm remains an explicit alternate path and the publish transport.
 
 ## Why
 

@@ -1,6 +1,6 @@
 # @wsmy/antora-markdown-exporter
 
-Antora Assembler based Markdown exporter with semantic IR and multi-flavor rendering.
+Antora Assembler based Markdown exporter scaffold with semantic IR and a first GitHub Flavored Markdown rendering path.
 
 ## Install
 
@@ -34,21 +34,26 @@ make test
 make unit
 make format
 make fix
-make release
 ```
 
-The Makefile uses an explicit package manager setting. It defaults to Bun and can be overridden when needed:
+The primary development path uses Bun through the Makefile delegate targets. npm remains available as an explicit alternate path when needed:
 
 ```bash
+make install
+make check
 make PM=npm install
-make PM=npm test
-make PM=npm check
 ```
 
 Each target is a thin delegate to the matching package-manager script.
 
-`make release` delegates to `npm publish` through the configured package manager, so it should only be run when the package is ready to publish.
+## Release
+
+```bash
+make release
+```
+
+`make release` delegates to `npm publish`, so it should only be run when the package is ready to publish.
 
 ## Package
 
-This repository is shaped as a library-first package with a small CLI entrypoint. The published package exposes the core module API and the Antora extension entrypoint under `./extension`.
+This repository is shaped as a library-first package with a small CLI entrypoint. The published package exposes the core module API and a scaffolded Antora extension helper under `./extension`.

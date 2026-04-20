@@ -15,7 +15,7 @@ Leftovers include:
 - docs that describe superseded setup paths
 - tests that assert artifacts which do not exist
 
-These artifacts should be removed or replaced before adding more renderer features.
+These artifacts should be removed or replaced before adding more renderer features. The Bun hello-world stub in `src/antora-markdown-exporter.ts` is an example of the kind of artifact that should not survive past the cleanup phase.
 
 ## Why
 

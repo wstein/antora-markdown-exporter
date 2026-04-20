@@ -14,7 +14,7 @@ The repository currently spans multiple execution assumptions:
 - Vitest-based tests
 - package scripts invoked through npm-style semantics
 
-One of these paths must be declared authoritative for the current phase.
+For the current phase, Bun is the authoritative development and CI path, while npm remains the explicit publish path and an alternate installer.
 
 ## Why
 
@@ -32,7 +32,7 @@ Choose one primary path for the current milestone and align:
 - CI workflows
 - Makefile policy
 
-If Bun remains supported, describe it as an explicit alternate path rather than the default when CI and publishing are Node/npm-driven.
+Describe npm as the release transport and an explicit alternate install path rather than the primary day-to-day workflow.
 
 Do not keep Bun-specific ambient types enabled unless the codebase actively depends on them.
 
