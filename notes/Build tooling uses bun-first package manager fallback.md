@@ -8,7 +8,7 @@ Build tooling uses one explicit package manager setting. The Makefile defaults t
 
 ## What
 
-The Makefile uses `PM ?= bun` and routes install, build, test, unit, check, lint, format, fix, and release through that one setting. Bun is the primary development toolchain, while npm remains an explicit alternate path and the publish transport.
+The Makefile uses `PM ?= bun` and routes install, build, test, unit, integration, check, lint, format, fix, and release through that one setting. Bun is the primary development toolchain, while npm remains an explicit alternate path and the publish transport.
 
 ## Why
 

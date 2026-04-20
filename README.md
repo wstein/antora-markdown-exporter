@@ -47,6 +47,7 @@ make install
 make build
 make test
 make unit
+make integration
 make format
 make fix
 ```

@@ -41,5 +41,6 @@ describe("repository contract", () => {
 			false,
 		);
 		expect(packageJson.scripts.unit).toContain("tests/unit");
+		expect(packageJson.scripts.integration).toContain("tests/integration");
 	});
 });

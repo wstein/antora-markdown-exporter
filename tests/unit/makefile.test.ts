@@ -11,6 +11,7 @@ describe("Makefile package manager policy", () => {
 		expect(makefile).toContain("$(PM) run build");
 		expect(makefile).toContain("$(PM) run test");
 		expect(makefile).toContain("$(PM) run unit");
+		expect(makefile).toContain("$(PM) run integration");
 		expect(makefile).toContain("$(PM) run check");
 		expect(makefile).toContain("$(PM) run lint");
 		expect(makefile).toContain("$(PM) run format");
