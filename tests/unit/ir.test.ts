@@ -16,14 +16,19 @@ describe("Markdown IR boundary", () => {
 		]);
 	});
 
-	it("maps lists, links, code blocks, and quote blocks into the IR", () => {
+	it("maps ordered and nested lists, links, code blocks, and quote blocks into the IR", () => {
 		const assembled = [
 			"== Rich sample",
 			"",
 			"Read https://example.com[the docs].",
 			"",
-			"* First item",
-			"* Second item",
+			". Prepare release",
+			".. Review changelog",
+			".. Notify https://example.com[stakeholders]",
+			". Publish package",
+			"",
+			"* Capture follow-up",
+			"** Gather feedback",
 			"",
 			"[source,ts]",
 			"----",
@@ -41,6 +46,7 @@ describe("Markdown IR boundary", () => {
 			expect.arrayContaining([
 				expect.objectContaining({ type: "heading", depth: 1 }),
 				expect.objectContaining({ type: "paragraph" }),
+				expect.objectContaining({ type: "list", ordered: true }),
 				expect.objectContaining({ type: "list", ordered: false }),
 				expect.objectContaining({ type: "codeBlock", language: "ts" }),
 				expect.objectContaining({ type: "blockquote" }),

@@ -34,7 +34,7 @@ describe("renderGfm", () => {
 		);
 	});
 
-	it("renders lists, links, code blocks, and block quotes", () => {
+	it("renders ordered and nested lists, links, code blocks, and block quotes", () => {
 		const rendered = renderGfm({
 			type: "document",
 			children: [
@@ -52,13 +52,27 @@ describe("renderGfm", () => {
 				},
 				{
 					type: "list",
-					ordered: false,
+					ordered: true,
 					items: [
 						{
 							children: [
 								{
 									type: "paragraph",
 									children: [{ type: "text", value: "First item" }],
+								},
+								{
+									type: "list",
+									ordered: false,
+									items: [
+										{
+											children: [
+												{
+													type: "paragraph",
+													children: [{ type: "text", value: "Nested item" }],
+												},
+											],
+										},
+									],
 								},
 							],
 						},
@@ -93,8 +107,9 @@ describe("renderGfm", () => {
 			[
 				"Visit [Example](https://example.com) today.",
 				"",
-				"- First item",
-				"- Second item",
+				"1. First item",
+				"  - Nested item",
+				"2. Second item",
 				"",
 				"```ts",
 				"const answer = 42;",

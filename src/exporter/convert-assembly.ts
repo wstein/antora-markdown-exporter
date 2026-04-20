@@ -10,6 +10,13 @@ import type {
 } from "../markdown/ir.js";
 
 const externalLinkPattern = /(?:link:)?(https?:\/\/[^\s[]+)\[([^\]]+)\]/g;
+const listMarkerPattern = /^\s*([*.]+)\s+(.*)$/;
+
+type ParsedListMarker = {
+	content: string;
+	depth: number;
+	ordered: boolean;
+};
 
 function parseInline(value: string): MarkdownInline[] {
 	const nodes: MarkdownInline[] = [];
@@ -55,10 +62,122 @@ function parseInline(value: string): MarkdownInline[] {
 function isBlockBoundary(line: string): boolean {
 	return (
 		line.startsWith("== ") ||
-		line.startsWith("* ") ||
+		parseListMarker(line) !== undefined ||
 		line === "[quote]" ||
 		line.startsWith("[source")
 	);
+}
+
+function parseListMarker(line: string): ParsedListMarker | undefined {
+	const match = line.match(listMarkerPattern);
+	if (match === null) {
+		return undefined;
+	}
+
+	const [, markers, content] = match;
+	if (markers === undefined || content === undefined) {
+		return undefined;
+	}
+
+	if (markers.includes("*") && markers.includes(".")) {
+		return undefined;
+	}
+
+	return {
+		content,
+		depth: markers.length,
+		ordered: markers.startsWith("."),
+	};
+}
+
+function parseList(
+	lines: string[],
+	startIndex: number,
+): { block: MarkdownList; nextIndex: number } {
+	const rootMarker = parseListMarker(lines[startIndex] ?? "");
+
+	if (rootMarker === undefined) {
+		throw new Error("parseList called without a list marker");
+	}
+
+	const rootList: MarkdownList = {
+		type: "list",
+		ordered: rootMarker.ordered,
+		items: [],
+	};
+	const stack: Array<{ depth: number; list: MarkdownList }> = [
+		{ depth: rootMarker.depth, list: rootList },
+	];
+	let index = startIndex;
+
+	while (index < lines.length) {
+		const marker = parseListMarker(lines[index] ?? "");
+		if (marker === undefined) {
+			break;
+		}
+
+		const currentDepth = stack[stack.length - 1]?.depth ?? rootMarker.depth;
+		if (marker.depth < rootMarker.depth) {
+			break;
+		}
+
+		if (
+			marker.depth === rootMarker.depth &&
+			marker.ordered !== rootList.ordered
+		) {
+			break;
+		}
+
+		while (
+			stack.length > 0 &&
+			marker.depth < (stack[stack.length - 1]?.depth ?? rootMarker.depth)
+		) {
+			stack.pop();
+		}
+
+		if (marker.depth > currentDepth) {
+			if (marker.depth !== currentDepth + 1) {
+				break;
+			}
+
+			const parentList = stack[stack.length - 1]?.list;
+			const parentItem = parentList?.items[parentList.items.length - 1];
+
+			if (parentList === undefined || parentItem === undefined) {
+				break;
+			}
+
+			const nestedList: MarkdownList = {
+				type: "list",
+				ordered: marker.ordered,
+				items: [],
+			};
+			parentItem.children.push(nestedList);
+			stack.push({ depth: marker.depth, list: nestedList });
+		} else {
+			const activeList = stack[stack.length - 1]?.list;
+			if (activeList === undefined || activeList.ordered !== marker.ordered) {
+				break;
+			}
+		}
+
+		const destinationList = stack[stack.length - 1]?.list;
+		if (destinationList === undefined) {
+			break;
+		}
+
+		destinationList.items.push({
+			children: [
+				<MarkdownParagraph>{
+					type: "paragraph",
+					children: parseInline(marker.content),
+				},
+			],
+		});
+		index += 1;
+	}
+
+	return { block: rootList, nextIndex: index };
 }
 
 function parseBlocks(lines: string[]): MarkdownBlock[] {
@@ -83,30 +202,10 @@ function parseBlocks(lines: string[]): MarkdownBlock[] {
 			continue;
 		}
 
-		if (line.startsWith("* ")) {
-			const items: MarkdownList["items"] = [];
-
-			while (
-				index < lines.length &&
-				(lines[index]?.trimStart().startsWith("* ") ?? false)
-			) {
-				const itemLine = lines[index]?.trimStart().slice(2) ?? "";
-				items.push({
-					children: [
-						<MarkdownParagraph>{
-							type: "paragraph",
-							children: parseInline(itemLine),
-						},
-					],
-				});
-				index += 1;
-			}
-
-			children.push({
-				type: "list",
-				ordered: false,
-				items,
-			});
+		if (parseListMarker(line) !== undefined) {
+			const { block, nextIndex } = parseList(lines, index);
+			children.push(block);
+			index = nextIndex;
 			continue;
 		}
 

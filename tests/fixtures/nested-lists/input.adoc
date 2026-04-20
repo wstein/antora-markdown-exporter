@@ -1,0 +1,9 @@
+== Release plan
+
+. Prepare release notes
+.. Review changelog
+.. Notify https://example.com[stakeholders]
+. Publish package
+
+* Follow-up
+** Gather feedback

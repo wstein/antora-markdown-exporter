@@ -28,13 +28,13 @@ describe("normalizeMarkdownIR", () => {
 		});
 	});
 
-	it("normalizes nested list, quote, and link content recursively", () => {
+	it("normalizes nested ordered list, quote, and link content recursively", () => {
 		const normalized = normalizeMarkdownIR({
 			type: "document",
 			children: [
 				{
 					type: "list",
-					ordered: false,
+					ordered: true,
 					items: [
 						{
 							children: [
@@ -45,6 +45,25 @@ describe("normalizeMarkdownIR", () => {
 											type: "link",
 											url: "https://example.com",
 											children: [{ type: "text", value: "  Example   docs  " }],
+										},
+									],
+								},
+								{
+									type: "list",
+									ordered: false,
+									items: [
+										{
+											children: [
+												{
+													type: "paragraph",
+													children: [
+														{
+															type: "text",
+															value: "  Keep   reviewing  ",
+														},
+													],
+												},
+											],
 										},
 									],
 								},
@@ -66,6 +85,7 @@ describe("normalizeMarkdownIR", () => {
 
 		expect(normalized.children[0]).toMatchObject({
 			type: "list",
+			ordered: true,
 			items: [
 				{
 					children: [
@@ -75,6 +95,20 @@ describe("normalizeMarkdownIR", () => {
 								{
 									type: "link",
 									children: [{ type: "text", value: "Example docs" }],
+								},
+							],
+						},
+						{
+							type: "list",
+							ordered: false,
+							items: [
+								{
+									children: [
+										{
+											type: "paragraph",
+											children: [{ type: "text", value: "Keep reviewing" }],
+										},
+									],
 								},
 							],
 						},

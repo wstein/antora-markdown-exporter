@@ -16,7 +16,7 @@ The repository currently ships one concrete GFM renderer. Future flavors such as
 GLFM and GFM share core Markdown features based on the CommonMark specification, but each has its own extensions. GLFM includes GFM extensions and also adds GitLab-specific enhancements, while GFM remains the baseline GitHub-compatible syntax. This distinction matters when renderer behavior or fallback policy differs by platform support.
 
 
-Flavor-specific behavior includes constructs such as admonition syntax, table emission, fence style, heading ID behavior, and HTML tolerance.
+Flavor-specific behavior includes constructs such as admonition syntax, nested-list indentation, table emission, fence style, heading ID behavior, and HTML tolerance.
 
 
 ## Why
