@@ -19,8 +19,10 @@ import type {
 const listMarkerPattern = /^\s*([*.]+)\s+(.*)$/;
 const admonitionPattern = /^(NOTE|TIP|IMPORTANT|CAUTION|WARNING):\s+(.*)$/;
 const calloutPattern = /^<(\d+)>\s+(.*)$/;
-const includePattern = /^include::([^\[]+)\[[^\]]*\]$/;
+const includePattern = /^include::([^\[]+)\[([^\]]*)\]$/;
 const pageAliasesPattern = /^:page-aliases:\s+(.+)$/;
+const tagStartPattern = /^\s*\/\/\s*tag::([A-Za-z0-9:_-]+)\[\]\s*$/;
+const tagEndPattern = /^\s*\/\/\s*end::([A-Za-z0-9:_-]+)\[\]\s*$/;
 
 type ParsedListMarker = {
 	content: string;
@@ -35,6 +37,11 @@ export type ConvertAssemblyToMarkdownIROptions = {
 		context: { includeRootDir: string; sourcePath: string },
 	) => string | undefined;
 	sourcePath?: string;
+};
+
+type IncludeDirective = {
+	attributes: Record<string, string>;
+	target: string;
 };
 
 type ImageToken = {
@@ -99,6 +106,45 @@ function parseNamedAttributes(value: string): {
 	}
 
 	return { title, unnamed };
+}
+
+function parseDirectiveAttributes(value: string): Record<string, string> {
+	const entries = value
+		.split(",")
+		.map((part) => part.trim())
+		.filter((part) => part.length > 0);
+	const attributes: Record<string, string> = {};
+
+	for (const entry of entries) {
+		const separatorIndex = entry.indexOf("=");
+		if (separatorIndex === -1) {
+			attributes[entry] = "true";
+			continue;
+		}
+
+		const key = entry.slice(0, separatorIndex).trim();
+		const rawValue = entry.slice(separatorIndex + 1).trim();
+		attributes[key] = rawValue.replace(/^"|"$/g, "");
+	}
+
+	return attributes;
+}
+
+function parseIncludeDirective(line: string): IncludeDirective | undefined {
+	const match = line.trim().match(includePattern);
+	if (match === null) {
+		return undefined;
+	}
+
+	const [, target, rawAttributes] = match;
+	if (target === undefined || rawAttributes === undefined) {
+		return undefined;
+	}
+
+	return {
+		target,
+		attributes: parseDirectiveAttributes(rawAttributes),
+	};
 }
 
 function matchImage(value: string): ImageToken | undefined {
@@ -660,6 +706,85 @@ function defaultIncludeResolver(
 	return readFileSync(resolvedPath, "utf8");
 }
 
+function selectTaggedRegions(content: string, tagValue: string): string {
+	const requestedTags = tagValue
+		.split(/[;,]/)
+		.map((tag) => tag.trim())
+		.filter(Boolean);
+	if (requestedTags.length === 0) {
+		return content;
+	}
+
+	const activeTags = new Set<string>();
+	const selectedLines: string[] = [];
+	for (const line of content.split(/\r?\n/)) {
+		const startMatch = line.match(tagStartPattern);
+		if (startMatch?.[1] !== undefined) {
+			activeTags.add(startMatch[1]);
+			continue;
+		}
+
+		const endMatch = line.match(tagEndPattern);
+		if (endMatch?.[1] !== undefined) {
+			activeTags.delete(endMatch[1]);
+			continue;
+		}
+
+		if (requestedTags.some((tag) => activeTags.has(tag))) {
+			selectedLines.push(line);
+		}
+	}
+
+	return selectedLines.join("\n");
+}
+
+function applyLevelOffset(content: string, levelOffset: string): string {
+	const match = levelOffset.match(/^([+-]?\d+)$/);
+	if (match?.[1] === undefined) {
+		return content;
+	}
+
+	const delta = Number(match[1]);
+	if (!Number.isFinite(delta) || delta === 0) {
+		return content;
+	}
+
+	return content
+		.split(/\r?\n/)
+		.map((line) => {
+			const headingMatch = line.match(/^(=+)(\s+.*)$/);
+			if (headingMatch === null) {
+				return line;
+			}
+
+			const [, markers, rest] = headingMatch;
+			if (markers === undefined || rest === undefined) {
+				return line;
+			}
+
+			const adjustedDepth = Math.max(1, markers.length + delta);
+			return `${"=".repeat(adjustedDepth)}${rest}`;
+		})
+		.join("\n");
+}
+
+function applyIncludeAttributes(
+	content: string,
+	attributes: Record<string, string>,
+): string {
+	const tagSelection = attributes.tag ?? attributes.tags;
+	let transformed =
+		tagSelection === undefined
+			? content
+			: selectTaggedRegions(content, tagSelection);
+
+	if (attributes.leveloffset !== undefined) {
+		transformed = applyLevelOffset(transformed, attributes.leveloffset);
+	}
+
+	return transformed;
+}
+
 function expandIncludes(
 	assembledAsciiDoc: string,
 	options: ConvertAssemblyToMarkdownIROptions,
@@ -675,17 +800,12 @@ function expandIncludes(
 	const expandedLines: string[] = [];
 
 	for (const line of lines) {
-		const match = line.trim().match(includePattern);
-		if (match === null) {
+		const directive = parseIncludeDirective(line);
+		if (directive === undefined) {
 			expandedLines.push(line);
 			continue;
 		}
-
-		const includeTarget = match[1];
-		if (includeTarget === undefined) {
-			expandedLines.push(line);
-			continue;
-		}
+		const includeTarget = directive.target;
 
 		const resolvedPath = resolveIncludePath(
 			options.sourcePath,
@@ -707,11 +827,15 @@ function expandIncludes(
 			expandedLines.push(line);
 			continue;
 		}
+		const transformedInclude = applyIncludeAttributes(
+			includeContent,
+			directive.attributes,
+		);
 
 		const nestedVisited = new Set(visited);
 		nestedVisited.add(resolvedPath);
 		const expandedInclude = expandIncludes(
-			includeContent,
+			transformedInclude,
 			{
 				...options,
 				includeRootDir,

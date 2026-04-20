@@ -1,0 +1,3 @@
+== Nested section
+
+Shifted body.

@@ -230,5 +230,37 @@
 			],
 			"renderedExcludes": ["Unsupported:"]
 		}
+	},
+	{
+		"id": "antora-include-tagged",
+		"sourceProject": "antora/docs.antora.org",
+		"sourceUrl": "https://gitlab.com/antora/docs.antora.org",
+		"sourcePath": "modules/ROOT/pages/page-partials.adoc",
+		"sourceCapturedAt": "2026-04-21",
+		"localPath": "tests/reference/fixtures/antora-include-tagged/input.adoc",
+		"sha256": "992ac26b48d2be17f496d6ff1e011a7a0b30eae194374c200bb921a36abcd6e1",
+		"coverage": ["includes", "tagged-includes", "partials"],
+		"rationale": "Exercises tagged-region include selection so compatibility checks prove partial files can expose only the requested snippet instead of always inlining the full file.",
+		"expectations": {
+			"nodeTypes": ["heading", "paragraph"],
+			"renderedContains": ["Selected introduction."],
+			"renderedExcludes": ["Selected details.", "Unsupported:"]
+		}
+	},
+	{
+		"id": "antora-include-leveloffset",
+		"sourceProject": "antora/docs.antora.org",
+		"sourceUrl": "https://gitlab.com/antora/docs.antora.org",
+		"sourcePath": "modules/ROOT/pages/page-partials.adoc",
+		"sourceCapturedAt": "2026-04-21",
+		"localPath": "tests/reference/fixtures/antora-include-leveloffset/input.adoc",
+		"sha256": "2705b4f54f6d117b1ea05f752c3ec9120c61804e5c94424724c3fe0a07898084",
+		"coverage": ["includes", "leveloffset", "headings"],
+		"rationale": "Exercises include level offsets so compatibility checks prove included section depth shifts before markdown rendering instead of flattening heading structure incorrectly.",
+		"expectations": {
+			"nodeTypes": ["heading", "paragraph"],
+			"renderedContains": ["## Nested section", "Shifted body."],
+			"renderedExcludes": ["Unsupported:"]
+		}
 	}
 ]

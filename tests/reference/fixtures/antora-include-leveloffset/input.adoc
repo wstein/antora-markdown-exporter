@@ -1,0 +1,3 @@
+== Offset include
+
+include::partials/section.adoc[leveloffset=+1]

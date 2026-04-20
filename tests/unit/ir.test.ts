@@ -155,4 +155,57 @@ describe("Markdown IR boundary", () => {
 			]),
 		});
 	});
+
+	it("applies include tag selection and level offsets before conversion", () => {
+		const assembled = [
+			"== Include features",
+			"",
+			"include::partials/snippet.adoc[tag=intro]",
+			"",
+			"include::partials/section.adoc[leveloffset=+1]",
+		].join("\n");
+		const ir = convertAssemblyToMarkdownIR(assembled, {
+			sourcePath: "/virtual/project/input.adoc",
+			includeResolver: (includeTarget) => {
+				if (includeTarget === "partials/snippet.adoc") {
+					return [
+						"// tag::intro[]",
+						"Selected introduction.",
+						"// end::intro[]",
+						"",
+						"// tag::details[]",
+						"Hidden details.",
+						"// end::details[]",
+					].join("\n");
+				}
+
+				if (includeTarget === "partials/section.adoc") {
+					return ["== Nested section", "", "Shifted body."].join("\n");
+				}
+
+				return undefined;
+			},
+		});
+
+		expect(ir.children).toEqual(
+			expect.arrayContaining([
+				expect.objectContaining({
+					type: "paragraph",
+					children: [{ type: "text", value: "Selected introduction." }],
+				}),
+				expect.objectContaining({
+					type: "heading",
+					depth: 2,
+				}),
+			]),
+		);
+		expect(ir.children).not.toEqual(
+			expect.arrayContaining([
+				expect.objectContaining({
+					type: "paragraph",
+					children: [{ type: "text", value: "Hidden details." }],
+				}),
+			]),
+		);
+	});
 });
