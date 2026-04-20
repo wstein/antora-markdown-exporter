@@ -1,0 +1,14 @@
+{
+  "name": "antora-markdown-exporter",
+  "module": "antora-markdown-exporter.ts",
+  "type": "module",
+  "devDependencies": {
+    "@types/bun": "latest",
+    "vitest": "^4"
+  },
+  "peerDependencies": {
+    "typescript": "^6"
+  },
+  "dependencies": {
+  }
+}
