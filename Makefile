@@ -3,7 +3,6 @@
 # Minimal bundle for explicit package-manager driven development.
 
 PM ?= bun
-NODE ?= node
 CLEAN_DIR ?= dist
 
 .PHONY: all install build test check lint clean notes help
@@ -18,21 +17,11 @@ build: ## Build the project with the configured package manager.
 test: ## Run tests with the configured package manager.
 	$(PM) run test
 
-check: ## Run typecheck or check when configured.
-	@if $(NODE) -e "const fs=require('node:fs'); const pkg=JSON.parse(fs.readFileSync('package.json','utf8')); process.exit(pkg.scripts && Object.prototype.hasOwnProperty.call(pkg.scripts,'typecheck') ? 0 : 1)"; then \
-		$(PM) run typecheck; \
-	elif $(NODE) -e "const fs=require('node:fs'); const pkg=JSON.parse(fs.readFileSync('package.json','utf8')); process.exit(pkg.scripts && Object.prototype.hasOwnProperty.call(pkg.scripts,'check') ? 0 : 1)"; then \
-		$(PM) run check; \
-	else \
-		printf "Skipping check: no typecheck or check script defined in package.json\n"; \
-	fi
+check: ## Run the check script with the configured package manager.
+	$(PM) run check
 
-lint: ## Run lint when configured.
-	@if $(NODE) -e "const fs=require('node:fs'); const pkg=JSON.parse(fs.readFileSync('package.json','utf8')); process.exit(pkg.scripts && Object.prototype.hasOwnProperty.call(pkg.scripts,'lint') ? 0 : 1)"; then \
-		$(PM) run lint; \
-	else \
-		printf "Skipping lint: no lint script defined in package.json\n"; \
-	fi
+lint: ## Run the lint script with the configured package manager.
+	$(PM) run lint
 
 clean: ## Remove generated output.
 	rm -rf node_modules dist "$(CLEAN_DIR)"
