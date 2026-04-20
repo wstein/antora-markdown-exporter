@@ -15,4 +15,36 @@ describe("Markdown IR boundary", () => {
 			{ type: "text", value: "Sample" },
 		]);
 	});
+
+	it("maps lists, links, code blocks, and quote blocks into the IR", () => {
+		const assembled = [
+			"== Rich sample",
+			"",
+			"Read https://example.com[the docs].",
+			"",
+			"* First item",
+			"* Second item",
+			"",
+			"[source,ts]",
+			"----",
+			"const answer = 42;",
+			"----",
+			"",
+			"[quote]",
+			"____",
+			"Stay focused.",
+			"____",
+		].join("\n");
+		const ir = convertAssemblyToMarkdownIR(assembled);
+
+		expect(ir.children).toEqual(
+			expect.arrayContaining([
+				expect.objectContaining({ type: "heading", depth: 1 }),
+				expect.objectContaining({ type: "paragraph" }),
+				expect.objectContaining({ type: "list", ordered: false }),
+				expect.objectContaining({ type: "codeBlock", language: "ts" }),
+				expect.objectContaining({ type: "blockquote" }),
+			]),
+		);
+	});
 });

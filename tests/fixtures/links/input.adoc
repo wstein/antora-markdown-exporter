@@ -1,0 +1,3 @@
+== Useful links
+
+See https://example.com[Example site] for docs.

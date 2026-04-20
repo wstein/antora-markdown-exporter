@@ -10,7 +10,7 @@ The Markdown IR is the canonical render boundary for the repository and preserve
 ## What
 
 
-The repository defines a custom Markdown intermediate representation for headings, paragraphs, inline emphasis, code, lists, block quotes, links, images, admonitions, tables, anchors, and explicit unsupported nodes.
+The repository currently defines a custom Markdown intermediate representation for headings, paragraphs, inline emphasis, code, links, unordered lists, block quotes, code blocks, and explicit unsupported nodes. Additional constructs should only land when conversion, normalization, rendering, and tests ship together.
 
 
 The IR is semantic rather than textual. It expresses meaning such as admonition kind or heading depth without embedding flavor syntax.

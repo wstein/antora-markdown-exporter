@@ -1,0 +1,6 @@
+== Quoted text
+
+[quote]
+____
+Stay focused.
+____

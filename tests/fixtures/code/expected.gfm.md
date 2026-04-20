@@ -1,0 +1,6 @@
+# Example code
+
+```ts
+const answer = 42;
+console.log(answer);
+```

@@ -27,4 +27,69 @@ describe("normalizeMarkdownIR", () => {
 			children: [{ type: "text", value: "Hello world" }],
 		});
 	});
+
+	it("normalizes nested list, quote, and link content recursively", () => {
+		const normalized = normalizeMarkdownIR({
+			type: "document",
+			children: [
+				{
+					type: "list",
+					ordered: false,
+					items: [
+						{
+							children: [
+								{
+									type: "paragraph",
+									children: [
+										{
+											type: "link",
+											url: "https://example.com",
+											children: [{ type: "text", value: "  Example   docs  " }],
+										},
+									],
+								},
+							],
+						},
+					],
+				},
+				{
+					type: "blockquote",
+					children: [
+						{
+							type: "paragraph",
+							children: [{ type: "text", value: "  Stay   focused. " }],
+						},
+					],
+				},
+			],
+		});
+
+		expect(normalized.children[0]).toMatchObject({
+			type: "list",
+			items: [
+				{
+					children: [
+						{
+							type: "paragraph",
+							children: [
+								{
+									type: "link",
+									children: [{ type: "text", value: "Example docs" }],
+								},
+							],
+						},
+					],
+				},
+			],
+		});
+		expect(normalized.children[1]).toMatchObject({
+			type: "blockquote",
+			children: [
+				{
+					type: "paragraph",
+					children: [{ type: "text", value: "Stay focused." }],
+				},
+			],
+		});
+	});
 });

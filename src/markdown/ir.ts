@@ -13,12 +13,22 @@ export type MarkdownCode = {
 	value: string;
 };
 
+export type MarkdownLink = {
+	type: "link";
+	url: string;
+	children: MarkdownInline[];
+};
+
 export type MarkdownUnsupported = {
 	type: "unsupported";
 	reason: string;
 };
 
-export type MarkdownInline = MarkdownText | MarkdownEmphasis | MarkdownCode;
+export type MarkdownInline =
+	| MarkdownText
+	| MarkdownEmphasis
+	| MarkdownCode
+	| MarkdownLink;
 
 export type MarkdownParagraph = {
 	type: "paragraph";
@@ -31,9 +41,33 @@ export type MarkdownHeading = {
 	children: MarkdownInline[];
 };
 
+export type MarkdownCodeBlock = {
+	type: "codeBlock";
+	language?: string;
+	value: string;
+};
+
+export type MarkdownBlockQuote = {
+	type: "blockquote";
+	children: MarkdownBlock[];
+};
+
+export type MarkdownListItem = {
+	children: MarkdownBlock[];
+};
+
+export type MarkdownList = {
+	type: "list";
+	ordered: boolean;
+	items: MarkdownListItem[];
+};
+
 export type MarkdownBlock =
 	| MarkdownParagraph
 	| MarkdownHeading
+	| MarkdownCodeBlock
+	| MarkdownBlockQuote
+	| MarkdownList
 	| MarkdownUnsupported;
 
 export type MarkdownDocument = {
