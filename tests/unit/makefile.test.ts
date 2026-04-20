@@ -7,7 +7,6 @@ const makefile = readFileSync(resolve(__dirname, "../../Makefile"), "utf8");
 describe("Makefile package manager policy", () => {
 	it("uses one explicit package manager for script execution", () => {
 		expect(makefile).toContain("PM ?= bun");
-		expect(makefile).toContain("NODE ?= node");
 		expect(makefile).toContain("$(PM) install");
 		expect(makefile).toContain("$(PM) run build");
 		expect(makefile).toContain("$(PM) run test");
@@ -15,7 +14,11 @@ describe("Makefile package manager policy", () => {
 		expect(makefile).toContain("$(PM) run lint");
 	});
 
-	it("does not keep lockfile-driven or deprecated fallbacks", () => {
+	it("does not keep detection logic or deprecated fallbacks", () => {
+		expect(makefile).not.toContain("readFileSync");
+		expect(makefile).not.toContain("typecheck");
+		expect(makefile).not.toContain("Skipping check");
+		expect(makefile).not.toContain("Skipping lint");
 		expect(makefile).not.toContain("bun.lockb");
 		expect(makefile).not.toContain("bun.lock");
 		expect(makefile).not.toContain("$(BUN)");

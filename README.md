@@ -38,7 +38,10 @@ The Makefile uses an explicit package manager setting. It defaults to Bun and ca
 ```bash
 make PM=npm install
 make PM=npm test
+make PM=npm check
 ```
+
+Each target is a thin delegate to the matching package-manager script.
 
 ## Package
 
