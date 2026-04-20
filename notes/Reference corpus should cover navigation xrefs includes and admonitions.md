@@ -11,7 +11,7 @@ The reference corpus should be selected to cover navigation structure, xrefs, in
 Reference cases should deliberately represent the highest-value Antora authoring patterns, including:
 - navigation-driven section ordering
 - mixed ordered and unordered list hierarchies
-- intra-page and inter-page xrefs
+- intra-page and inter-page xrefs, including component/module/version-qualified targets
 - anchors and page-alias metadata
 - include-heavy pages, including recursive partial chains, tagged-region selection, and level offsets
 - admonitions and block variants

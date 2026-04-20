@@ -1,0 +1,3 @@
+== Antora xrefs
+
+See xref:docs:ROOT:install.adoc[], xref:2.0@docs:ROOT:install.adoc#cli[], and xref:docs:ROOT:partial$nav.adoc[].

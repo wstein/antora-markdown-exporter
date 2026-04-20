@@ -208,4 +208,34 @@ describe("Markdown IR boundary", () => {
 			]),
 		);
 	});
+
+	it("normalizes richer Antora xref coordinates into markdown link targets", () => {
+		const assembled = [
+			"== Xref coordinates",
+			"",
+			"See xref:docs:ROOT:install.adoc[], xref:2.0@docs:ROOT:install.adoc#cli[], and xref:docs:ROOT:partial$nav.adoc[].",
+		].join("\n");
+		const ir = convertAssemblyToMarkdownIR(assembled);
+
+		expect(ir.children[1]).toMatchObject({
+			type: "paragraph",
+			children: expect.arrayContaining([
+				expect.objectContaining({
+					type: "link",
+					url: "docs/ROOT/install.adoc",
+					children: [{ type: "text", value: "install" }],
+				}),
+				expect.objectContaining({
+					type: "link",
+					url: "docs/2.0/ROOT/install.adoc#cli",
+					children: [{ type: "text", value: "cli" }],
+				}),
+				expect.objectContaining({
+					type: "link",
+					url: "docs/ROOT/partial/nav.adoc",
+					children: [{ type: "text", value: "nav" }],
+				}),
+			]),
+		});
+	});
 });

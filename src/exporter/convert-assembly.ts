@@ -44,6 +44,11 @@ type IncludeDirective = {
 	target: string;
 };
 
+type ParsedXrefTarget = {
+	label: string;
+	url: string;
+};
+
 type ImageToken = {
 	alt: string;
 	raw: string;
@@ -187,28 +192,97 @@ function matchLink(value: string): LinkToken | undefined {
 		return undefined;
 	}
 
-	const [, url, label] = xrefMatch;
-	if (url === undefined || label === undefined) {
+	const [, rawTarget, label] = xrefMatch;
+	if (rawTarget === undefined || label === undefined) {
 		return undefined;
 	}
-
-	const normalizedLabel =
-		label.length > 0
-			? label
-			: url.startsWith("#")
-				? url.slice(1)
-				: (url.split("#")[1] ??
-					url
-						.split("/")
-						.at(-1)
-						?.replace(/\.adoc$/, "") ??
-					url);
+	const parsedTarget = parseXrefTarget(rawTarget);
+	if (parsedTarget === undefined) {
+		return undefined;
+	}
 
 	return {
 		type: "link",
 		raw: xrefMatch[0],
-		url,
-		label: normalizedLabel,
+		url: parsedTarget.url,
+		label: label.length > 0 ? label : parsedTarget.label,
+	};
+}
+
+function parseXrefTarget(rawTarget: string): ParsedXrefTarget | undefined {
+	if (rawTarget.startsWith("#")) {
+		const anchor = rawTarget.slice(1);
+		return anchor.length === 0
+			? undefined
+			: {
+					url: `#${anchor}`,
+					label: anchor,
+				};
+	}
+
+	const [targetWithoutFragment, fragment] = rawTarget.split("#", 2);
+	if (targetWithoutFragment === undefined) {
+		return undefined;
+	}
+
+	const [versionPart, coordinatePart] = targetWithoutFragment.includes("@")
+		? targetWithoutFragment.split("@", 2)
+		: [undefined, targetWithoutFragment];
+	if (coordinatePart === undefined) {
+		return undefined;
+	}
+
+	const coordinateSegments = coordinatePart.split(":");
+	const pageSegment = coordinateSegments.pop();
+	if (pageSegment === undefined) {
+		return undefined;
+	}
+
+	const normalizedSegments: string[] = [];
+	if (coordinateSegments.length === 2) {
+		const [componentName, moduleName] = coordinateSegments;
+		if (componentName !== undefined && componentName.length > 0) {
+			normalizedSegments.push(componentName);
+		}
+		if (versionPart !== undefined && versionPart.length > 0) {
+			normalizedSegments.push(versionPart);
+		}
+		if (moduleName !== undefined && moduleName.length > 0) {
+			normalizedSegments.push(moduleName);
+		}
+	} else if (coordinateSegments.length === 1) {
+		const [moduleName] = coordinateSegments;
+		if (versionPart !== undefined && versionPart.length > 0) {
+			normalizedSegments.push(versionPart);
+		}
+		if (moduleName !== undefined && moduleName.length > 0) {
+			normalizedSegments.push(moduleName);
+		}
+	} else if (versionPart !== undefined && versionPart.length > 0) {
+		normalizedSegments.push(versionPart);
+	}
+
+	const [familyName, familyPath] = pageSegment.includes("$")
+		? pageSegment.split("$", 2)
+		: [undefined, pageSegment];
+	if (familyName !== undefined && familyName.length > 0) {
+		normalizedSegments.push(familyName);
+	}
+	if (familyPath !== undefined && familyPath.length > 0) {
+		normalizedSegments.push(familyPath);
+	}
+
+	const urlPath = normalizedSegments.join("/");
+	const labelSource =
+		fragment ??
+		normalizedSegments[normalizedSegments.length - 1] ??
+		targetWithoutFragment;
+	return {
+		url:
+			fragment === undefined || fragment.length === 0
+				? urlPath
+				: `${urlPath}#${fragment}`,
+		label: labelSource.replace(/\.adoc$/, ""),
 	};
 }
 

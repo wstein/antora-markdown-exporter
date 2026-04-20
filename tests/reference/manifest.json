@@ -262,5 +262,30 @@
 			"renderedContains": ["## Nested section", "Shifted body."],
 			"renderedExcludes": ["Unsupported:"]
 		}
+	},
+	{
+		"id": "antora-xrefs-qualified",
+		"sourceProject": "antora/docs.antora.org",
+		"sourceUrl": "https://gitlab.com/antora/docs.antora.org",
+		"sourcePath": "modules/ROOT/pages/xref.adoc",
+		"sourceCapturedAt": "2026-04-21",
+		"localPath": "tests/reference/fixtures/antora-xrefs-qualified/input.adoc",
+		"sha256": "1d34f160f6f8968c1aec4d96682d67d200e37d5f1da7f1a93879906e5d5bca74",
+		"coverage": [
+			"xrefs",
+			"component-targets",
+			"versioned-targets",
+			"family-targets"
+		],
+		"rationale": "Exercises component, module, version, and family-qualified Antora xrefs so compatibility checks prove richer target semantics survive markdown link normalization.",
+		"expectations": {
+			"nodeTypes": ["heading", "paragraph"],
+			"renderedContains": [
+				"[install](docs/ROOT/install.adoc)",
+				"[cli](docs/2.0/ROOT/install.adoc#cli)",
+				"[nav](docs/ROOT/partial/nav.adoc)"
+			],
+			"renderedExcludes": ["Unsupported:"]
+		}
 	}
 ]
