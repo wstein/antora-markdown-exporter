@@ -5,7 +5,7 @@
 PM ?= bun
 CLEAN_DIR ?= dist
 
-.PHONY: all install build test check lint fix clean notes help
+.PHONY: all install build test check lint format fix clean notes help
 all: build
 
 install: ## Install dependencies with the configured package manager.
@@ -23,6 +23,9 @@ check: ## Run the check script with the configured package manager.
 lint: ## Run the lint script with the configured package manager.
 	$(PM) run lint
 
+format: ## Run the format script with the configured package manager.
+	$(PM) run format
+
 fix: ## Run the fix script with the configured package manager.
 	$(PM) run fix
 
@@ -33,4 +36,4 @@ notes: ## Print the notes directory path.
 	@printf "Notes directory: notes\n"
 
 help: ## Show available targets.
-	@printf "Available targets:\n  install build test check lint fix clean notes\n"
+	@printf "Available targets:\n  install build test check lint format fix clean notes\n"

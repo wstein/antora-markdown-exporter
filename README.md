@@ -31,6 +31,7 @@ npx antora-markdown-exporter --help
 make install
 make build
 make test
+make format
 make fix
 ```
 
