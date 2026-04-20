@@ -28,9 +28,16 @@ npx antora-markdown-exporter --help
 ## Development
 
 ```bash
-npm install
-npm run build
-npm run test
+make install
+make build
+make test
+```
+
+The Makefile uses an explicit package manager setting. It defaults to Bun and can be overridden when needed:
+
+```bash
+make PM=npm install
+make PM=npm test
 ```
 
 ## Package
