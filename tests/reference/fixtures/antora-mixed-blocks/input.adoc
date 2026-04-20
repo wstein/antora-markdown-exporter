@@ -1,0 +1,20 @@
+== Documentation flow
+
+Start with stable navigation.
+
+. Draft module pages
+.. Review sidebar labels
+. Publish site
+
+[quote]
+____
+Docs are part of the product.
+____
+
+[source,sh]
+----
+antora antora-playbook.yml
+----
+
+* Capture follow-up
+** Record broken links

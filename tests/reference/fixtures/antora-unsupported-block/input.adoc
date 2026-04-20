@@ -1,0 +1,5 @@
+== Unsupported block
+
+[source,ts]
+----
+const status = "open";

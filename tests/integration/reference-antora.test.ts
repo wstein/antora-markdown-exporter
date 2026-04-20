@@ -7,6 +7,12 @@ import { normalizeMarkdownIR } from "../../src/markdown/normalize.js";
 import { renderGfm } from "../../src/markdown/render/index.js";
 
 interface ReferenceManifestEntry {
+	coverage: string[];
+	expectations: {
+		nodeTypes: string[];
+		renderedContains: string[];
+		renderedExcludes?: string[];
+	};
 	id: string;
 	localPath: string;
 	rationale: string;
@@ -36,22 +42,22 @@ describe("reference Antora compatibility tests", () => {
 			expect(entry.sourceUrl).toContain("gitlab.com/antora/docs.antora.org");
 			expect(entry.sourcePath).toContain(".adoc");
 			expect(entry.sourceCapturedAt).toMatch(/^\d{4}-\d{2}-\d{2}$/);
+			expect(entry.coverage.length).toBeGreaterThan(0);
 			expect(entry.rationale.length).toBeGreaterThan(20);
 
 			expect(ir.type).toBe("document");
-			expect(ir.children.some((child) => child.type === "heading")).toBe(true);
-			expect(ir.children.some((child) => child.type === "list")).toBe(true);
-			expect(ir.children.some((child) => child.type === "codeBlock")).toBe(
-				true,
-			);
-			expect(ir.children.some((child) => child.type === "blockquote")).toBe(
-				true,
-			);
-			expect(rendered).toContain("[Antora docs](https://docs.antora.org)");
-			expect(rendered).toContain("- Define modules clearly");
-			expect(rendered).toContain("```sh");
-			expect(rendered).toContain("> Docs are part of the product.");
-			expect(rendered).not.toContain("Unsupported:");
+
+			for (const nodeType of entry.expectations.nodeTypes) {
+				expect(ir.children.some((child) => child.type === nodeType)).toBe(true);
+			}
+
+			for (const marker of entry.expectations.renderedContains) {
+				expect(rendered).toContain(marker);
+			}
+
+			for (const marker of entry.expectations.renderedExcludes ?? []) {
+				expect(rendered).not.toContain(marker);
+			}
 		});
 	}
 });

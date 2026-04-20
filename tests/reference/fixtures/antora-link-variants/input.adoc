@@ -1,0 +1,6 @@
+== Link variants
+
+See https://docs.antora.org[Antora docs] and link:https://gitlab.com/antora/antora[Antora on GitLab].
+
+* Preserve https://antora.org[external labels]
+* Keep link:https://example.com/reference[explicit link syntax]

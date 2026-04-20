@@ -65,7 +65,7 @@ make PM=npm install
 
 Each target is a thin delegate to the matching package-manager script.
 
-`make integration` runs the broader integration suite. `make reference` runs only the provenance-locked compatibility cases.
+`make integration` runs the broader integration suite. `make reference` runs only the provenance-locked compatibility cases, including link variants, mixed block sequences, and visible unsupported fallbacks.
 
 ## Release
 

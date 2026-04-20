@@ -12,10 +12,11 @@ The repository keeps reference fixtures as curated snapshots rather than live pu
 
 Each fixture records at least:
 - source project
-- source revision or tag
 - original file paths
+- capture date
+- coverage themes
 - local selection rationale
-- any normalization or trimming performed for testability
+- semantic expectations for compatibility assertions
 
 ## Why
 
@@ -25,7 +26,7 @@ Curation also keeps the corpus compact and high-signal.
 
 ## How
 
-Store fixture metadata beside each reference case, for example in `case.json` or a small manifest file. Keep the current repository contract in `tests/reference/manifest.json`.
+Store fixture metadata beside each reference case, for example in `case.json` or a small manifest file. Keep the current repository contract in `tests/reference/manifest.json`, including coverage tags and expected semantic markers.
 
 Require review whenever a reference snapshot is refreshed. Refreshes should explain semantic differences, not only file diffs.
 
