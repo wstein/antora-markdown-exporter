@@ -10,7 +10,7 @@ Flavor renderers are syntax adapters over one normalized semantic layer rather t
 ## What
 
 
-The repository currently ships one concrete GFM renderer. Future flavors such as GLFM or CommonMark-oriented output should serialize the same normalized IR using explicit flavor capabilities and render policy.
+The repository currently ships explicit `gfm`, `commonmark`, `gitlab`, and `strict` renderer profiles. Additional flavors should serialize the same normalized IR using explicit flavor capabilities and render policy rather than introducing flavor-local semantics.
 
 
 GLFM and GFM share core Markdown features based on the CommonMark specification, but each has its own extensions. GLFM includes GFM extensions and also adds GitLab-specific enhancements, while GFM remains the baseline GitHub-compatible syntax. This distinction matters when renderer behavior or fallback policy differs by platform support.
@@ -31,7 +31,7 @@ This makes new flavors additive instead of invasive.
 ## How
 
 
-Implement concrete renderers in `src/markdown/render/**`, and add flavor specs only when more than one renderer exists.
+Implement concrete renderers in `src/markdown/render/**` and keep flavor capabilities explicit in `src/markdown/flavor.ts`.
 
 
 Keep flavor support, render policy, escaping, and fallback rules explicit. Unsupported constructs must degrade deterministically and visibly.

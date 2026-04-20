@@ -1,6 +1,6 @@
 # @wsmy/antora-markdown-exporter
 
-Antora Assembler based Markdown exporter scaffold with semantic IR and a first GitHub Flavored Markdown rendering path for headings, paragraphs, links, ordered and unordered lists, nested lists, code blocks, block quotes, and visible unsupported fallbacks.
+Antora Assembler based Markdown exporter scaffold with semantic IR, explicit flavor capabilities, and renderer profiles for GitHub Flavored Markdown, CommonMark, GitLab Flavored Markdown, and a strict canonical mode.
 
 ## Install
 
@@ -16,6 +16,7 @@ npm install @wsmy/antora-markdown-exporter
 import {
   convertAssemblyToMarkdownIR,
   normalizeMarkdownIR,
+  renderMarkdown,
   renderGfm,
 } from "@wsmy/antora-markdown-exporter";
 
@@ -23,9 +24,10 @@ const ir = convertAssemblyToMarkdownIR("== Sample document\n\nHello world.");
 const normalized = normalizeMarkdownIR(ir);
 
 console.log(renderGfm(normalized));
+console.log(renderMarkdown(normalized, "commonmark"));
 ```
 
-Current scaffold coverage includes headings, paragraphs, inline links, ordered and unordered lists, nested lists, fenced code blocks, block quotes, and explicit unsupported markers.
+Current scaffold coverage includes headings, paragraphs, inline links, ordered and unordered lists, nested lists, thematic breaks, tables, raw HTML nodes, footnote placeholders, fenced code blocks, block quotes, and explicit unsupported markers.
 
 ### Extension scaffold
 

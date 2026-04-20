@@ -194,7 +194,7 @@ describe("renderGfm", () => {
 			[
 				"**Strong** emphasis",
 				'![Diagram](https://example.com/diagram.png "Diagram \\"A\\"")\\',
-				"[^note-1] [@cite-key]",
+				"[^note-1] [cite:cite-key]",
 				"",
 				"---",
 				"",
