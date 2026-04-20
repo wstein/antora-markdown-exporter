@@ -2,7 +2,7 @@
 id: 20260420193100
 aliases: ["Markdown semantic layer", "Markdown IR boundary", "Canonical render boundary"]
 tags: ["architecture", "ir", "markdown", "renderer"]
-target: current
+target: v0.1
 ---
 The Markdown IR is the canonical render boundary for the repository and preserves document meaning independently from any concrete Markdown flavor. All renderer logic must consume normalized semantic nodes instead of source-specific or syntax-specific structures.
 

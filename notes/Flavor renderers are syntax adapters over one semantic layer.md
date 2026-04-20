@@ -2,7 +2,7 @@
 id: 20260420193200
 aliases: ["Flavor renderer boundary", "Markdown flavor adapters", "Syntax adapters", "GLFM", "glfm"]
 tags: ["markdown", "renderer", "flavors", "architecture"]
-target: current
+target: v0.1
 ---
 Flavor renderers are syntax adapters over one normalized semantic layer rather than independent document translators. Each renderer may differ in syntax choices and supported constructs, but it must not redefine document meaning.
 

@@ -2,7 +2,7 @@
 id: 20260420193000
 aliases: ["Assembler direct converter pipeline", "Exporter pipeline", "Antora Markdown pipeline"]
 tags: ["architecture", "antora", "exporter", "markdown", "typescript"]
-target: current
+target: v0.1
 ---
 The exporter pipeline uses Antora Assembler to produce assembled AsciiDoc and then hands that document to a direct TypeScript converter rather than routing through Pandoc or DocBook. This preserves deterministic control over semantics, fallbacks, and flavor-specific rendering.
 

@@ -2,7 +2,7 @@
 id: 20260420194300
 aliases: ["Extension maturity signaling", "Antora entrypoint honesty", "Scaffold boundary note"]
 tags: ["architecture", "antora", "extension", "naming"]
-target: current
+target: v0.1
 ---
 Antora extension entrypoints must reflect actual integration maturity because public names that imply real Antora integration should not wrap placeholder objects without clearly signaling scaffold status. Honest boundary naming improves review accuracy and reduces future churn.
 

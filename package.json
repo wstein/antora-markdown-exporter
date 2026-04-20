@@ -1,6 +1,6 @@
 {
 	"name": "@wsmy/antora-markdown-exporter",
-	"version": "0.1.0",
+  "version": "0.1.0-dev",
 	"description": "Antora Assembler based Markdown exporter with semantic IR and multi-flavor rendering",
 	"license": "MIT",
 	"type": "module",
