@@ -31,6 +31,7 @@ npx antora-markdown-exporter --help
 make install
 make build
 make test
+make fix
 ```
 
 The Makefile uses an explicit package manager setting. It defaults to Bun and can be overridden when needed:

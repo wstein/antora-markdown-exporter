@@ -1,51 +1,47 @@
 {
-  "name": "@wsmy/antora-markdown-exporter",
-  "version": "0.1.0",
-  "description": "Antora Assembler based Markdown exporter with semantic IR and multi-flavor rendering",
-  "license": "MIT",
-  "type": "module",
-  "main": "./dist/index.cjs",
-  "module": "./dist/index.js",
-  "types": "./dist/index.d.ts",
-  "bin": {
-    "antora-markdown-exporter": "./bin/antora-markdown-exporter.js"
-  },
-  "exports": {
-    ".": {
-      "types": "./dist/index.d.ts",
-      "import": "./dist/index.js",
-      "require": "./dist/index.cjs"
-    },
-    "./extension": {
-      "types": "./dist/extension/index.d.ts",
-      "import": "./dist/extension/index.js",
-      "require": "./dist/extension/index.cjs"
-    }
-  },
-  "files": [
-    "dist",
-    "bin",
-    "README.md",
-    "LICENSE"
-  ],
-  "scripts": {
-    "build": "tsup --dts --format esm,cjs --out-dir dist src/index.ts src/extension/index.ts",
-    "test": "vitest run --coverage",
-    "test:watch": "vitest",
-    "lint": "biome check .",
-    "format": "biome format --write .",
-    "check": "biome check . && vitest run --coverage",
-    "prepublishOnly": "npm run build && npm run check"
-  },
-  "publishConfig": {
-    "access": "public"
-  },
-  "devDependencies": {
-    "@types/node": "^20.11.0",
-    "@vitest/coverage-v8": "^1.0.0",
-    "biome": "^1.0.0",
-    "tsup": "^6.0.0",
-    "typescript": "^6.0.0",
-    "vitest": "^4.0.0"
-  }
+	"name": "@wsmy/antora-markdown-exporter",
+	"version": "0.1.0",
+	"description": "Antora Assembler based Markdown exporter with semantic IR and multi-flavor rendering",
+	"license": "MIT",
+	"type": "module",
+	"main": "./dist/index.cjs",
+	"module": "./dist/index.js",
+	"types": "./dist/index.d.ts",
+	"bin": {
+		"antora-markdown-exporter": "./bin/antora-markdown-exporter.js"
+	},
+	"exports": {
+		".": {
+			"types": "./dist/index.d.ts",
+			"import": "./dist/index.js",
+			"require": "./dist/index.cjs"
+		},
+		"./extension": {
+			"types": "./dist/extension/index.d.ts",
+			"import": "./dist/extension/index.js",
+			"require": "./dist/extension/index.cjs"
+		}
+	},
+	"files": ["dist", "bin", "README.md", "LICENSE"],
+	"scripts": {
+		"build": "tsup --dts --format esm,cjs --out-dir dist src/index.ts src/extension/index.ts",
+		"test": "vitest run --coverage",
+		"test:watch": "vitest",
+		"lint": "biome check bin src tests package.json tsconfig.json tsconfig.build.json vitest.config.ts",
+		"fix": "biome check --write bin src tests package.json tsconfig.json tsconfig.build.json vitest.config.ts",
+		"format": "biome format --write bin src tests package.json tsconfig.json tsconfig.build.json vitest.config.ts",
+		"check": "biome check bin src tests package.json tsconfig.json tsconfig.build.json vitest.config.ts && vitest run --coverage",
+		"prepublishOnly": "npm run build && npm run check"
+	},
+	"publishConfig": {
+		"access": "public"
+	},
+	"devDependencies": {
+		"@types/node": "^20.11.0",
+		"@vitest/coverage-v8": "^4.1.4",
+		"@biomejs/biome": "^1.9.4",
+		"tsup": "^6.0.0",
+		"typescript": "^5.9.3",
+		"vitest": "^4.0.0"
+	}
 }

@@ -5,5 +5,5 @@ export type { MarkdownDocument } from "./markdown/ir.js";
 export const PACKAGE_NAME = "@wsmy/antora-markdown-exporter";
 
 export function describePackage() {
-  return "Antora Assembler based Markdown exporter with semantic IR and multi-flavor rendering.";
+	return "Antora Assembler based Markdown exporter with semantic IR and multi-flavor rendering.";
 }
