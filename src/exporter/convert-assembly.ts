@@ -2,7 +2,6 @@ import type {
 	MarkdownDocument,
 	MarkdownHeading,
 	MarkdownParagraph,
-	MarkdownText,
 } from "../markdown/ir.js";
 
 export function convertAssemblyToMarkdownIR(
@@ -16,7 +15,7 @@ export function convertAssemblyToMarkdownIR(
 			if (line.startsWith("== ")) {
 				return <MarkdownHeading>{
 					type: "heading",
-					depth: 2,
+					depth: 1,
 					children: [{ type: "text", value: line.slice(3).trim() }],
 				};
 			}

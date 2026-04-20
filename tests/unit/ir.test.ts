@@ -9,7 +9,10 @@ describe("Markdown IR boundary", () => {
 		const normalized = normalizeMarkdownIR(ir);
 
 		expect(normalized.type).toBe("document");
-		expect(normalized.children[0]).toMatchObject({ type: "heading", depth: 2 });
+		expect(normalized.children[0]).toMatchObject({ type: "heading", depth: 1 });
 		expect(normalized.children[1]).toMatchObject({ type: "paragraph" });
+		expect(normalized.children[0]?.children).toEqual([
+			{ type: "text", value: "Sample" },
+		]);
 	});
 });
