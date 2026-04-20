@@ -1,0 +1,9 @@
+== Assets
+
+image::diagram.png[Architecture overview,title=System diagram]
+
+|===
+| Asset | State
+| Diagram | Ready
+| Table | Reviewed
+|===

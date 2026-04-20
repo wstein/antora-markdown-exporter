@@ -1,0 +1,3 @@
+== Guidance
+
+NOTE: Keep _docs_ and *code* aligned.

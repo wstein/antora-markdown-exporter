@@ -1,0 +1,3 @@
+== Inline formatting
+
+Use _careful_ *review* and `npm test`.

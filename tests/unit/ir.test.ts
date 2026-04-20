@@ -16,11 +16,11 @@ describe("Markdown IR boundary", () => {
 		]);
 	});
 
-	it("maps ordered and nested lists, links, code blocks, and quote blocks into the IR", () => {
+	it("maps richer AsciiDoc structures into the IR", () => {
 		const assembled = [
 			"== Rich sample",
 			"",
-			"Read https://example.com[the docs].",
+			"Read https://example.com[the docs], xref:install.adoc[install guide], and image::diagram.png[Diagram,title=Architecture].",
 			"",
 			". Prepare release",
 			".. Review changelog",
@@ -30,15 +30,27 @@ describe("Markdown IR boundary", () => {
 			"* Capture follow-up",
 			"** Gather feedback",
 			"",
+			"'''",
+			"",
+			"NOTE: Keep _docs_ and *code* aligned.",
+			"",
 			"[source,ts]",
 			"----",
-			"const answer = 42;",
+			"const answer = 42; <1>",
 			"----",
+			"<1> Verify the result",
 			"",
 			"[quote]",
 			"____",
 			"Stay focused.",
 			"____",
+			"",
+			"|===",
+			"| Name | Value",
+			"| Alpha | 42",
+			"|===",
+			"",
+			"include::partial$shared.adoc[]",
 		].join("\n");
 		const ir = convertAssemblyToMarkdownIR(assembled);
 
@@ -48,8 +60,26 @@ describe("Markdown IR boundary", () => {
 				expect.objectContaining({ type: "paragraph" }),
 				expect.objectContaining({ type: "list", ordered: true }),
 				expect.objectContaining({ type: "list", ordered: false }),
+				expect.objectContaining({ type: "thematicBreak" }),
 				expect.objectContaining({ type: "codeBlock", language: "ts" }),
 				expect.objectContaining({ type: "blockquote" }),
+				expect.objectContaining({ type: "table" }),
+				expect.objectContaining({ type: "unsupported" }),
+			]),
+		);
+		expect(ir.children[1]).toMatchObject({
+			type: "paragraph",
+			children: expect.arrayContaining([
+				expect.objectContaining({ type: "link", url: "install.adoc" }),
+				expect.objectContaining({ type: "image", url: "diagram.png" }),
+			]),
+		});
+		expect(ir.children).toEqual(
+			expect.arrayContaining([
+				expect.objectContaining({
+					type: "codeBlock",
+					callouts: [1],
+				}),
 			]),
 		);
 	});

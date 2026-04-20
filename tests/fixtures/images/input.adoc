@@ -1,0 +1,3 @@
+== Diagram
+
+image::diagram.png[Architecture overview,title=System diagram]

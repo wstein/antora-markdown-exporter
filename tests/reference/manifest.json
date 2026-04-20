@@ -92,5 +92,80 @@
 				"Unsupported: source block fence is not closed correctly"
 			]
 		}
+	},
+	{
+		"id": "antora-xrefs",
+		"sourceProject": "antora/docs.antora.org",
+		"sourceUrl": "https://gitlab.com/antora/docs.antora.org",
+		"sourcePath": "modules/ROOT/pages/xref.adoc",
+		"sourceCapturedAt": "2026-04-20",
+		"localPath": "tests/reference/fixtures/antora-xrefs/input.adoc",
+		"sha256": "53602a7b6c080343b74052732517669b56a802428ae737057b5462422e8180f5",
+		"coverage": ["xrefs", "links", "navigation"],
+		"rationale": "Exercises Antora-style xref syntax so the compatibility suite proves cross-reference labels and targets remain visible in the exported markdown.",
+		"expectations": {
+			"nodeTypes": ["heading", "paragraph"],
+			"renderedContains": [
+				"[Install guide](install.adoc)",
+				"[Overview](#overview)"
+			],
+			"renderedExcludes": ["Unsupported:"]
+		}
+	},
+	{
+		"id": "antora-include-directive",
+		"sourceProject": "antora/docs.antora.org",
+		"sourceUrl": "https://gitlab.com/antora/docs.antora.org",
+		"sourcePath": "modules/ROOT/pages/page-partials.adoc",
+		"sourceCapturedAt": "2026-04-20",
+		"localPath": "tests/reference/fixtures/antora-include-directive/input.adoc",
+		"sha256": "b36010d9ef8093fbacf8102b24d58ecd2026ff4627e72892afe8e7012d3220a8",
+		"coverage": ["includes", "fallbacks", "unsupported"],
+		"rationale": "Exercises include directives so compatibility checks keep deferred include handling explicit until real inlining support lands.",
+		"expectations": {
+			"nodeTypes": ["heading", "unsupported"],
+			"renderedContains": [
+				"Unsupported: include directive is not yet inlined: include::partial$shared-nav.adoc[]"
+			]
+		}
+	},
+	{
+		"id": "antora-images-tables",
+		"sourceProject": "antora/docs.antora.org",
+		"sourceUrl": "https://gitlab.com/antora/docs.antora.org",
+		"sourcePath": "modules/ROOT/pages/page-resource-ids.adoc",
+		"sourceCapturedAt": "2026-04-20",
+		"localPath": "tests/reference/fixtures/antora-images-tables/input.adoc",
+		"sha256": "78a49bd1fdd326f26fe1e817a357de4eb250c66f56c4680ce1ebc92d2ea70404",
+		"coverage": ["images", "tables", "assets"],
+		"rationale": "Exercises image and simple table emission together so the compatibility suite covers two high-value documentation asset shapes in one provenance-locked case.",
+		"expectations": {
+			"nodeTypes": ["heading", "paragraph", "table"],
+			"renderedContains": [
+				"![Architecture overview](diagram.png \"System diagram\")",
+				"| Asset | State |",
+				"| Diagram | Ready |"
+			],
+			"renderedExcludes": ["Unsupported:"]
+		}
+	},
+	{
+		"id": "antora-admonitions",
+		"sourceProject": "antora/docs.antora.org",
+		"sourceUrl": "https://gitlab.com/antora/docs.antora.org",
+		"sourcePath": "modules/ROOT/pages/admonitions.adoc",
+		"sourceCapturedAt": "2026-04-20",
+		"localPath": "tests/reference/fixtures/antora-admonitions/input.adoc",
+		"sha256": "cd2baf31e969c3908b4648d2a24f9445c6863ccecf3cf6c27b9e5ee298246d07",
+		"coverage": ["admonitions", "inline-formatting", "xrefs"],
+		"rationale": "Exercises note-style admonitions with inline emphasis, strong text, and xrefs so compatibility checks cover common documentation guidance patterns.",
+		"expectations": {
+			"nodeTypes": ["heading", "blockquote"],
+			"renderedContains": [
+				"> **NOTE:** Keep *docs* and **code** aligned.",
+				"> **TIP:** Review [the style guide](style-guide.adoc) before publishing."
+			],
+			"renderedExcludes": ["Unsupported:"]
+		}
 	}
 ]

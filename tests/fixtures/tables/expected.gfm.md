@@ -1,0 +1,6 @@
+# Metrics
+
+| Name | Value |
+| --- | --- |
+| Alpha | 42 |
+| Beta | 7 |

@@ -1,0 +1,3 @@
+== Navigation
+
+See xref:install.adoc[Install guide] and xref:#overview[Overview].
