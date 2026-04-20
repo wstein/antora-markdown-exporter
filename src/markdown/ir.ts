@@ -25,6 +25,24 @@ export type MarkdownLink = {
 	children: MarkdownInline[];
 };
 
+export type MarkdownXrefTarget = {
+	component?: string;
+	family?: string;
+	fragment?: string;
+	module?: string;
+	path: string;
+	raw: string;
+	version?: string;
+};
+
+export type MarkdownXref = {
+	type: "xref";
+	target: MarkdownXrefTarget;
+	url: string;
+	title?: string;
+	children: MarkdownInline[];
+};
+
 export type MarkdownImage = {
 	type: "image";
 	url: string;
@@ -68,6 +86,7 @@ export type MarkdownInline =
 	| MarkdownStrong
 	| MarkdownCode
 	| MarkdownLink
+	| MarkdownXref
 	| MarkdownImage
 	| MarkdownHardBreak
 	| MarkdownSoftBreak
@@ -94,6 +113,13 @@ export type MarkdownAnchor = {
 export type MarkdownPageAliases = {
 	type: "pageAliases";
 	aliases: string[];
+};
+
+export type MarkdownIncludeDirective = {
+	type: "includeDirective";
+	attributes: Record<string, string>;
+	resolvedPath?: string;
+	target: string;
 };
 
 export type MarkdownThematicBreak = {
@@ -172,6 +198,7 @@ export type MarkdownBlock =
 	| MarkdownHeading
 	| MarkdownAnchor
 	| MarkdownPageAliases
+	| MarkdownIncludeDirective
 	| MarkdownThematicBreak
 	| MarkdownCodeBlock
 	| MarkdownBlockQuote

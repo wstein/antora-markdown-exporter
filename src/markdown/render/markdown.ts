@@ -32,6 +32,7 @@ function renderInline(
 		case "code":
 			return `\`${node.value.replace(/`/g, "\\`")}\``;
 		case "link":
+		case "xref":
 			return `[${node.children.map((child) => renderInline(child, flavor)).join("")}](${renderLinkDestination(node.url, node.title)})`;
 		case "image":
 			return `![${node.alt.map((child) => renderInline(child, flavor)).join("")}](${renderLinkDestination(node.url, node.title)})`;
@@ -103,6 +104,8 @@ function renderBlock(block: MarkdownBlock, flavor: MarkdownFlavorSpec): string {
 						"page alias metadata requires raw HTML support in this flavor",
 						flavor,
 					);
+		case "includeDirective":
+			return "";
 		case "thematicBreak":
 			return "---";
 		case "codeBlock":
@@ -252,5 +255,6 @@ export function renderMarkdown(
 	const resolvedFlavor = resolveMarkdownFlavor(flavor);
 	return `${document.children
 		.map((block) => renderBlock(block, resolvedFlavor))
+		.filter((block) => block.length > 0)
 		.join("\n\n")}\n`;
 }

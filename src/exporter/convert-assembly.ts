@@ -9,11 +9,13 @@ import type {
 	MarkdownDocument,
 	MarkdownHeading,
 	MarkdownImage,
+	MarkdownIncludeDirective,
 	MarkdownInline,
 	MarkdownList,
 	MarkdownParagraph,
 	MarkdownTable,
 	MarkdownTableRow,
+	MarkdownXrefTarget,
 } from "../markdown/ir.js";
 
 const listMarkerPattern = /^\s*([*.]+)\s+(.*)$/;
@@ -46,6 +48,7 @@ type IncludeDirective = {
 
 type ParsedXrefTarget = {
 	label: string;
+	target: MarkdownXrefTarget;
 	url: string;
 };
 
@@ -62,6 +65,14 @@ type LinkToken = {
 	raw: string;
 	title?: string;
 	type: "link";
+	url: string;
+};
+
+type XrefToken = {
+	label: string;
+	raw: string;
+	target: MarkdownXrefTarget;
+	type: "xref";
 	url: string;
 };
 
@@ -86,6 +97,7 @@ type EmphasisToken = {
 type InlineToken =
 	| ImageToken
 	| LinkToken
+	| XrefToken
 	| CodeToken
 	| StrongToken
 	| EmphasisToken;
@@ -173,7 +185,7 @@ function matchImage(value: string): ImageToken | undefined {
 	};
 }
 
-function matchLink(value: string): LinkToken | undefined {
+function matchLink(value: string): LinkToken | XrefToken | undefined {
 	const linkMatch = value.match(/^(?:link:)?(https?:\/\/[^\s[]+)\[([^\]]+)\]/);
 	if (linkMatch !== null) {
 		const [, url, label] = linkMatch;
@@ -202,9 +214,10 @@ function matchLink(value: string): LinkToken | undefined {
 	}
 
 	return {
-		type: "link",
+		type: "xref",
 		raw: xrefMatch[0],
 		url: parsedTarget.url,
+		target: parsedTarget.target,
 		label: label.length > 0 ? label : parsedTarget.label,
 	};
 }
@@ -217,6 +230,11 @@ function parseXrefTarget(rawTarget: string): ParsedXrefTarget | undefined {
 			: {
 					url: `#${anchor}`,
 					label: anchor,
+					target: {
+						raw: rawTarget,
+						path: "",
+						fragment: anchor,
+					},
 				};
 	}
 
@@ -237,10 +255,13 @@ function parseXrefTarget(rawTarget: string): ParsedXrefTarget | undefined {
 	if (pageSegment === undefined) {
 		return undefined;
 	}
+	const [componentName, moduleName] =
+		coordinateSegments.length === 2
+			? coordinateSegments
+			: [undefined, coordinateSegments[0]];
 
 	const normalizedSegments: string[] = [];
 	if (coordinateSegments.length === 2) {
-		const [componentName, moduleName] = coordinateSegments;
 		if (componentName !== undefined && componentName.length > 0) {
 			normalizedSegments.push(componentName);
 		}
@@ -251,7 +272,6 @@ function parseXrefTarget(rawTarget: string): ParsedXrefTarget | undefined {
 			normalizedSegments.push(moduleName);
 		}
 	} else if (coordinateSegments.length === 1) {
-		const [moduleName] = coordinateSegments;
 		if (versionPart !== undefined && versionPart.length > 0) {
 			normalizedSegments.push(versionPart);
 		}
@@ -283,6 +303,15 @@ function parseXrefTarget(rawTarget: string): ParsedXrefTarget | undefined {
 				? urlPath
 				: `${urlPath}#${fragment}`,
 		label: labelSource.replace(/\.adoc$/, ""),
+		target: {
+			raw: rawTarget,
+			component: componentName,
+			version: versionPart,
+			module: moduleName,
+			family: familyName,
+			path: familyPath ?? pageSegment,
+			fragment,
+		},
 	};
 }
 
@@ -406,6 +435,14 @@ function parseInline(value: string): MarkdownInline[] {
 					type: "link",
 					url: next.token.url,
 					title: next.token.title,
+					children: parseInline(next.token.label),
+				});
+				break;
+			case "xref":
+				nodes.push({
+					type: "xref",
+					target: next.token.target,
+					url: next.token.url,
 					children: parseInline(next.token.label),
 				});
 				break;
@@ -886,6 +923,13 @@ function expandIncludes(
 			includeTarget,
 			includeRootDir,
 		);
+		expandedLines.push(
+			`<!-- md-ir-include ${JSON.stringify({
+				target: includeTarget,
+				attributes: directive.attributes,
+				resolvedPath,
+			})} -->`,
+		);
 		if (visited.has(resolvedPath)) {
 			expandedLines.push(
 				`// include cycle prevented for ${includeTarget} from ${options.sourcePath}`,
@@ -921,6 +965,27 @@ function expandIncludes(
 	}
 
 	return expandedLines.join("\n");
+}
+
+function parseIncludeDirectiveMarker(
+	line: string,
+): MarkdownIncludeDirective | undefined {
+	const match = line.trim().match(/^<!-- md-ir-include (.+) -->$/);
+	if (match?.[1] === undefined) {
+		return undefined;
+	}
+
+	const payload = JSON.parse(match[1]) as {
+		attributes: Record<string, string>;
+		resolvedPath?: string;
+		target: string;
+	};
+	return {
+		type: "includeDirective",
+		target: payload.target,
+		attributes: payload.attributes,
+		resolvedPath: payload.resolvedPath,
+	};
 }
 
 function isBlockBoundary(line: string): boolean {
@@ -979,6 +1044,13 @@ function parseBlocks(lines: string[]): MarkdownBlock[] {
 					.map((alias) => alias.trim())
 					.filter(Boolean),
 			});
+			index += 1;
+			continue;
+		}
+
+		const includeDirective = parseIncludeDirectiveMarker(line.trim());
+		if (includeDirective !== undefined) {
+			children.push(includeDirective);
 			index += 1;
 			continue;
 		}

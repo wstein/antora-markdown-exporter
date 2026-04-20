@@ -79,12 +79,23 @@ describe("Markdown IR boundary", () => {
 		expect(ir.children[1]).toMatchObject({
 			type: "paragraph",
 			children: expect.arrayContaining([
-				expect.objectContaining({ type: "link", url: "install.adoc" }),
+				expect.objectContaining({
+					type: "xref",
+					url: "install.adoc",
+					target: expect.objectContaining({
+						raw: "install.adoc",
+						path: "install.adoc",
+					}),
+				}),
 				expect.objectContaining({ type: "image", url: "diagram.png" }),
 			]),
 		});
 		expect(ir.children).toEqual(
 			expect.arrayContaining([
+				expect.objectContaining({
+					type: "includeDirective",
+					target: "partial$shared.adoc",
+				}),
 				expect.objectContaining({
 					type: "codeBlock",
 					callouts: [1],
@@ -143,13 +154,22 @@ describe("Markdown IR boundary", () => {
 			type: "paragraph",
 			children: expect.arrayContaining([
 				expect.objectContaining({
-					type: "link",
+					type: "xref",
 					url: "#overview",
+					target: expect.objectContaining({
+						raw: "#overview",
+						fragment: "overview",
+					}),
 					children: [{ type: "text", value: "overview" }],
 				}),
 				expect.objectContaining({
-					type: "link",
+					type: "xref",
 					url: "guide/setup.adoc#details",
+					target: expect.objectContaining({
+						raw: "guide/setup.adoc#details",
+						path: "guide/setup.adoc",
+						fragment: "details",
+					}),
 					children: [{ type: "text", value: "details" }],
 				}),
 			]),
@@ -221,18 +241,36 @@ describe("Markdown IR boundary", () => {
 			type: "paragraph",
 			children: expect.arrayContaining([
 				expect.objectContaining({
-					type: "link",
+					type: "xref",
 					url: "docs/ROOT/install.adoc",
+					target: expect.objectContaining({
+						component: "docs",
+						module: "ROOT",
+						path: "install.adoc",
+					}),
 					children: [{ type: "text", value: "install" }],
 				}),
 				expect.objectContaining({
-					type: "link",
+					type: "xref",
 					url: "docs/2.0/ROOT/install.adoc#cli",
+					target: expect.objectContaining({
+						component: "docs",
+						version: "2.0",
+						module: "ROOT",
+						path: "install.adoc",
+						fragment: "cli",
+					}),
 					children: [{ type: "text", value: "cli" }],
 				}),
 				expect.objectContaining({
-					type: "link",
+					type: "xref",
 					url: "docs/ROOT/partial/nav.adoc",
+					target: expect.objectContaining({
+						component: "docs",
+						module: "ROOT",
+						family: "partial",
+						path: "nav.adoc",
+					}),
 					children: [{ type: "text", value: "nav" }],
 				}),
 			]),

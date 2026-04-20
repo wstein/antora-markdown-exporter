@@ -58,6 +58,23 @@ function normalizeInline(node: MarkdownInline): MarkdownInline {
 				title: node.title?.trim(),
 				children: normalizeInlineChildren(node.children),
 			};
+		case "xref":
+			return {
+				...node,
+				url: node.url.trim(),
+				title: node.title?.trim(),
+				target: {
+					...node.target,
+					raw: node.target.raw.trim(),
+					path: node.target.path.trim(),
+					component: node.target.component?.trim(),
+					version: node.target.version?.trim(),
+					module: node.target.module?.trim(),
+					family: node.target.family?.trim(),
+					fragment: node.target.fragment?.trim(),
+				},
+				children: normalizeInlineChildren(node.children),
+			};
 		case "image":
 			return {
 				...node,
@@ -135,6 +152,18 @@ function normalizeBlock(block: MarkdownBlock): MarkdownBlock {
 			return {
 				...block,
 				aliases: block.aliases.map((alias) => alias.trim()).filter(Boolean),
+			};
+		case "includeDirective":
+			return {
+				...block,
+				target: block.target.trim(),
+				resolvedPath: block.resolvedPath?.trim(),
+				attributes: Object.fromEntries(
+					Object.entries(block.attributes).map(([key, value]) => [
+						key.trim(),
+						value.trim(),
+					]),
+				),
 			};
 		case "blockquote":
 		case "admonition":

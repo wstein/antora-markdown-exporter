@@ -46,6 +46,39 @@ describe("renderGfm", () => {
 		);
 	});
 
+	it("renders xref nodes like links and omits include metadata blocks", () => {
+		const rendered = renderGfm({
+			type: "document",
+			children: [
+				{
+					type: "includeDirective",
+					target: "partial$shared.adoc",
+					attributes: { tag: "intro" },
+					resolvedPath: "/tmp/shared.adoc",
+				},
+				{
+					type: "paragraph",
+					children: [
+						{
+							type: "xref",
+							url: "docs/ROOT/install.adoc#cli",
+							target: {
+								raw: "docs:ROOT:install.adoc#cli",
+								component: "docs",
+								module: "ROOT",
+								path: "install.adoc",
+								fragment: "cli",
+							},
+							children: [{ type: "text", value: "cli" }],
+						},
+					],
+				},
+			],
+		});
+
+		expect(rendered).toBe("[cli](docs/ROOT/install.adoc#cli)\n");
+	});
+
 	it("renders unsupported blocks as visible fallback markers", () => {
 		const rendered = renderGfm({
 			type: "document",

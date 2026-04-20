@@ -53,6 +53,67 @@ describe("normalizeMarkdownIR", () => {
 		});
 	});
 
+	it("normalizes include directive and xref target metadata", () => {
+		const normalized = normalizeMarkdownIR({
+			type: "document",
+			children: [
+				{
+					type: "includeDirective",
+					target: " partial$shared.adoc ",
+					resolvedPath: " /tmp/shared.adoc ",
+					attributes: {
+						" tag ": " intro ",
+						" leveloffset ": " +1 ",
+					},
+				},
+				{
+					type: "paragraph",
+					children: [
+						{
+							type: "xref",
+							url: " docs/ROOT/install.adoc#cli ",
+							target: {
+								raw: " docs:ROOT:install.adoc#cli ",
+								component: " docs ",
+								module: " ROOT ",
+								path: " install.adoc ",
+								fragment: " cli ",
+							},
+							children: [{ type: "text", value: " Install " }],
+						},
+					],
+				},
+			],
+		});
+
+		expect(normalized.children[0]).toEqual({
+			type: "includeDirective",
+			target: "partial$shared.adoc",
+			resolvedPath: "/tmp/shared.adoc",
+			attributes: {
+				tag: "intro",
+				leveloffset: "+1",
+			},
+		});
+		expect(normalized.children[1]).toMatchObject({
+			type: "paragraph",
+			children: [
+				{
+					type: "xref",
+					url: "docs/ROOT/install.adoc#cli",
+					target: {
+						raw: "docs:ROOT:install.adoc#cli",
+						component: "docs",
+						module: "ROOT",
+						path: "install.adoc",
+						fragment: "cli",
+					},
+					children: [{ type: "text", value: "Install" }],
+				},
+			],
+		});
+	});
+
 	it("normalizes nested ordered list, quote, and link content recursively", () => {
 		const normalized = normalizeMarkdownIR({
 			type: "document",
