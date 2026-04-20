@@ -1,5 +1,6 @@
 {
   "name": "antora-markdown-exporter",
+  "license": "MIT",
   "module": "antora-markdown-exporter.ts",
   "type": "module",
   "devDependencies": {
