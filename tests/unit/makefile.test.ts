@@ -14,6 +14,7 @@ describe("Makefile package manager policy", () => {
 		expect(makefile).toContain("$(PM) run lint");
 		expect(makefile).toContain("$(PM) run format");
 		expect(makefile).toContain("$(PM) run fix");
+		expect(makefile).toContain("$(PM) run release");
 	});
 
 	it("does not keep detection logic or deprecated fallbacks", () => {

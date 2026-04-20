@@ -5,7 +5,7 @@
 PM ?= bun
 CLEAN_DIR ?= dist
 
-.PHONY: all install build test check lint format fix clean notes help
+.PHONY: all install build test check lint format fix release clean notes help
 all: build
 
 install: ## Install dependencies with the configured package manager.
@@ -29,6 +29,9 @@ format: ## Run the format script with the configured package manager.
 fix: ## Run the fix script with the configured package manager.
 	$(PM) run fix
 
+release: ## Run the release script with the configured package manager.
+	$(PM) run release
+
 clean: ## Remove generated output.
 	rm -rf node_modules dist "$(CLEAN_DIR)"
 
@@ -36,4 +39,4 @@ notes: ## Print the notes directory path.
 	@printf "Notes directory: notes\n"
 
 help: ## Show available targets.
-	@printf "Available targets:\n  install build test check lint format fix clean notes\n"
+	@printf "Available targets:\n  install build test check lint format fix release clean notes\n"

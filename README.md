@@ -33,6 +33,7 @@ make build
 make test
 make format
 make fix
+make release
 ```
 
 The Makefile uses an explicit package manager setting. It defaults to Bun and can be overridden when needed:
@@ -44,6 +45,8 @@ make PM=npm check
 ```
 
 Each target is a thin delegate to the matching package-manager script.
+
+`make release` delegates to `npm publish` through the configured package manager, so it should only be run when the package is ready to publish.
 
 ## Package
 

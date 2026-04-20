@@ -31,6 +31,7 @@
 		"fix": "biome check --write bin src tests package.json tsconfig.json tsconfig.build.json vitest.config.ts",
 		"format": "biome format --write bin src tests package.json tsconfig.json tsconfig.build.json vitest.config.ts",
 		"check": "biome check bin src tests package.json tsconfig.json tsconfig.build.json vitest.config.ts && vitest run --coverage",
+		"release": "npm publish",
 		"prepublishOnly": "npm run build && npm run check"
 	},
 	"publishConfig": {

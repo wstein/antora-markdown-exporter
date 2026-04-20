@@ -14,7 +14,7 @@ Build tooling uses one explicit package manager setting. The Makefile defaults t
 
 ## What
 
-The Makefile uses `PM ?= bun` and routes install, build, test, check, lint, format, and fix through that one setting. Each target is a thin delegate to the matching package-manager command. When a different package manager is needed, invoke Make with `PM=npm`.
+The Makefile uses `PM ?= bun` and routes install, build, test, check, lint, format, fix, and release through that one setting. Each target is a thin delegate to the matching package-manager command. When a different package manager is needed, invoke Make with `PM=npm`.
 
 ## Why
 
