@@ -86,6 +86,16 @@ export type MarkdownHeading = {
 	children: MarkdownInline[];
 };
 
+export type MarkdownAnchor = {
+	type: "anchor";
+	identifier: string;
+};
+
+export type MarkdownPageAliases = {
+	type: "pageAliases";
+	aliases: string[];
+};
+
 export type MarkdownThematicBreak = {
 	type: "thematicBreak";
 };
@@ -160,6 +170,8 @@ export type MarkdownFootnoteDefinition = {
 export type MarkdownBlock =
 	| MarkdownParagraph
 	| MarkdownHeading
+	| MarkdownAnchor
+	| MarkdownPageAliases
 	| MarkdownThematicBreak
 	| MarkdownCodeBlock
 	| MarkdownBlockQuote

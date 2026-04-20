@@ -126,6 +126,16 @@ function normalizeBlock(block: MarkdownBlock): MarkdownBlock {
 				...block,
 				children: normalizeInlineChildren(block.children),
 			};
+		case "anchor":
+			return {
+				...block,
+				identifier: block.identifier.trim(),
+			};
+		case "pageAliases":
+			return {
+				...block,
+				aliases: block.aliases.map((alias) => alias.trim()).filter(Boolean),
+			};
 		case "blockquote":
 		case "admonition":
 			return {

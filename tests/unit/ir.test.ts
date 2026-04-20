@@ -125,12 +125,12 @@ describe("Markdown IR boundary", () => {
 		expect(ir.children).toEqual(
 			expect.arrayContaining([
 				expect.objectContaining({
-					type: "htmlBlock",
-					value: "<!-- page-aliases: legacy-home, legacy-overview -->",
+					type: "pageAliases",
+					aliases: ["legacy-home", "legacy-overview"],
 				}),
 				expect.objectContaining({
-					type: "htmlBlock",
-					value: '<a id="overview"></a>',
+					type: "anchor",
+					identifier: "overview",
 				}),
 				expect.objectContaining({ type: "heading", depth: 1 }),
 				expect.objectContaining({

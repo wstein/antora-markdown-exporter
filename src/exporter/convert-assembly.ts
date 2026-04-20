@@ -765,8 +765,8 @@ function parseBlocks(lines: string[]): MarkdownBlock[] {
 		const anchorId = parseAnchor(line.trim());
 		if (anchorId !== undefined) {
 			children.push({
-				type: "htmlBlock",
-				value: `<a id="${anchorId}"></a>`,
+				type: "anchor",
+				identifier: anchorId,
 			});
 			index += 1;
 			continue;
@@ -775,8 +775,11 @@ function parseBlocks(lines: string[]): MarkdownBlock[] {
 		const pageAliasesMatch = line.trim().match(pageAliasesPattern);
 		if (pageAliasesMatch?.[1] !== undefined) {
 			children.push({
-				type: "htmlBlock",
-				value: `<!-- page-aliases: ${pageAliasesMatch[1].trim()} -->`,
+				type: "pageAliases",
+				aliases: pageAliasesMatch[1]
+					.split(",")
+					.map((alias) => alias.trim())
+					.filter(Boolean),
 			});
 			index += 1;
 			continue;

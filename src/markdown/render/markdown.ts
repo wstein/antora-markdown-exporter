@@ -89,6 +89,20 @@ function renderBlock(block: MarkdownBlock, flavor: MarkdownFlavorSpec): string {
 			return block.children
 				.map((child) => renderInline(child, flavor))
 				.join("");
+		case "anchor":
+			return flavor.supportsRawHtml
+				? `<a id="${block.identifier}"></a>`
+				: renderUnsupported(
+						"anchor blocks require raw HTML support in this flavor",
+						flavor,
+					);
+		case "pageAliases":
+			return flavor.supportsRawHtml
+				? `<!-- page-aliases: ${block.aliases.join(", ")} -->`
+				: renderUnsupported(
+						"page alias metadata requires raw HTML support in this flavor",
+						flavor,
+					);
 		case "thematicBreak":
 			return "---";
 		case "codeBlock":

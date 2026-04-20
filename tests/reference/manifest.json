@@ -181,7 +181,7 @@
 		"coverage": ["anchors", "page-aliases", "xrefs", "html-metadata"],
 		"rationale": "Exercises anchor preservation and page alias metadata so compatibility checks cover stable internal-link targets and migration metadata in one provenance-locked case.",
 		"expectations": {
-			"nodeTypes": ["htmlBlock", "heading", "paragraph"],
+			"nodeTypes": ["pageAliases", "anchor", "heading", "paragraph"],
 			"renderedContains": [
 				"<!-- page-aliases: old-home, old-overview -->",
 				"<a id=\"overview\"></a>",

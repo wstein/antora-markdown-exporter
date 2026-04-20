@@ -28,6 +28,31 @@ describe("normalizeMarkdownIR", () => {
 		});
 	});
 
+	it("normalizes anchor and page alias metadata", () => {
+		const normalized = normalizeMarkdownIR({
+			type: "document",
+			children: [
+				{
+					type: "pageAliases",
+					aliases: [" legacy-home ", "  legacy-overview  "],
+				},
+				{
+					type: "anchor",
+					identifier: " overview ",
+				},
+			],
+		});
+
+		expect(normalized.children[0]).toEqual({
+			type: "pageAliases",
+			aliases: ["legacy-home", "legacy-overview"],
+		});
+		expect(normalized.children[1]).toEqual({
+			type: "anchor",
+			identifier: "overview",
+		});
+	});
+
 	it("normalizes nested ordered list, quote, and link content recursively", () => {
 		const normalized = normalizeMarkdownIR({
 			type: "document",

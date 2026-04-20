@@ -21,6 +21,31 @@ describe("renderGfm", () => {
 		expect(rendered).toBe("# Sample document\n\nHello world.\n");
 	});
 
+	it("renders anchors and page aliases through dedicated semantic nodes", () => {
+		const rendered = renderGfm({
+			type: "document",
+			children: [
+				{
+					type: "pageAliases",
+					aliases: ["legacy-home", "legacy-overview"],
+				},
+				{
+					type: "anchor",
+					identifier: "overview",
+				},
+			],
+		});
+
+		expect(rendered).toBe(
+			[
+				"<!-- page-aliases: legacy-home, legacy-overview -->",
+				"",
+				'<a id="overview"></a>',
+				"",
+			].join("\n"),
+		);
+	});
+
 	it("renders unsupported blocks as visible fallback markers", () => {
 		const rendered = renderGfm({
 			type: "document",
