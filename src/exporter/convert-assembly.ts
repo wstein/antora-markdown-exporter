@@ -20,6 +20,7 @@ const listMarkerPattern = /^\s*([*.]+)\s+(.*)$/;
 const admonitionPattern = /^(NOTE|TIP|IMPORTANT|CAUTION|WARNING):\s+(.*)$/;
 const calloutPattern = /^<(\d+)>\s+(.*)$/;
 const includePattern = /^include::([^\[]+)\[[^\]]*\]$/;
+const pageAliasesPattern = /^:page-aliases:\s+(.+)$/;
 
 type ParsedListMarker = {
 	content: string;
@@ -135,7 +136,7 @@ function matchLink(value: string): LinkToken | undefined {
 		}
 	}
 
-	const xrefMatch = value.match(/^xref:([^\[]+)\[([^\]]+)\]/);
+	const xrefMatch = value.match(/^xref:([^\[]+)\[([^\]]*)\]/);
 	if (xrefMatch === null) {
 		return undefined;
 	}
@@ -145,11 +146,23 @@ function matchLink(value: string): LinkToken | undefined {
 		return undefined;
 	}
 
+	const normalizedLabel =
+		label.length > 0
+			? label
+			: url.startsWith("#")
+				? url.slice(1)
+				: (url.split("#")[1] ??
+					url
+						.split("/")
+						.at(-1)
+						?.replace(/\.adoc$/, "") ??
+					url);
+
 	return {
 		type: "link",
 		raw: xrefMatch[0],
 		url,
-		label,
+		label: normalizedLabel,
 	};
 }
 
@@ -495,6 +508,7 @@ function parseTableRow(line: string): MarkdownTableRow {
 function parseTable(
 	lines: string[],
 	startIndex: number,
+	align?: Array<"left" | "center" | "right" | null>,
 ): { block: MarkdownTable | MarkdownBlock; nextIndex: number } {
 	let index = startIndex + 1;
 	const rows: MarkdownTableRow[] = [];
@@ -531,10 +545,45 @@ function parseTable(
 		nextIndex: index + 1,
 		block: {
 			type: "table",
+			align,
 			header: rows[0] ?? { cells: [] },
 			rows: rows.slice(1),
 		},
 	};
+}
+
+function parseAnchor(line: string): string | undefined {
+	const bracketMatch = line.match(/^\[#([A-Za-z0-9:_-]+)\]$/);
+	if (bracketMatch?.[1] !== undefined) {
+		return bracketMatch[1];
+	}
+
+	const doubleBracketMatch = line.match(/^\[\[([A-Za-z0-9:_-]+)\]\]$/);
+	return doubleBracketMatch?.[1];
+}
+
+function parseTableAlignment(
+	line: string,
+): Array<"left" | "center" | "right" | null> | undefined {
+	const match = line.match(/^\[cols="?([^"\]]+)"?\]$/);
+	if (match?.[1] === undefined) {
+		return undefined;
+	}
+
+	return match[1].split(",").map((part) => {
+		const token = part.trim();
+		if (token.startsWith("<")) {
+			return "left";
+		}
+		if (token.startsWith("^")) {
+			return "center";
+		}
+		if (token.startsWith(">")) {
+			return "right";
+		}
+
+		return null;
+	});
 }
 
 function parseAdmonition(line: string): MarkdownAdmonition | undefined {
@@ -679,6 +728,9 @@ function expandIncludes(
 function isBlockBoundary(line: string): boolean {
 	return (
 		parseHeading(line) !== undefined ||
+		parseAnchor(line) !== undefined ||
+		line.match(pageAliasesPattern) !== null ||
+		parseTableAlignment(line) !== undefined ||
 		parseListMarker(line) !== undefined ||
 		line === "[quote]" ||
 		line.startsWith("[source") ||
@@ -710,9 +762,37 @@ function parseBlocks(lines: string[]): MarkdownBlock[] {
 			continue;
 		}
 
+		const anchorId = parseAnchor(line.trim());
+		if (anchorId !== undefined) {
+			children.push({
+				type: "htmlBlock",
+				value: `<a id="${anchorId}"></a>`,
+			});
+			index += 1;
+			continue;
+		}
+
+		const pageAliasesMatch = line.trim().match(pageAliasesPattern);
+		if (pageAliasesMatch?.[1] !== undefined) {
+			children.push({
+				type: "htmlBlock",
+				value: `<!-- page-aliases: ${pageAliasesMatch[1].trim()} -->`,
+			});
+			index += 1;
+			continue;
+		}
+
 		if (line.trim() === "'''") {
 			children.push({ type: "thematicBreak" });
 			index += 1;
+			continue;
+		}
+
+		const tableAlignment = parseTableAlignment(line.trim());
+		if (tableAlignment !== undefined && lines[index + 1]?.trim() === "|===") {
+			const { block, nextIndex } = parseTable(lines, index + 1, tableAlignment);
+			children.push(block);
+			index = nextIndex;
 			continue;
 		}
 

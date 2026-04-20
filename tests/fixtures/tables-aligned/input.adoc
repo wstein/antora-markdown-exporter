@@ -1,0 +1,7 @@
+== Aligned metrics
+
+[cols="<,^,>"]
+|===
+| Name | Status | Value
+| *Alpha* | _Ready_ | `42`
+|===

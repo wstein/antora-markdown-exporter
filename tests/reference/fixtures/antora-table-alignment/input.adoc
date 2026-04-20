@@ -1,0 +1,7 @@
+== Release matrix
+
+[cols="<,^,>"]
+|===
+| Name | State | Score
+| *Alpha* | _Ready_ | `42`
+|===

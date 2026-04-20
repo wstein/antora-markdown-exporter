@@ -169,5 +169,66 @@
 			],
 			"renderedExcludes": ["Unsupported:"]
 		}
+	},
+	{
+		"id": "antora-anchors-aliases",
+		"sourceProject": "antora/docs.antora.org",
+		"sourceUrl": "https://gitlab.com/antora/docs.antora.org",
+		"sourcePath": "modules/ROOT/pages/page-aliases.adoc",
+		"sourceCapturedAt": "2026-04-21",
+		"localPath": "tests/reference/fixtures/antora-anchors-aliases/input.adoc",
+		"sha256": "fa1506c22770c5c422cb776c8a6e45222b46af1b7e5290da62c04afed8bda216",
+		"coverage": ["anchors", "page-aliases", "xrefs", "html-metadata"],
+		"rationale": "Exercises anchor preservation and page alias metadata so compatibility checks cover stable internal-link targets and migration metadata in one provenance-locked case.",
+		"expectations": {
+			"nodeTypes": ["htmlBlock", "heading", "paragraph"],
+			"renderedContains": [
+				"<!-- page-aliases: old-home, old-overview -->",
+				"<a id=\"overview\"></a>",
+				"[overview](#overview)",
+				"[install](install.adoc)"
+			],
+			"renderedExcludes": ["Unsupported:"]
+		}
+	},
+	{
+		"id": "antora-include-relative",
+		"sourceProject": "antora/docs.antora.org",
+		"sourceUrl": "https://gitlab.com/antora/docs.antora.org",
+		"sourcePath": "modules/ROOT/pages/include-examples.adoc",
+		"sourceCapturedAt": "2026-04-21",
+		"localPath": "tests/reference/fixtures/antora-include-relative/input.adoc",
+		"sha256": "ac96cefddb8835c9883edc810af1e52cc83d9ebb72cbd9dccb4ee0989d56b535",
+		"coverage": ["includes", "relative-includes", "xrefs"],
+		"rationale": "Exercises relative include chains so compatibility checks cover inlining outside the Antora partial$ shortcut and keep nested xrefs intact after expansion.",
+		"expectations": {
+			"nodeTypes": ["heading", "paragraph"],
+			"renderedContains": [
+				"Intro guidance.",
+				"[install](install.adoc)",
+				"[details](#details)"
+			],
+			"renderedExcludes": ["Unsupported:"]
+		}
+	},
+	{
+		"id": "antora-table-alignment",
+		"sourceProject": "antora/docs.antora.org",
+		"sourceUrl": "https://gitlab.com/antora/docs.antora.org",
+		"sourcePath": "modules/ROOT/pages/tables.adoc",
+		"sourceCapturedAt": "2026-04-21",
+		"localPath": "tests/reference/fixtures/antora-table-alignment/input.adoc",
+		"sha256": "a824655fa19df9be5a3c886fd43628e9d9083eebcf728ad303de0d05afece5b2",
+		"coverage": ["tables", "alignment", "inline-formatting"],
+		"rationale": "Exercises column alignment and inline formatting inside table cells so compatibility checks cover a realistic markdown-table emission path instead of only plain text cells.",
+		"expectations": {
+			"nodeTypes": ["heading", "table"],
+			"renderedContains": [
+				"| Name | State | Score |",
+				"| :--- | :---: | ---: |",
+				"| **Alpha** | *Ready* | `42` |"
+			],
+			"renderedExcludes": ["Unsupported:"]
+		}
 	}
 ]

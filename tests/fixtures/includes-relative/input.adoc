@@ -1,0 +1,3 @@
+== Relative includes
+
+include::partials/intro.adoc[]

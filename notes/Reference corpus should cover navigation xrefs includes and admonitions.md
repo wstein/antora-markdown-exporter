@@ -4,7 +4,7 @@ aliases: ["Reference corpus coverage model", "Antora feature coverage", "Compati
 tags: ["testing", "coverage", "antora", "fixtures"]
 target: v0.1
 ---
-The reference corpus should be selected to cover navigation structure, xrefs, includes, admonitions, tables, images, and unsupported constructs because those features create most of the exporter’s real-world compatibility pressure. Coverage quality matters more than corpus size.
+The reference corpus should be selected to cover navigation structure, xrefs, includes, anchors, page aliases, admonitions, tables, images, and unsupported constructs because those features create most of the exporter’s real-world compatibility pressure. Coverage quality matters more than corpus size.
 
 ## What
 
@@ -12,6 +12,7 @@ Reference cases should deliberately represent the highest-value Antora authoring
 - navigation-driven section ordering
 - mixed ordered and unordered list hierarchies
 - intra-page and inter-page xrefs
+- anchors and page-alias metadata
 - include-heavy pages, including recursive partial chains
 - admonitions and block variants
 - code listings and callout-adjacent structures

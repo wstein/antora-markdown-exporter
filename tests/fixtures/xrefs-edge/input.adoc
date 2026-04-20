@@ -1,0 +1,3 @@
+== Cross references
+
+See xref:install.adoc[] and xref:guide/setup.adoc#details[].

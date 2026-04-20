@@ -1,0 +1,6 @@
+:page-aliases: old-home, old-overview
+
+[[overview]]
+== Overview
+
+See xref:#overview[] and xref:install.adoc[].

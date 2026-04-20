@@ -104,4 +104,55 @@ describe("Markdown IR boundary", () => {
 			]),
 		);
 	});
+
+	it("maps anchors, page aliases, aligned tables, and implicit xref labels", () => {
+		const assembled = [
+			":page-aliases: legacy-home, legacy-overview",
+			"",
+			"[[overview]]",
+			"== Overview",
+			"",
+			"See xref:#overview[] and xref:guide/setup.adoc#details[].",
+			"",
+			'[cols="<,^,>"]',
+			"|===",
+			"| Name | Status | Value",
+			"| *Alpha* | _Ready_ | `42`",
+			"|===",
+		].join("\n");
+		const ir = convertAssemblyToMarkdownIR(assembled);
+
+		expect(ir.children).toEqual(
+			expect.arrayContaining([
+				expect.objectContaining({
+					type: "htmlBlock",
+					value: "<!-- page-aliases: legacy-home, legacy-overview -->",
+				}),
+				expect.objectContaining({
+					type: "htmlBlock",
+					value: '<a id="overview"></a>',
+				}),
+				expect.objectContaining({ type: "heading", depth: 1 }),
+				expect.objectContaining({
+					type: "table",
+					align: ["left", "center", "right"],
+				}),
+			]),
+		);
+		expect(ir.children[3]).toMatchObject({
+			type: "paragraph",
+			children: expect.arrayContaining([
+				expect.objectContaining({
+					type: "link",
+					url: "#overview",
+					children: [{ type: "text", value: "overview" }],
+				}),
+				expect.objectContaining({
+					type: "link",
+					url: "guide/setup.adoc#details",
+					children: [{ type: "text", value: "details" }],
+				}),
+			]),
+		});
+	});
 });

@@ -1,0 +1,6 @@
+:page-aliases: legacy-index, legacy-overview
+
+[#overview]
+== Overview
+
+See xref:#overview[] and xref:install.adoc[].
