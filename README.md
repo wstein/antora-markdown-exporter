@@ -27,7 +27,7 @@ console.log(renderGfm(normalized));
 console.log(renderMarkdown(normalized, "commonmark"));
 ```
 
-Current scaffold coverage includes headings, paragraphs, inline links, xrefs, images, ordered and unordered lists, nested lists, thematic breaks, tables, raw HTML nodes, footnote placeholders, fenced code blocks with callout metadata, block quotes, admonition-to-blockquote conversion, and explicit unsupported markers for deferred include handling.
+Current scaffold coverage includes headings, paragraphs, inline links, xrefs, images, ordered and unordered lists, nested lists, thematic breaks, tables, raw HTML nodes, footnote placeholders, fenced code blocks with callout metadata, block quotes, admonition-to-blockquote conversion, and recursive include inlining when source-path context is available.
 
 ### Extension scaffold
 
@@ -67,7 +67,7 @@ make PM=npm install
 
 Each target is a thin delegate to the matching package-manager script.
 
-`make integration` runs the broader integration suite. `make reference` runs only the provenance-locked compatibility cases, including xrefs, includes, images, tables, admonitions, mixed block sequences, and visible unsupported fallbacks.
+`make integration` runs the broader integration suite. `make reference` runs only the provenance-locked compatibility cases, including recursive include inlining, xrefs, images, tables, admonitions, mixed block sequences, and visible unsupported fallbacks where support is still intentionally deferred.
 
 ## Release
 

@@ -22,7 +22,9 @@ describe("fixture golden tests", () => {
 				.filter((file) => file.startsWith("expected.") && file.endsWith(".md"))
 				.sort();
 
-			const ir = convertAssemblyToMarkdownIR(input);
+			const ir = convertAssemblyToMarkdownIR(input, {
+				sourcePath: resolve(fixtureDir, "input.adoc"),
+			});
 			const normalized = normalizeMarkdownIR(ir);
 
 			for (const expectedFile of expectedFiles) {

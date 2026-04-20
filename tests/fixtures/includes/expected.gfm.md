@@ -1,3 +1,5 @@
 # Includes
 
-> Unsupported: include directive is not yet inlined: include::partial$shared.adoc[]
+Included paragraph.
+
+Nested included note.

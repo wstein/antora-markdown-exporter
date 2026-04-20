@@ -52,7 +52,16 @@ describe("Markdown IR boundary", () => {
 			"",
 			"include::partial$shared.adoc[]",
 		].join("\n");
-		const ir = convertAssemblyToMarkdownIR(assembled);
+		const ir = convertAssemblyToMarkdownIR(assembled, {
+			sourcePath: "/virtual/project/input.adoc",
+			includeResolver: (includeTarget) => {
+				if (includeTarget === "partial$shared.adoc") {
+					return "Included paragraph.";
+				}
+
+				return undefined;
+			},
+		});
 
 		expect(ir.children).toEqual(
 			expect.arrayContaining([
@@ -64,7 +73,6 @@ describe("Markdown IR boundary", () => {
 				expect.objectContaining({ type: "codeBlock", language: "ts" }),
 				expect.objectContaining({ type: "blockquote" }),
 				expect.objectContaining({ type: "table" }),
-				expect.objectContaining({ type: "unsupported" }),
 			]),
 		);
 		expect(ir.children[1]).toMatchObject({
@@ -79,6 +87,10 @@ describe("Markdown IR boundary", () => {
 				expect.objectContaining({
 					type: "codeBlock",
 					callouts: [1],
+				}),
+				expect.objectContaining({
+					type: "paragraph",
+					children: [{ type: "text", value: "Included paragraph." }],
 				}),
 			]),
 		);

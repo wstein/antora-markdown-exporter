@@ -1,3 +1,5 @@
+import { existsSync, readFileSync } from "node:fs";
+import { dirname, resolve } from "node:path";
 import type {
 	MarkdownBlock,
 	MarkdownBlockQuote,
@@ -15,11 +17,21 @@ import type {
 const listMarkerPattern = /^\s*([*.]+)\s+(.*)$/;
 const admonitionPattern = /^(NOTE|TIP|IMPORTANT|CAUTION|WARNING):\s+(.*)$/;
 const calloutPattern = /^<(\d+)>\s+(.*)$/;
+const includePattern = /^include::([^\[]+)\[[^\]]*\]$/;
 
 type ParsedListMarker = {
 	content: string;
 	depth: number;
 	ordered: boolean;
+};
+
+export type ConvertAssemblyToMarkdownIROptions = {
+	includeRootDir?: string;
+	includeResolver?: (
+		includeTarget: string,
+		context: { includeRootDir: string; sourcePath: string },
+	) => string | undefined;
+	sourcePath?: string;
 };
 
 type ImageToken = {
@@ -574,6 +586,103 @@ function parseStandaloneImage(line: string): MarkdownParagraph | undefined {
 	};
 }
 
+function resolveIncludePath(
+	sourcePath: string,
+	includeTarget: string,
+	includeRootDir = dirname(sourcePath),
+): string {
+	if (includeTarget.startsWith("partial$")) {
+		return resolve(
+			includeRootDir,
+			"partials",
+			includeTarget.slice("partial$".length),
+		);
+	}
+
+	return resolve(dirname(sourcePath), includeTarget);
+}
+
+function defaultIncludeResolver(
+	includeTarget: string,
+	context: { includeRootDir: string; sourcePath: string },
+): string | undefined {
+	const resolvedPath = resolveIncludePath(
+		context.sourcePath,
+		includeTarget,
+		context.includeRootDir,
+	);
+	if (!existsSync(resolvedPath)) {
+		return undefined;
+	}
+
+	return readFileSync(resolvedPath, "utf8");
+}
+
+function expandIncludes(
+	assembledAsciiDoc: string,
+	options: ConvertAssemblyToMarkdownIROptions,
+	visited = new Set<string>(),
+): string {
+	if (options.sourcePath === undefined) {
+		return assembledAsciiDoc;
+	}
+
+	const includeRootDir = options.includeRootDir ?? dirname(options.sourcePath);
+	const includeResolver = options.includeResolver ?? defaultIncludeResolver;
+	const lines = assembledAsciiDoc.split(/\r?\n/);
+	const expandedLines: string[] = [];
+
+	for (const line of lines) {
+		const match = line.trim().match(includePattern);
+		if (match === null) {
+			expandedLines.push(line);
+			continue;
+		}
+
+		const includeTarget = match[1];
+		if (includeTarget === undefined) {
+			expandedLines.push(line);
+			continue;
+		}
+
+		const resolvedPath = resolveIncludePath(
+			options.sourcePath,
+			includeTarget,
+			includeRootDir,
+		);
+		if (visited.has(resolvedPath)) {
+			expandedLines.push(
+				`// include cycle prevented for ${includeTarget} from ${options.sourcePath}`,
+			);
+			continue;
+		}
+
+		const includeContent = includeResolver(includeTarget, {
+			includeRootDir,
+			sourcePath: options.sourcePath,
+		});
+		if (includeContent === undefined) {
+			expandedLines.push(line);
+			continue;
+		}
+
+		const nestedVisited = new Set(visited);
+		nestedVisited.add(resolvedPath);
+		const expandedInclude = expandIncludes(
+			includeContent,
+			{
+				...options,
+				includeRootDir,
+				sourcePath: resolvedPath,
+			},
+			nestedVisited,
+		);
+		expandedLines.push(expandedInclude);
+	}
+
+	return expandedLines.join("\n");
+}
+
 function isBlockBoundary(line: string): boolean {
 	return (
 		parseHeading(line) !== undefined ||
@@ -768,8 +877,10 @@ function parseBlocks(lines: string[]): MarkdownBlock[] {
 
 export function convertAssemblyToMarkdownIR(
 	assembledAsciiDoc: string,
+	options: ConvertAssemblyToMarkdownIROptions = {},
 ): MarkdownDocument {
-	const lines = assembledAsciiDoc.split(/\r?\n/);
+	const expandedAsciiDoc = expandIncludes(assembledAsciiDoc, options);
+	const lines = expandedAsciiDoc.split(/\r?\n/);
 
 	return {
 		type: "document",

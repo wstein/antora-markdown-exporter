@@ -33,7 +33,9 @@ describe("reference Antora compatibility tests", () => {
 		it(`preserves semantic invariants for ${entry.id}`, async () => {
 			const input = await readFile(resolve(root, entry.localPath), "utf8");
 			const digest = createHash("sha256").update(input).digest("hex");
-			const ir = convertAssemblyToMarkdownIR(input);
+			const ir = convertAssemblyToMarkdownIR(input, {
+				sourcePath: resolve(root, entry.localPath),
+			});
 			const normalized = normalizeMarkdownIR(ir);
 			const rendered = renderGfm(normalized);
 

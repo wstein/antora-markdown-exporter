@@ -121,12 +121,14 @@
 		"localPath": "tests/reference/fixtures/antora-include-directive/input.adoc",
 		"sha256": "b36010d9ef8093fbacf8102b24d58ecd2026ff4627e72892afe8e7012d3220a8",
 		"coverage": ["includes", "fallbacks", "unsupported"],
-		"rationale": "Exercises include directives so compatibility checks keep deferred include handling explicit until real inlining support lands.",
+		"rationale": "Exercises recursive include directives so compatibility checks prove partials are inlined in document order instead of being surfaced as placeholder unsupported markers.",
 		"expectations": {
-			"nodeTypes": ["heading", "unsupported"],
+			"nodeTypes": ["heading", "paragraph"],
 			"renderedContains": [
-				"Unsupported: include directive is not yet inlined: include::partial$shared-nav.adoc[]"
-			]
+				"Included navigation guidance.",
+				"Review page aliases before publishing."
+			],
+			"renderedExcludes": ["Unsupported:"]
 		}
 	},
 	{
