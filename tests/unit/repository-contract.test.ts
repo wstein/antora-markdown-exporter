@@ -42,5 +42,8 @@ describe("repository contract", () => {
 		);
 		expect(packageJson.scripts.unit).toContain("tests/unit");
 		expect(packageJson.scripts.integration).toContain("tests/integration");
+		expect(packageJson.scripts.reference).toContain(
+			"tests/integration/reference-antora.test.ts",
+		);
 	});
 });

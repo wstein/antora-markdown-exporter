@@ -12,6 +12,7 @@ The repository must keep these layers aligned:
 - `package.json` scripts and publish metadata
 - CI workflow commands
 - README developer commands
+- Makefile delegate targets
 - test assumptions about repository files
 - actual tracked files in the tree
 

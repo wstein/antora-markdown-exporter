@@ -28,6 +28,8 @@ This keeps the reference suite informative without turning every upstream author
 
 Implement semantic assertions in `tests/integration/reference-antora.test.ts` and keep byte-exact assertions in local fixture golden tests.
 
+Expose the reference suite through a dedicated script and Make target so compatibility checks can run independently from broader integration coverage.
+
 Where exact comparisons are still useful, compare reduced normalized forms rather than raw output unless the case is intentionally frozen.
 
 Do not let reference tests silently accept content loss. They must still fail on missing sections, broken links, or unmarked unsupported drops.
