@@ -1,14 +1,8 @@
 ---
 id: 20260420193500
-aliases:
-  - Antora reference corpus
-  - Official docs compatibility corpus
-  - Reference testing corpus
-tags:
-  - testing
-  - antora
-  - fixtures
-  - compatibility
+aliases: ["Antora reference corpus", "Official docs compatibility corpus", "Reference testing corpus"]
+tags: ["testing", "antora", "fixtures", "compatibility"]
+target: current
 ---
 Reference testing uses the official Antora documentation project as a compatibility corpus because it exercises real navigation structure, xrefs, includes, admonitions, and authoring conventions that synthetic fixtures do not fully capture. The project should treat this corpus as a living external reference rather than a source of exact-output truth.
 

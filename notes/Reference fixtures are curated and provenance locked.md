@@ -1,14 +1,8 @@
 ---
 id: 20260420193600
-aliases:
-  - Reference fixture provenance
-  - Curated reference fixtures
-  - Provenance locked fixtures
-tags:
-  - testing
-  - fixtures
-  - provenance
-  - governance
+aliases: ["Reference fixture provenance", "Curated reference fixtures", "Provenance locked fixtures"]
+tags: ["testing", "fixtures", "provenance", "governance"]
+target: current
 ---
 Reference fixtures are curated and provenance locked so the repository can benefit from real external document shapes without turning tests into an uncontrolled moving target. Every imported reference case must record where it came from and why it was selected.
 

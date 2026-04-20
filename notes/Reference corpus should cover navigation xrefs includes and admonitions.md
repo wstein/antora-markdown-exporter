@@ -1,14 +1,8 @@
 ---
 id: 20260420193800
-aliases:
-  - Reference corpus coverage model
-  - Antora feature coverage
-  - Compatibility coverage targets
-tags:
-  - testing
-  - coverage
-  - antora
-  - fixtures
+aliases: ["Reference corpus coverage model", "Antora feature coverage", "Compatibility coverage targets"]
+tags: ["testing", "coverage", "antora", "fixtures"]
+target: current
 ---
 The reference corpus should be selected to cover navigation structure, xrefs, includes, admonitions, tables, images, and unsupported constructs because those features create most of the exporter’s real-world compatibility pressure. Coverage quality matters more than corpus size.
 

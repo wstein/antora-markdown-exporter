@@ -1,14 +1,8 @@
 ---
 id: 20260420193900
-aliases:
-  - explicit package manager policy
-  - Makefile package manager setting
-  - Build tooling policy
-tags:
-  - tooling
-  - build
-  - package-manager
-  - notes
+aliases: ["explicit package manager policy", "Makefile package manager setting", "Build tooling policy"]
+tags: ["tooling", "build", "package-manager", "notes"]
+target: current
 ---
 Build tooling uses one explicit package manager setting. The Makefile defaults to Bun, and developers can override it with npm when needed. This keeps the repository focused without carrying lockfile-detection branches or extra compatibility paths.
 
