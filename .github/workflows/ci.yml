@@ -19,3 +19,4 @@ jobs:
       - run: bun run build
       - run: bun run unit
       - run: bun run check
+      - run: bun run release:check

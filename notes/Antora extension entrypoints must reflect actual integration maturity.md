@@ -22,7 +22,7 @@ Clear maturity signaling supports honest incremental delivery.
 
 ## How
 
-Either rename the current helper to something explicitly provisional, or replace it with a real Antora extension registration implementation as the next vertical slice.
+Name the current helper as an explicit scaffold until the real Antora registration contract lands, or replace it with a real Antora extension registration implementation as the next vertical slice.
 
 Document the current maturity level in README and notes until the real integration lands.
 
@@ -32,4 +32,4 @@ Do not let public package examples suggest full Antora behavior before the imple
 
 - [[Exporter pipeline uses Assembler and a direct TypeScript converter]] - The real integration boundary described by the architecture.
 - README.md - Public-facing usage examples must match real maturity.
-- src/extension/index.ts - Current extension entrypoint.
+- src/extension/index.ts - Current scaffolded extension entrypoint.

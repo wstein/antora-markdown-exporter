@@ -1,6 +1,7 @@
-export { registerAntoraExtension } from "./extension/index.js";
+export { createAntoraExtensionScaffold } from "./extension/index.js";
 export { convertAssemblyToMarkdownIR } from "./exporter/convert-assembly.js";
 export type { MarkdownDocument } from "./markdown/ir.js";
+export { normalizeMarkdownIR } from "./markdown/normalize.js";
 export { renderGfm } from "./markdown/render/index.js";
 
 export const PACKAGE_NAME = "@wsmy/antora-markdown-exporter";

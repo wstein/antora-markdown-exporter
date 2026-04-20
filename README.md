@@ -13,10 +13,25 @@ npm install @wsmy/antora-markdown-exporter
 ### Library
 
 ```ts
-import { registerAntoraExtension } from "@wsmy/antora-markdown-exporter";
+import {
+  convertAssemblyToMarkdownIR,
+  normalizeMarkdownIR,
+  renderGfm,
+} from "@wsmy/antora-markdown-exporter";
 
-const extension = registerAntoraExtension();
-console.log(extension.name);
+const ir = convertAssemblyToMarkdownIR("== Sample document\n\nHello world.");
+const normalized = normalizeMarkdownIR(ir);
+
+console.log(renderGfm(normalized));
+```
+
+### Extension scaffold
+
+```ts
+import { createAntoraExtensionScaffold } from "@wsmy/antora-markdown-exporter";
+
+const extension = createAntoraExtensionScaffold();
+console.log(extension.kind);
 ```
 
 ### CLI
@@ -56,4 +71,4 @@ make release
 
 ## Package
 
-This repository is shaped as a library-first package with a small CLI entrypoint. The published package exposes the core module API and a scaffolded Antora extension helper under `./extension`.
+This repository is shaped as a library-first package with a small CLI entrypoint. The published package exposes the core markdown pipeline API and a scaffolded Antora extension helper under `./extension`.
