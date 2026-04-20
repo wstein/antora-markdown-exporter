@@ -120,4 +120,93 @@ describe("renderGfm", () => {
 			].join("\n"),
 		);
 	});
+
+	it("renders extended markdown nodes with stable GFM-compatible output", () => {
+		const rendered = renderGfm({
+			type: "document",
+			children: [
+				{
+					type: "paragraph",
+					children: [
+						{
+							type: "strong",
+							children: [{ type: "text", value: "Strong" }],
+						},
+						{ type: "text", value: " emphasis" },
+						{ type: "softBreak" },
+						{
+							type: "image",
+							url: "https://example.com/diagram.png",
+							title: 'Diagram "A"',
+							alt: [{ type: "text", value: "Diagram" }],
+						},
+						{ type: "hardBreak" },
+						{
+							type: "footnoteReference",
+							identifier: "note-1",
+						},
+						{ type: "text", value: " " },
+						{
+							type: "citation",
+							identifier: "cite-key",
+						},
+					],
+				},
+				{
+					type: "thematicBreak",
+				},
+				{
+					type: "table",
+					align: ["left", "right"],
+					header: {
+						cells: [
+							{ children: [{ type: "text", value: "Name" }] },
+							{ children: [{ type: "text", value: "Value" }] },
+						],
+					},
+					rows: [
+						{
+							cells: [
+								{ children: [{ type: "text", value: "Alpha" }] },
+								{ children: [{ type: "text", value: "42" }] },
+							],
+						},
+					],
+				},
+				{
+					type: "htmlBlock",
+					value: "<div>raw</div>",
+				},
+				{
+					type: "footnoteDefinition",
+					identifier: "note-1",
+					children: [
+						{
+							type: "paragraph",
+							children: [{ type: "text", value: "Footnote body." }],
+						},
+					],
+				},
+			],
+		});
+
+		expect(rendered).toBe(
+			[
+				"**Strong** emphasis",
+				'![Diagram](https://example.com/diagram.png "Diagram \\"A\\"")\\',
+				"[^note-1] [@cite-key]",
+				"",
+				"---",
+				"",
+				"| Name | Value |",
+				"| :--- | ---: |",
+				"| Alpha | 42 |",
+				"",
+				"<div>raw</div>",
+				"",
+				"[^note-1]: Footnote body.",
+				"",
+			].join("\n"),
+		);
+	});
 });

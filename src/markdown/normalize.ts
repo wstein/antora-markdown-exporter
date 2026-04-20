@@ -3,7 +3,13 @@ import type {
 	MarkdownDocument,
 	MarkdownInline,
 	MarkdownListItem,
+	MarkdownTableCell,
+	MarkdownTableRow,
 } from "./ir.js";
+
+function normalizeTextValue(value: string): string {
+	return value.replace(/\s+/g, " ");
+}
 
 function normalizeInlineChildren(children: MarkdownInline[]): MarkdownInline[] {
 	const normalized = children.map(normalizeInline);
@@ -36,9 +42,10 @@ function normalizeInline(node: MarkdownInline): MarkdownInline {
 		case "text":
 			return {
 				...node,
-				value: node.value.replace(/\s+/g, " "),
+				value: normalizeTextValue(node.value),
 			};
 		case "emphasis":
+		case "strong":
 			return {
 				...node,
 				children: normalizeInlineChildren(node.children),
@@ -46,10 +53,37 @@ function normalizeInline(node: MarkdownInline): MarkdownInline {
 		case "link":
 			return {
 				...node,
+				url: node.url.trim(),
+				title: node.title?.trim(),
 				children: normalizeInlineChildren(node.children),
 			};
-		case "code":
+		case "image":
+			return {
+				...node,
+				url: node.url.trim(),
+				title: node.title?.trim(),
+				alt: normalizeInlineChildren(node.alt),
+			};
+		case "htmlInline":
+			return {
+				...node,
+				value: node.value.trim(),
+			};
+		case "footnoteReference":
+		case "citation":
+			return {
+				...node,
+				identifier: node.identifier.trim(),
+				label: node.label?.trim(),
+			};
+		case "hardBreak":
+		case "softBreak":
 			return node;
+		case "code":
+			return {
+				...node,
+				value: node.value.replace(/\s+$/, ""),
+			};
 	}
 }
 
@@ -57,6 +91,20 @@ function normalizeListItem(item: MarkdownListItem): MarkdownListItem {
 	return {
 		...item,
 		children: item.children.map(normalizeBlock),
+	};
+}
+
+function normalizeTableCell(cell: MarkdownTableCell): MarkdownTableCell {
+	return {
+		...cell,
+		children: normalizeInlineChildren(cell.children),
+	};
+}
+
+function normalizeTableRow(row: MarkdownTableRow): MarkdownTableRow {
+	return {
+		...row,
+		cells: row.cells.map(normalizeTableCell),
 	};
 }
 
@@ -78,11 +126,31 @@ function normalizeBlock(block: MarkdownBlock): MarkdownBlock {
 				...block,
 				items: block.items.map(normalizeListItem),
 			};
+		case "table":
+			return {
+				...block,
+				header: normalizeTableRow(block.header),
+				rows: block.rows.map(normalizeTableRow),
+			};
 		case "codeBlock":
 			return {
 				...block,
+				language: block.language?.trim(),
+				meta: block.meta?.trim(),
 				value: block.value.replace(/\s+$/, ""),
 			};
+		case "htmlBlock":
+			return {
+				...block,
+				value: block.value.trim(),
+			};
+		case "footnoteDefinition":
+			return {
+				...block,
+				identifier: block.identifier.trim(),
+				children: block.children.map(normalizeBlock),
+			};
+		case "thematicBreak":
 		case "unsupported":
 			return block;
 	}
