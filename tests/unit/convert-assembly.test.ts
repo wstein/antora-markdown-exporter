@@ -359,4 +359,67 @@ describe("convertAssemblyToMarkdownIR", () => {
 			},
 		]);
 	});
+
+	it("covers xref parsing, inline fallback, and table or alignment guard branches", () => {
+		const document = convertAssemblyToMarkdownIR(
+			[
+				"link:xref:#[]",
+				"xref:#anchor[]",
+				"Standalone `code` with *strong* and _emphasis_ plus `",
+				'[cols="1,>2"]',
+				"|===",
+				"|===",
+				'[cols="1,^2"]',
+				"|===",
+				"| Header | Value",
+				"|===",
+				"NOTE:",
+			].join("\n"),
+		);
+
+		expect(document.children).toEqual([
+			{
+				type: "paragraph",
+				children: [
+					{ type: "text", value: "link:xref:#[] " },
+					{
+						type: "xref",
+						url: "#anchor",
+						target: {
+							raw: "#anchor",
+							path: "",
+							fragment: "anchor",
+						},
+						children: [{ type: "text", value: "anchor" }],
+					},
+					{ type: "text", value: " Standalone " },
+					{ type: "code", value: "code" },
+					{ type: "text", value: " with " },
+					{ type: "strong", children: [{ type: "text", value: "strong" }] },
+					{ type: "text", value: " and " },
+					{ type: "emphasis", children: [{ type: "text", value: "emphasis" }] },
+					{ type: "text", value: " plus `" },
+				],
+			},
+			{
+				type: "unsupported",
+				reason: "table requires at least one header row",
+			},
+			{
+				type: "table",
+				align: [null, "center"],
+				header: {
+					cells: [
+						{ children: [{ type: "text", value: "Header" }] },
+						{ children: [{ type: "text", value: "Value" }] },
+					],
+				},
+				rows: [],
+			},
+			{
+				type: "paragraph",
+				children: [{ type: "text", value: "NOTE:" }],
+			},
+		]);
+	});
 });
