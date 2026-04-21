@@ -85,6 +85,9 @@ describe("repository contract", () => {
 
 	it("keeps CI and release workflows aligned with the develop/tag operating model", () => {
 		expect(ciWorkflow).toContain("branches: [develop]");
+		expect(ciWorkflow).toContain("ruby/setup-ruby@v1");
+		expect(ciWorkflow).toContain("gem install asciidoctor-pdf --no-document");
+		expect(ciWorkflow).toContain("apt-get install -y poppler-utils");
 		expect(releaseWorkflow).toContain("tags:");
 		expect(releaseWorkflow).toContain('- "v*"');
 		expect(releaseWorkflow).toContain("origin/develop$");
