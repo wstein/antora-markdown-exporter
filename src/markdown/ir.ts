@@ -25,9 +25,22 @@ export type MarkdownLink = {
 	children: MarkdownInline[];
 };
 
+export type MarkdownXrefFamilyKind =
+	| "attachment"
+	| "example"
+	| "image"
+	| "other"
+	| "page"
+	| "partial";
+
+export type MarkdownXrefFamily = {
+	kind: MarkdownXrefFamilyKind;
+	name: string;
+};
+
 export type MarkdownXrefTarget = {
 	component?: string;
-	family?: string;
+	family?: MarkdownXrefFamily;
 	fragment?: string;
 	module?: string;
 	path: string;
@@ -118,11 +131,25 @@ export type MarkdownPageAliases = {
 export type MarkdownIncludeLineRange = {
 	end?: number;
 	start?: number;
+	step?: number;
 };
 
 export type MarkdownIncludeTagSelection = {
 	precedence: "document-order";
 	tags: string[];
+};
+
+export type MarkdownIncludeDiagnosticCode =
+	| "empty-tag-selection"
+	| "invalid-indent"
+	| "invalid-leveloffset"
+	| "invalid-line-range"
+	| "invalid-line-step";
+
+export type MarkdownIncludeDiagnostic = {
+	code: MarkdownIncludeDiagnosticCode;
+	message: string;
+	source?: string;
 };
 
 export type MarkdownIncludeSemantics = {
@@ -133,7 +160,9 @@ export type MarkdownIncludeSemantics = {
 };
 
 export type MarkdownIncludeProvenance = {
+	depth: number;
 	includeRootDir: string;
+	inclusionStack: string[];
 	includingSourcePath: string;
 	resolvedPath?: string;
 };
@@ -141,6 +170,7 @@ export type MarkdownIncludeProvenance = {
 export type MarkdownIncludeDirective = {
 	type: "includeDirective";
 	attributes: Record<string, string>;
+	diagnostics?: MarkdownIncludeDiagnostic[];
 	provenance?: MarkdownIncludeProvenance;
 	semantics?: MarkdownIncludeSemantics;
 	target: string;

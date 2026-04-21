@@ -70,7 +70,13 @@ function normalizeInline(node: MarkdownInline): MarkdownInline {
 					component: node.target.component?.trim(),
 					version: node.target.version?.trim(),
 					module: node.target.module?.trim(),
-					family: node.target.family?.trim(),
+					family:
+						node.target.family === undefined
+							? undefined
+							: {
+									kind: node.target.family.kind,
+									name: node.target.family.name.trim(),
+								},
 					fragment: node.target.fragment?.trim(),
 				},
 				children: normalizeInlineChildren(node.children),
@@ -163,6 +169,11 @@ function normalizeBlock(block: MarkdownBlock): MarkdownBlock {
 						value.trim(),
 					]),
 				),
+				diagnostics: block.diagnostics?.map((diagnostic) => ({
+					code: diagnostic.code,
+					message: diagnostic.message.trim(),
+					source: diagnostic.source?.trim(),
+				})),
 				semantics:
 					block.semantics === undefined
 						? undefined
@@ -172,6 +183,7 @@ function normalizeBlock(block: MarkdownBlock): MarkdownBlock {
 								lineRanges: block.semantics.lineRanges?.map((range) => ({
 									start: range.start,
 									end: range.end,
+									step: range.step,
 								})),
 								tagSelection:
 									block.semantics.tagSelection === undefined
@@ -187,7 +199,11 @@ function normalizeBlock(block: MarkdownBlock): MarkdownBlock {
 					block.provenance === undefined
 						? undefined
 						: {
+								depth: block.provenance.depth,
 								includeRootDir: block.provenance.includeRootDir.trim(),
+								inclusionStack: block.provenance.inclusionStack.map((path) =>
+									path.trim(),
+								),
 								includingSourcePath:
 									block.provenance.includingSourcePath.trim(),
 								resolvedPath: block.provenance.resolvedPath?.trim(),

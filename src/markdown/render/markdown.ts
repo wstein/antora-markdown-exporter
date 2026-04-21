@@ -48,13 +48,13 @@ function renderXrefDestination(
 		segments.push(moduleSegment);
 	}
 
-	const family = target.family ?? "page";
-	if (family === "page") {
+	const family = target.family ?? { kind: "page", name: "page" };
+	if (family.kind === "page") {
 		segments.push(stripAsciiDocExtension(target.path));
 	} else {
 		const assetDirectory =
 			flavor.xrefSiteAssetFamilies[
-				family as keyof typeof flavor.xrefSiteAssetFamilies
+				family.kind as keyof typeof flavor.xrefSiteAssetFamilies
 			];
 		if (assetDirectory === undefined) {
 			return node.url;

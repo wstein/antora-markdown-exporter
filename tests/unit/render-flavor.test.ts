@@ -122,6 +122,10 @@ describe("flavor-aware markdown rendering", () => {
 								raw: "docs:ROOT:install.adoc",
 								component: "docs",
 								module: "ROOT",
+								family: {
+									kind: "page" as const,
+									name: "page",
+								},
 								path: "install.adoc",
 							},
 							children: [{ type: "text" as const, value: "install" }],
@@ -135,6 +139,10 @@ describe("flavor-aware markdown rendering", () => {
 								component: "docs",
 								version: "2.0",
 								module: "ROOT",
+								family: {
+									kind: "page" as const,
+									name: "page",
+								},
 								path: "install.adoc",
 								fragment: "cli",
 							},
@@ -148,7 +156,10 @@ describe("flavor-aware markdown rendering", () => {
 								raw: "docs:ROOT:partial$nav.adoc",
 								component: "docs",
 								module: "ROOT",
-								family: "partial",
+								family: {
+									kind: "partial" as const,
+									name: "partial",
+								},
 								path: "nav.adoc",
 							},
 							children: [{ type: "text" as const, value: "nav" }],
@@ -184,7 +195,10 @@ describe("flavor-aware markdown rendering", () => {
 								component: "docs",
 								version: "2.0",
 								module: "ROOT",
-								family: "image",
+								family: {
+									kind: "image" as const,
+									name: "image",
+								},
 								path: "diagram.png",
 							},
 							children: [{ type: "text" as const, value: "diagram" }],
@@ -198,7 +212,10 @@ describe("flavor-aware markdown rendering", () => {
 								component: "docs",
 								version: "2.0",
 								module: "ROOT",
-								family: "attachment",
+								family: {
+									kind: "attachment" as const,
+									name: "attachment",
+								},
 								path: "guide.pdf",
 							},
 							children: [{ type: "text" as const, value: "guide" }],
@@ -212,11 +229,31 @@ describe("flavor-aware markdown rendering", () => {
 								component: "docs",
 								version: "2.0",
 								module: "api",
-								family: "page",
+								family: {
+									kind: "page" as const,
+									name: "page",
+								},
 								path: "index.adoc",
 								fragment: "overview",
 							},
 							children: [{ type: "text" as const, value: "overview" }],
+						},
+						{ type: "text" as const, value: " " },
+						{
+							type: "xref" as const,
+							url: "docs/2.0/ROOT/example/example.adoc",
+							target: {
+								raw: "2.0@docs:ROOT:example$example.adoc",
+								component: "docs",
+								version: "2.0",
+								module: "ROOT",
+								family: {
+									kind: "example" as const,
+									name: "example",
+								},
+								path: "example.adoc",
+							},
+							children: [{ type: "text" as const, value: "example" }],
 						},
 					],
 				},
@@ -224,10 +261,10 @@ describe("flavor-aware markdown rendering", () => {
 		};
 
 		expect(renderCommonMark(documentWithFamilyTargets)).toContain(
-			"[diagram](docs/2.0/ROOT/image/diagram.png) [guide](docs/2.0/ROOT/attachment/guide.pdf) [overview](docs/2.0/api/page/index.adoc#overview)",
+			"[diagram](docs/2.0/ROOT/image/diagram.png) [guide](docs/2.0/ROOT/attachment/guide.pdf) [overview](docs/2.0/api/page/index.adoc#overview) [example](docs/2.0/ROOT/example/example.adoc)",
 		);
 		expect(renderGitLab(documentWithFamilyTargets)).toContain(
-			"[diagram](docs/2.0/_images/diagram.png) [guide](docs/2.0/_attachments/guide.pdf) [overview](docs/2.0/api/index.html#overview)",
+			"[diagram](docs/2.0/_images/diagram.png) [guide](docs/2.0/_attachments/guide.pdf) [overview](docs/2.0/api/index.html#overview) [example](docs/2.0/_examples/example.adoc)",
 		);
 	});
 });

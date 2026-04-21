@@ -84,6 +84,10 @@ describe("Markdown IR boundary", () => {
 					url: "install.adoc",
 					target: expect.objectContaining({
 						raw: "install.adoc",
+						family: {
+							kind: "page",
+							name: "page",
+						},
 						path: "install.adoc",
 					}),
 				}),
@@ -170,6 +174,10 @@ describe("Markdown IR boundary", () => {
 					url: "guide/setup.adoc#details",
 					target: expect.objectContaining({
 						raw: "guide/setup.adoc#details",
+						family: {
+							kind: "page",
+							name: "page",
+						},
 						path: "guide/setup.adoc",
 						fragment: "details",
 					}),
@@ -297,6 +305,10 @@ describe("Markdown IR boundary", () => {
 							tags: ["intro", "details"],
 						},
 					},
+					provenance: expect.objectContaining({
+						depth: 0,
+						inclusionStack: ["/virtual/project/input.adoc"],
+					}),
 				}),
 				expect.objectContaining({
 					type: "paragraph",
@@ -368,7 +380,9 @@ describe("Markdown IR boundary", () => {
 						lineRanges: [{ end: 2 }, { start: 4 }],
 					},
 					provenance: {
+						depth: 0,
 						includeRootDir: "/virtual/project",
+						inclusionStack: ["/virtual/project/input.adoc"],
 						includingSourcePath: "/virtual/project/input.adoc",
 						resolvedPath: "/virtual/project/partials/ranges.adoc",
 					},
@@ -405,11 +419,79 @@ describe("Markdown IR boundary", () => {
 		);
 	});
 
+	it("records stepped ranges and include diagnostics for invalid selectors", () => {
+		const assembled = [
+			"== Include diagnostics",
+			"",
+			"include::partials/steps.adoc[lines=1..5..2]",
+			"",
+			"include::partials/invalid.adoc[lines=-2;..,indent=-1,tags=]",
+		].join("\n");
+		const ir = convertAssemblyToMarkdownIR(assembled, {
+			sourcePath: "/virtual/project/input.adoc",
+			includeResolver: (includeTarget) => {
+				if (includeTarget === "partials/steps.adoc") {
+					return [
+						"First line.",
+						"Second line.",
+						"Third line.",
+						"Fourth line.",
+						"Fifth line.",
+					].join("\n");
+				}
+				if (includeTarget === "partials/invalid.adoc") {
+					return "Ignored line.";
+				}
+
+				return undefined;
+			},
+		});
+
+		expect(ir.children).toEqual(
+			expect.arrayContaining([
+				expect.objectContaining({
+					type: "includeDirective",
+					target: "partials/steps.adoc",
+					semantics: {
+						lineRanges: [{ start: 1, end: 5, step: 2 }],
+					},
+				}),
+				expect.objectContaining({
+					type: "includeDirective",
+					target: "partials/invalid.adoc",
+					diagnostics: expect.arrayContaining([
+						expect.objectContaining({
+							code: "invalid-line-range",
+							source: "-2",
+						}),
+						expect.objectContaining({
+							code: "invalid-indent",
+							source: "-1",
+						}),
+						expect.objectContaining({
+							code: "empty-tag-selection",
+							source: "",
+						}),
+					]),
+				}),
+				expect.objectContaining({
+					type: "paragraph",
+					children: [
+						{
+							type: "text",
+							value: "First line. Third line. Fifth line.",
+						},
+					],
+				}),
+			]),
+		);
+	});
+
 	it("normalizes richer Antora xref coordinates into markdown link targets", () => {
 		const assembled = [
 			"== Xref coordinates",
 			"",
-			"See xref:docs:ROOT:install.adoc[], xref:2.0@docs:ROOT:install.adoc#cli[], and xref:docs:ROOT:partial$nav.adoc[].",
+			"See xref:docs:ROOT:install.adoc[], xref:2.0@docs:ROOT:install.adoc#cli[], xref:docs:ROOT:partial$nav.adoc[], and xref:docs:ROOT:example$snippet.adoc[].",
 		].join("\n");
 		const ir = convertAssemblyToMarkdownIR(assembled);
 
@@ -422,6 +504,10 @@ describe("Markdown IR boundary", () => {
 					target: expect.objectContaining({
 						component: "docs",
 						module: "ROOT",
+						family: {
+							kind: "page",
+							name: "page",
+						},
 						path: "install.adoc",
 					}),
 					children: [{ type: "text", value: "install" }],
@@ -433,6 +519,10 @@ describe("Markdown IR boundary", () => {
 						component: "docs",
 						version: "2.0",
 						module: "ROOT",
+						family: {
+							kind: "page",
+							name: "page",
+						},
 						path: "install.adoc",
 						fragment: "cli",
 					}),
@@ -444,10 +534,22 @@ describe("Markdown IR boundary", () => {
 					target: expect.objectContaining({
 						component: "docs",
 						module: "ROOT",
-						family: "partial",
+						family: {
+							kind: "partial",
+							name: "partial",
+						},
 						path: "nav.adoc",
 					}),
 					children: [{ type: "text", value: "nav" }],
+				}),
+				expect.objectContaining({
+					type: "xref",
+					target: expect.objectContaining({
+						family: {
+							kind: "example",
+							name: "example",
+						},
+					}),
 				}),
 			]),
 		});

@@ -64,17 +64,26 @@ describe("normalizeMarkdownIR", () => {
 						" tag ": " intro ",
 						" leveloffset ": " +1 ",
 					},
+					diagnostics: [
+						{
+							code: "invalid-line-range",
+							message: " include line ranges cannot omit both bounds ",
+							source: " .. ",
+						},
+					],
 					semantics: {
 						tagSelection: {
 							precedence: "document-order",
 							tags: [" intro ", " details "],
 						},
-						lineRanges: [{ start: 1, end: 3 }, { start: 5 }],
+						lineRanges: [{ start: 1, end: 3, step: 2 }, { start: 5 }],
 						indent: 2,
 						levelOffset: 1,
 					},
 					provenance: {
+						depth: 1,
 						includeRootDir: " /tmp/partials ",
+						inclusionStack: [" /tmp/root.adoc ", " /tmp/page.adoc "],
 						includingSourcePath: " /tmp/page.adoc ",
 						resolvedPath: " /tmp/shared.adoc ",
 					},
@@ -106,17 +115,26 @@ describe("normalizeMarkdownIR", () => {
 				tag: "intro",
 				leveloffset: "+1",
 			},
+			diagnostics: [
+				{
+					code: "invalid-line-range",
+					message: "include line ranges cannot omit both bounds",
+					source: "..",
+				},
+			],
 			semantics: {
 				tagSelection: {
 					precedence: "document-order",
 					tags: ["intro", "details"],
 				},
-				lineRanges: [{ start: 1, end: 3 }, { start: 5 }],
+				lineRanges: [{ start: 1, end: 3, step: 2 }, { start: 5 }],
 				indent: 2,
 				levelOffset: 1,
 			},
 			provenance: {
+				depth: 1,
 				includeRootDir: "/tmp/partials",
+				inclusionStack: ["/tmp/root.adoc", "/tmp/page.adoc"],
 				includingSourcePath: "/tmp/page.adoc",
 				resolvedPath: "/tmp/shared.adoc",
 			},

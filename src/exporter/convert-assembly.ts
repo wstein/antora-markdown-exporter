@@ -9,6 +9,7 @@ import type {
 	MarkdownDocument,
 	MarkdownHeading,
 	MarkdownImage,
+	MarkdownIncludeDiagnostic,
 	MarkdownIncludeDirective,
 	MarkdownIncludeLineRange,
 	MarkdownIncludeSemantics,
@@ -18,6 +19,7 @@ import type {
 	MarkdownParagraph,
 	MarkdownTable,
 	MarkdownTableRow,
+	MarkdownXrefFamily,
 	MarkdownXrefTarget,
 } from "../markdown/ir.js";
 
@@ -53,6 +55,11 @@ type ParsedXrefTarget = {
 	label: string;
 	target: MarkdownXrefTarget;
 	url: string;
+};
+
+type ParsedIncludeSemantics = {
+	diagnostics: MarkdownIncludeDiagnostic[];
+	semantics?: MarkdownIncludeSemantics;
 };
 
 type ImageToken = {
@@ -104,6 +111,25 @@ type InlineToken =
 	| CodeToken
 	| StrongToken
 	| EmphasisToken;
+
+function classifyXrefFamily(name: string | undefined): MarkdownXrefFamily {
+	switch (name) {
+		case undefined:
+			return { kind: "page", name: "page" };
+		case "attachment":
+			return { kind: "attachment", name };
+		case "example":
+			return { kind: "example", name };
+		case "image":
+			return { kind: "image", name };
+		case "partial":
+			return { kind: "partial", name };
+		case "page":
+			return { kind: "page", name };
+		default:
+			return { kind: "other", name };
+	}
+}
 
 function parseNamedAttributes(value: string): {
 	title?: string;
@@ -311,7 +337,7 @@ function parseXrefTarget(rawTarget: string): ParsedXrefTarget | undefined {
 			component: componentName,
 			version: versionPart,
 			module: moduleName,
-			family: familyName,
+			family: classifyXrefFamily(familyName),
 			path: familyPath ?? pageSegment,
 			fragment,
 		},
@@ -879,21 +905,46 @@ function parseIncludeTagSelection(
 	};
 }
 
-function parseIncludeLineRanges(
-	lineSpec: string,
-): MarkdownIncludeLineRange[] | undefined {
+function parseIncludeLineRanges(lineSpec: string): {
+	diagnostics: MarkdownIncludeDiagnostic[];
+	lineRanges?: MarkdownIncludeLineRange[];
+} {
+	const diagnostics: MarkdownIncludeDiagnostic[] = [];
 	const ranges = lineSpec
 		.split(/[;,]/)
 		.map((segment) => segment.trim())
 		.filter(Boolean)
 		.flatMap<MarkdownIncludeLineRange>((segment) => {
-			const rangeMatch = segment.match(/^(\d*)\.\.(\d*)$/);
+			const rangeMatch = segment.match(/^(-?\d*)\.\.(-?\d*)(?:\.\.(\d+))?$/);
 			if (rangeMatch !== null) {
-				const [, rawStart = "", rawEnd = ""] = rangeMatch;
+				const [, rawStart = "", rawEnd = "", rawStep = ""] = rangeMatch;
+				if (rawStart.startsWith("-") || rawEnd.startsWith("-")) {
+					diagnostics.push({
+						code: "invalid-line-range",
+						message:
+							"include line ranges must use positive line numbers or open-ended bounds",
+						source: segment,
+					});
+					return [];
+				}
 				const start =
 					rawStart === "" ? undefined : parsePositiveInteger(rawStart);
 				const end = rawEnd === "" ? undefined : parsePositiveInteger(rawEnd);
+				const step = rawStep === "" ? undefined : parsePositiveInteger(rawStep);
 				if (start === undefined && end === undefined) {
+					diagnostics.push({
+						code: "invalid-line-range",
+						message: "include line ranges cannot omit both bounds",
+						source: segment,
+					});
+					return [];
+				}
+				if (rawStep !== "" && step === undefined) {
+					diagnostics.push({
+						code: "invalid-line-step",
+						message: "include line steps must be positive integers",
+						source: segment,
+					});
 					return [];
 				}
 
@@ -903,58 +954,101 @@ function parseIncludeLineRanges(
 					Number.isFinite(start) &&
 					Number.isFinite(end)
 				) {
-					return start <= end ? [{ start, end }] : [{ start: end, end: start }];
+					return start <= end
+						? [{ start, end, step }]
+						: [{ start: end, end: start, step }];
 				}
 
-				return [{ start, end }];
+				return [{ start, end, step }];
 			}
 
 			const lineNumber = parsePositiveInteger(segment);
-			return lineNumber === undefined
-				? []
-				: [{ start: lineNumber, end: lineNumber }];
+			if (lineNumber === undefined) {
+				diagnostics.push({
+					code: "invalid-line-range",
+					message: "include line selectors must be positive integers or ranges",
+					source: segment,
+				});
+				return [];
+			}
+
+			return [{ start: lineNumber, end: lineNumber }];
 		});
 
-	return ranges.length === 0 ? undefined : ranges;
+	return {
+		diagnostics,
+		lineRanges: ranges.length === 0 ? undefined : ranges,
+	};
 }
 
 function parseIncludeSemantics(
 	attributes: Record<string, string>,
-): MarkdownIncludeSemantics | undefined {
+): ParsedIncludeSemantics {
+	const diagnostics: MarkdownIncludeDiagnostic[] = [];
 	const tagValue = attributes.tag ?? attributes.tags;
 	const tagSelection =
 		tagValue === undefined ? undefined : parseIncludeTagSelection(tagValue);
-	const lineRanges =
+	if (tagValue !== undefined && tagSelection === undefined) {
+		diagnostics.push({
+			code: "empty-tag-selection",
+			message: "include tag selection must contain at least one tag",
+			source: tagValue,
+		});
+	}
+	const parsedLineRanges =
 		attributes.lines === undefined
-			? undefined
+			? { diagnostics: [], lineRanges: undefined }
 			: parseIncludeLineRanges(attributes.lines);
+	diagnostics.push(...parsedLineRanges.diagnostics);
 	const indent =
 		attributes.indent === undefined
 			? undefined
 			: parsePositiveInteger(attributes.indent);
+	if (attributes.indent !== undefined && indent === undefined) {
+		diagnostics.push({
+			code: "invalid-indent",
+			message: "include indent must be a positive integer",
+			source: attributes.indent,
+		});
+	}
 	const levelOffsetMatch = attributes.leveloffset?.match(/^([+-]?\d+)$/);
 	const levelOffset =
 		levelOffsetMatch?.[1] === undefined
 			? undefined
 			: Number(levelOffsetMatch[1]);
+	if (
+		attributes.leveloffset !== undefined &&
+		(levelOffset === undefined || !Number.isFinite(levelOffset))
+	) {
+		diagnostics.push({
+			code: "invalid-leveloffset",
+			message: "include leveloffset must be a signed integer",
+			source: attributes.leveloffset,
+		});
+	}
 
 	if (
 		tagSelection === undefined &&
-		lineRanges === undefined &&
+		parsedLineRanges.lineRanges === undefined &&
 		indent === undefined &&
 		(levelOffset === undefined || !Number.isFinite(levelOffset))
 	) {
-		return undefined;
+		return {
+			diagnostics,
+		};
 	}
 
 	return {
-		tagSelection,
-		lineRanges,
-		indent,
-		levelOffset:
-			levelOffset !== undefined && Number.isFinite(levelOffset)
-				? levelOffset
-				: undefined,
+		diagnostics,
+		semantics: {
+			tagSelection,
+			lineRanges: parsedLineRanges.lineRanges,
+			indent,
+			levelOffset:
+				levelOffset !== undefined && Number.isFinite(levelOffset)
+					? levelOffset
+					: undefined,
+		},
 	};
 }
 
@@ -990,7 +1084,7 @@ function applyLevelOffset(content: string, levelOffset: string): string {
 
 function applyLineSelection(content: string, lineSpec: string): string {
 	const lines = content.split(/\r?\n/);
-	const ranges = parseIncludeLineRanges(lineSpec);
+	const ranges = parseIncludeLineRanges(lineSpec).lineRanges;
 	if (ranges === undefined) {
 		return content;
 	}
@@ -1001,7 +1095,8 @@ function applyLineSelection(content: string, lineSpec: string): string {
 	for (const range of ranges) {
 		const start = range.start ?? 1;
 		const end = range.end ?? lines.length;
-		for (let index = start; index <= end; index += 1) {
+		const step = range.step ?? 1;
+		for (let index = start; index <= end; index += step) {
 			if (seenLineNumbers.has(index)) {
 				continue;
 			}
@@ -1066,6 +1161,9 @@ function expandIncludes(
 	const includeResolver = options.includeResolver ?? defaultIncludeResolver;
 	const lines = assembledAsciiDoc.split(/\r?\n/);
 	const expandedLines: string[] = [];
+	const inclusionStack = [...visited, options.sourcePath].filter(
+		(path, index, array) => array.indexOf(path) === index,
+	);
 
 	for (const line of lines) {
 		const directive = parseIncludeDirective(line);
@@ -1080,13 +1178,20 @@ function expandIncludes(
 			includeTarget,
 			includeRootDir,
 		);
+		const parsedSemantics = parseIncludeSemantics(directive.attributes);
 		expandedLines.push(
 			`<!-- md-ir-include ${JSON.stringify({
 				target: includeTarget,
 				attributes: directive.attributes,
-				semantics: parseIncludeSemantics(directive.attributes),
+				diagnostics:
+					parsedSemantics.diagnostics.length === 0
+						? undefined
+						: parsedSemantics.diagnostics,
+				semantics: parsedSemantics.semantics,
 				provenance: {
+					depth: inclusionStack.length - 1,
 					includeRootDir,
+					inclusionStack,
 					includingSourcePath: options.sourcePath,
 					resolvedPath,
 				},
@@ -1139,6 +1244,7 @@ function parseIncludeDirectiveMarker(
 
 	const payload = JSON.parse(match[1]) as {
 		attributes: Record<string, string>;
+		diagnostics?: MarkdownIncludeDirective["diagnostics"];
 		provenance?: MarkdownIncludeDirective["provenance"];
 		semantics?: MarkdownIncludeDirective["semantics"];
 		target: string;
@@ -1147,6 +1253,7 @@ function parseIncludeDirectiveMarker(
 		type: "includeDirective",
 		target: payload.target,
 		attributes: payload.attributes,
+		diagnostics: payload.diagnostics,
 		semantics: payload.semantics,
 		provenance: payload.provenance,
 	};
