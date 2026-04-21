@@ -10,6 +10,9 @@ describe("convertAssemblyToMarkdownIR", () => {
 			[
 				"= Title",
 				":doctype: book",
+				":toc:",
+				":toclevels: 2",
+				":sectnums:",
 				":page-component-name: antora-markdown-exporter",
 				"",
 				'<a id="section-one"></a>',
@@ -34,6 +37,11 @@ describe("convertAssemblyToMarkdownIR", () => {
 			].join("\n"),
 		);
 
+		expect(document.renderOptions).toEqual({
+			headingNumbering: { mode: "book" },
+			tableOfContents: { maxDepth: 2 },
+		});
+
 		expect(document.children).toEqual([
 			{
 				type: "heading",
@@ -41,12 +49,9 @@ describe("convertAssemblyToMarkdownIR", () => {
 				children: [{ type: "text", value: "Title" }],
 			},
 			{
-				type: "anchor",
-				identifier: "section-one",
-			},
-			{
 				type: "heading",
 				depth: 1,
+				identifier: "section-one",
 				children: [{ type: "text", value: "Section One" }],
 			},
 			{
@@ -77,7 +82,7 @@ describe("convertAssemblyToMarkdownIR", () => {
 		]);
 	});
 
-	it("strips generated chapter prefixes from top-level headings", () => {
+	it("preserves generated chapter prefixes when they are present in source", () => {
 		const document = convertAssemblyToMarkdownIR(
 			["= Title", "", "== Chapter 2. Architecture Constraints"].join("\n"),
 		);
@@ -91,7 +96,34 @@ describe("convertAssemblyToMarkdownIR", () => {
 			{
 				type: "heading",
 				depth: 1,
-				children: [{ type: "text", value: "Architecture Constraints" }],
+				children: [
+					{ type: "text", value: "Chapter 2. Architecture Constraints" },
+				],
+			},
+		]);
+	});
+
+	it("skips AsciiDoc conditional control directives in assembled input", () => {
+		const document = convertAssemblyToMarkdownIR(
+			[
+				"= Title",
+				"",
+				"ifdef::arc42help[]",
+				"== Visible Section",
+				"endif::arc42help[]",
+			].join("\n"),
+		);
+
+		expect(document.children).toEqual([
+			{
+				type: "heading",
+				depth: 1,
+				children: [{ type: "text", value: "Title" }],
+			},
+			{
+				type: "heading",
+				depth: 1,
+				children: [{ type: "text", value: "Visible Section" }],
 			},
 		]);
 	});

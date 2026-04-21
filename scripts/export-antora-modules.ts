@@ -1,17 +1,14 @@
 import { mkdir, rm, stat } from "node:fs/promises";
 import { dirname, resolve } from "node:path";
 import { pathToFileURL } from "node:url";
-import loadAsciiDoc from "@antora/asciidoc-loader";
-import { assembleContent } from "@antora/assembler";
-import aggregateContent from "@antora/content-aggregator";
-import classifyContent from "@antora/content-classifier";
-import convertDocuments from "@antora/document-converter";
-import buildNavigation from "@antora/navigation-builder";
-import buildPlaybook from "@antora/playbook-builder";
 import {
 	createMarkdownConverter,
 	type MarkdownFlavorName,
 } from "../src/extension/index.ts";
+import {
+	createDocumentationModuleSource,
+	getDocumentationModuleNames,
+} from "./docs-module-sources.mjs";
 
 export type ExportAntoraModulesOptions = {
 	flavor: MarkdownFlavorName;
@@ -25,19 +22,6 @@ export type ExportedMarkdownFile = {
 	relativeOutputPath: string;
 };
 
-type NavigationEntry = {
-	content?: string;
-	items?: NavigationEntry[];
-	url?: string;
-	urlType?: string;
-};
-
-type ComponentVersionWithNavigation = {
-	name: string;
-	version: string;
-	navigation?: NavigationEntry[];
-};
-
 const markdownFlavors = new Set<MarkdownFlavorName>([
 	"gfm",
 	"commonmark",
@@ -49,7 +33,7 @@ function usage(): string {
 	return [
 		"Usage: bun scripts/export-antora-modules.ts [--playbook <file>] [--output-root <dir>] [--flavor <gfm|commonmark|gitlab|strict>]",
 		"",
-		"Export assembled Antora documentation modules to Markdown using Antora and the repository exporter extension.",
+		"Export assembled documentation modules to Markdown using the repository's Antora Markdown converter.",
 	].join("\n");
 }
 
@@ -104,107 +88,6 @@ export function parseArguments(argv: string[]): ExportAntoraModulesOptions {
 	return { flavor, outputRoot, playbookPath };
 }
 
-function isNavigationEntry(value: unknown): value is NavigationEntry {
-	return value !== null && typeof value === "object";
-}
-
-function createAssemblerConfigSource(
-	outputRoot: string,
-): Record<string, unknown> {
-	return {
-		componentVersionFilter: {
-			names: ["antora-markdown-exporter"],
-		},
-		assembly: {
-			insertStartPage: false,
-			rootLevel: 1,
-		},
-		build: {
-			clean: false,
-			dir: outputRoot,
-			mkdirs: true,
-			publish: false,
-		},
-	};
-}
-
-function createAntoraEnvironment(playbookPath: string): NodeJS.ProcessEnv {
-	return {
-		...process.env,
-		ANTORA_CACHE_DIR: resolve(dirname(playbookPath), "build/.antora-cache"),
-	};
-}
-
-function getTargetComponentVersion(contentCatalog: {
-	getComponent: (
-		name: string,
-	) => { versions?: ComponentVersionWithNavigation[] } | undefined;
-}): ComponentVersionWithNavigation {
-	const component = contentCatalog.getComponent("antora-markdown-exporter");
-	const [componentVersion] = component?.versions ?? [];
-	if (componentVersion === undefined) {
-		throw new Error("Could not resolve component antora-markdown-exporter");
-	}
-
-	return componentVersion;
-}
-
-function findModuleRootEntry(
-	entry: NavigationEntry,
-): NavigationEntry | undefined {
-	if (!Array.isArray(entry.items) || entry.items.length === 0) {
-		return undefined;
-	}
-
-	const [candidate] = entry.items;
-	return isNavigationEntry(candidate) ? candidate : undefined;
-}
-
-function extractModuleNameFromUrl(url: string | undefined): string | undefined {
-	if (typeof url !== "string") {
-		return undefined;
-	}
-
-	const match = /\/([^/]+)\/index\.html$/u.exec(url);
-	return match?.[1];
-}
-
-export function getDocumentationModuleEntries(
-	componentVersion: ComponentVersionWithNavigation,
-): Array<{ moduleName: string; navigation: NavigationEntry }> {
-	return (componentVersion.navigation ?? [])
-		.map(findModuleRootEntry)
-		.filter((entry): entry is NavigationEntry => entry !== undefined)
-		.map((entry) => ({
-			moduleName: extractModuleNameFromUrl(entry.url),
-			navigation: entry,
-		}))
-		.filter(
-			(entry): entry is { moduleName: string; navigation: NavigationEntry } =>
-				entry.moduleName === "architecture" ||
-				entry.moduleName === "manual" ||
-				entry.moduleName === "onboarding",
-		);
-}
-
-export function createModuleNavigationCatalog(
-	componentVersion: ComponentVersionWithNavigation,
-	moduleNavigation: NavigationEntry,
-) {
-	return {
-		getNavigation(component: string, version: string): NavigationEntry[] {
-			if (
-				component === componentVersion.name &&
-				version === componentVersion.version
-			) {
-				return [moduleNavigation];
-			}
-
-			return [];
-		},
-	};
-}
-
 export async function exportAntoraModulesToMarkdown(
 	options: ExportAntoraModulesOptions,
 ): Promise<ExportedMarkdownFile[]> {
@@ -217,61 +100,47 @@ export async function exportAntoraModulesToMarkdown(
 		throw new Error(`Unsupported markdown flavor: ${options.flavor}`);
 	}
 
-	const playbook = buildPlaybook(
-		["--playbook", options.playbookPath, "--quiet"],
-		createAntoraEnvironment(options.playbookPath),
-	);
-	playbook.runtime.quiet = true;
+	const rootDir = dirname(options.playbookPath);
+	const converter = createMarkdownConverter({ flavor: options.flavor });
+	const exportedFiles: ExportedMarkdownFile[] = [];
 
-	const siteAsciiDocConfig = loadAsciiDoc.resolveAsciiDocConfig(playbook);
-	siteAsciiDocConfig.keepSource = true;
-	const contentAggregate = await aggregateContent(playbook);
-	const contentCatalog = classifyContent(
-		playbook,
-		contentAggregate,
-		siteAsciiDocConfig,
-	);
-	convertDocuments(contentCatalog, siteAsciiDocConfig);
-	buildNavigation(contentCatalog, siteAsciiDocConfig);
 	await rm(options.outputRoot, { force: true, recursive: true });
 	await mkdir(options.outputRoot, { recursive: true });
 
-	const componentVersion = getTargetComponentVersion(contentCatalog);
-	const moduleEntries = getDocumentationModuleEntries(componentVersion);
-	const exportedFiles: ExportedMarkdownFile[] = [];
+	for (const moduleName of getDocumentationModuleNames()) {
+		const relativeOutputPath = `${moduleName}.md`;
+		const outputPath = resolve(options.outputRoot, relativeOutputPath);
+		const assembledSource = createDocumentationModuleSource(
+			rootDir,
+			moduleName,
+		);
+		const docfile = resolve(rootDir, `${moduleName}.assembled.adoc`);
 
-	for (const moduleEntry of moduleEntries) {
-		const files = await assembleContent(
-			playbook,
-			contentCatalog,
-			createMarkdownConverter({ flavor: options.flavor }),
+		await converter.convert(
 			{
-				configSource: createAssemblerConfigSource(options.outputRoot),
-				navigationCatalog: createModuleNavigationCatalog(
-					componentVersion,
-					moduleEntry.navigation,
-				),
+				contents: Buffer.from(assembledSource, "utf8"),
+				path: docfile,
+			},
+			{
+				docfile,
+				outdir: options.outputRoot,
+				outfile: outputPath,
+				outfilesuffix: ".md",
+			},
+			{
+				cwd: rootDir,
+				dir: options.outputRoot,
 			},
 		);
 
-		for (const file of files) {
-			const relativeOutputPath =
-				typeof file?.src?.relative === "string" ? file.src.relative : undefined;
-			if (relativeOutputPath === undefined) {
-				continue;
-			}
-
-			exportedFiles.push({
-				moduleName: moduleEntry.moduleName,
-				outputPath: resolve(options.outputRoot, relativeOutputPath),
-				relativeOutputPath,
-			});
-		}
+		exportedFiles.push({
+			moduleName,
+			outputPath,
+			relativeOutputPath,
+		});
 	}
 
-	return exportedFiles.sort((left, right) =>
-		left.relativeOutputPath.localeCompare(right.relativeOutputPath),
-	);
+	return exportedFiles;
 }
 
 async function main(): Promise<void> {

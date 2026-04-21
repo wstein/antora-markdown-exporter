@@ -115,6 +115,7 @@ export type MarkdownParagraph = {
 export type MarkdownHeading = {
 	type: "heading";
 	depth: number;
+	identifier?: string;
 	children: MarkdownInline[];
 };
 
@@ -211,6 +212,12 @@ export type MarkdownList = {
 	items: MarkdownListItem[];
 };
 
+export type MarkdownLabeledGroup = {
+	type: "labeledGroup";
+	label: MarkdownInline[];
+	children: MarkdownBlock[];
+};
+
 export type MarkdownTableCell = {
 	children: MarkdownInline[];
 };
@@ -258,13 +265,26 @@ export type MarkdownBlock =
 	| MarkdownBlockQuote
 	| MarkdownAdmonition
 	| MarkdownList
+	| MarkdownLabeledGroup
 	| MarkdownTable
 	| MarkdownCalloutList
 	| MarkdownHtmlBlock
 	| MarkdownFootnoteDefinition
 	| MarkdownUnsupported;
 
+export type MarkdownHeadingNumberingMode = "book" | "section";
+
+export type MarkdownRenderOptions = {
+	headingNumbering?: {
+		mode: MarkdownHeadingNumberingMode;
+	};
+	tableOfContents?: {
+		maxDepth?: number;
+	};
+};
+
 export type MarkdownDocument = {
 	type: "document";
+	renderOptions?: MarkdownRenderOptions;
 	children: MarkdownBlock[];
 };

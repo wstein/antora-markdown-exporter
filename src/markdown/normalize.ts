@@ -144,9 +144,14 @@ function normalizeTableRow(row: MarkdownTableRow): MarkdownTableRow {
 function normalizeBlock(block: MarkdownBlock): MarkdownBlock {
 	switch (block.type) {
 		case "paragraph":
+			return {
+				...block,
+				children: normalizeInlineChildren(block.children),
+			};
 		case "heading":
 			return {
 				...block,
+				identifier: block.identifier?.trim(),
 				children: normalizeInlineChildren(block.children),
 			};
 		case "anchor":
@@ -220,6 +225,12 @@ function normalizeBlock(block: MarkdownBlock): MarkdownBlock {
 				...block,
 				items: block.items.map(normalizeListItem),
 			};
+		case "labeledGroup":
+			return {
+				...block,
+				label: normalizeInlineChildren(block.label),
+				children: block.children.map(normalizeBlock),
+			};
 		case "calloutList":
 			return {
 				...block,
@@ -260,6 +271,23 @@ export function normalizeMarkdownIR(
 ): MarkdownDocument {
 	return {
 		...document,
+		renderOptions:
+			document.renderOptions === undefined
+				? undefined
+				: {
+						headingNumbering:
+							document.renderOptions.headingNumbering === undefined
+								? undefined
+								: {
+										mode: document.renderOptions.headingNumbering.mode,
+									},
+						tableOfContents:
+							document.renderOptions.tableOfContents === undefined
+								? undefined
+								: {
+										maxDepth: document.renderOptions.tableOfContents.maxDepth,
+									},
+					},
 		children: document.children.map(normalizeBlock),
 	};
 }

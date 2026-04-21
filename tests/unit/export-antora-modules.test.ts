@@ -3,9 +3,7 @@ import { tmpdir } from "node:os";
 import { resolve } from "node:path";
 import { describe, expect, it } from "vitest";
 import {
-	createModuleNavigationCatalog,
 	exportAntoraModulesToMarkdown,
-	getDocumentationModuleEntries,
 	parseArguments,
 } from "../../scripts/export-antora-modules.ts";
 
@@ -33,75 +31,7 @@ describe("export antora modules script", () => {
 		expect(options.flavor).toBe("gitlab");
 	});
 
-	it("extracts documentation module roots from the built navigation", () => {
-		const entries = getDocumentationModuleEntries({
-			name: "antora-markdown-exporter",
-			version: "",
-			navigation: [
-				{
-					items: [
-						{
-							content: "Documentation",
-							url: "/antora-markdown-exporter/index.html",
-						},
-					],
-				},
-				{
-					items: [
-						{
-							content: "Architecture",
-							url: "/antora-markdown-exporter/architecture/index.html",
-						},
-					],
-				},
-				{
-					items: [
-						{
-							content: "Manual",
-							url: "/antora-markdown-exporter/manual/index.html",
-						},
-					],
-				},
-				{
-					items: [
-						{
-							content: "Onboarding",
-							url: "/antora-markdown-exporter/onboarding/index.html",
-						},
-					],
-				},
-			],
-		});
-
-		expect(entries.map((entry) => entry.moduleName)).toEqual([
-			"architecture",
-			"manual",
-			"onboarding",
-		]);
-	});
-
-	it("creates a module-scoped navigation override for assembler", () => {
-		const componentVersion = {
-			name: "antora-markdown-exporter",
-			version: "",
-			navigation: [],
-		};
-		const architectureNavigation = {
-			content: "Architecture",
-			url: "/antora-markdown-exporter/architecture/index.html",
-		};
-		const navigationCatalog = createModuleNavigationCatalog(
-			componentVersion,
-			architectureNavigation,
-		);
-
-		expect(
-			navigationCatalog.getNavigation("antora-markdown-exporter", ""),
-		).toEqual([architectureNavigation]);
-		expect(navigationCatalog.getNavigation("other", "")).toEqual([]);
-	});
-
-	it("exports assembled markdown modules through antora and assembler", async () => {
+	it("exports one assembled markdown document per documentation module", async () => {
 		const outputRoot = await mkdtemp(
 			resolve(tmpdir(), "antora-markdown-export-"),
 		);
@@ -123,22 +53,38 @@ describe("export antora modules script", () => {
 		);
 		expect(architectureMarkdown).toContain("## Table of Contents");
 		expect(architectureMarkdown).toContain(
-			"- [Chapter 1. Introduction and Goals](#",
+			"- [Chapter 1. Introduction and Goals](#chapter-1-introduction-and-goals)",
 		);
 		expect(architectureMarkdown).toContain(
 			"# Chapter 2. Architecture Constraints",
 		);
 		expect(architectureMarkdown).toContain(
-			"| 1 | Deterministic, reviewable output |",
+			"**Motivation:** The decomposition follows",
 		);
-		expect(architectureMarkdown).not.toContain(":doctype:");
-		expect(architectureMarkdown).not.toContain(":page-component-name:");
+		expect(architectureMarkdown).not.toContain(
+			'<a id="architecture:index"></a>',
+		);
+		expect(architectureMarkdown).not.toContain(
+			'<a id="section-introduction-and-goals"></a>',
+		);
 
 		const manualMarkdown = await readFile(
 			resolve(outputRoot, "manual.md"),
 			"utf8",
 		);
-		expect(manualMarkdown).toContain("## Table of Contents");
-		expect(manualMarkdown).toContain("- [Core Workflows](#");
+		expect(manualMarkdown).toContain(
+			"- [Chapter 1. Core Workflows](#chapter-1-core-workflows)",
+		);
+		expect(manualMarkdown).toContain("1. Install dependencies:");
+		expect(manualMarkdown).not.toContain("\n+\n");
+
+		const onboardingMarkdown = await readFile(
+			resolve(outputRoot, "onboarding.md"),
+			"utf8",
+		);
+		expect(onboardingMarkdown).toContain(
+			"- [Chapter 1. Mental Models](#chapter-1-mental-models)",
+		);
+		expect(onboardingMarkdown).toContain("# Chapter 2. Core Workflows");
 	});
 });

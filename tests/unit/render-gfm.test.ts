@@ -21,7 +21,42 @@ describe("renderGfm", () => {
 		expect(rendered).toBe("# Sample document\n\nHello world.\n");
 	});
 
-	it("renders anchors and page aliases through dedicated semantic nodes", () => {
+	it("renders numbering and table of contents from document render options", () => {
+		const rendered = renderGfm({
+			type: "document",
+			renderOptions: {
+				headingNumbering: { mode: "book" },
+				tableOfContents: { maxDepth: 2 },
+			},
+			children: [
+				{
+					type: "heading",
+					depth: 1,
+					children: [{ type: "text", value: "Sample document" }],
+				},
+				{
+					type: "heading",
+					depth: 1,
+					children: [{ type: "text", value: "Section One" }],
+				},
+				{
+					type: "heading",
+					depth: 2,
+					children: [{ type: "text", value: "Detail" }],
+				},
+			],
+		});
+
+		expect(rendered).toContain("## Table of Contents");
+		expect(rendered).toContain(
+			"- [Chapter 1. Section One](#chapter-1-section-one)",
+		);
+		expect(rendered).toContain("  - [1.1. Detail](#11-detail)");
+		expect(rendered).toContain("# Chapter 1. Section One");
+		expect(rendered).toContain("## 1.1. Detail");
+	});
+
+	it("renders page aliases and suppresses redundant heading anchors", () => {
 		const rendered = renderGfm({
 			type: "document",
 			children: [
@@ -30,19 +65,20 @@ describe("renderGfm", () => {
 					aliases: ["legacy-home", "legacy-overview"],
 				},
 				{
-					type: "anchor",
+					type: "heading",
+					depth: 1,
 					identifier: "overview",
+					children: [{ type: "text", value: "Overview" }],
 				},
 			],
 		});
 
 		expect(rendered).toBe(
-			[
+			`${[
 				"<!-- page-aliases: legacy-home, legacy-overview -->",
 				"",
-				'<a id="overview"></a>',
-				"",
-			].join("\n"),
+				"# Overview",
+			].join("\n")}\n`,
 		);
 	});
 

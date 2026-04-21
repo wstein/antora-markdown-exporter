@@ -147,17 +147,17 @@ describe("Markdown IR boundary", () => {
 					aliases: ["legacy-home", "legacy-overview"],
 				}),
 				expect.objectContaining({
-					type: "anchor",
+					type: "heading",
+					depth: 1,
 					identifier: "overview",
 				}),
-				expect.objectContaining({ type: "heading", depth: 1 }),
 				expect.objectContaining({
 					type: "table",
 					align: ["left", "center", "right"],
 				}),
 			]),
 		);
-		expect(ir.children[3]).toMatchObject({
+		expect(ir.children[2]).toMatchObject({
 			type: "paragraph",
 			children: expect.arrayContaining([
 				expect.objectContaining({

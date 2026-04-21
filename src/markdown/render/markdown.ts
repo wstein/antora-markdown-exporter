@@ -23,6 +23,133 @@ function renderCodeBlock(
 	return `\`\`\`${language}\n${block.value}\n\`\`\``;
 }
 
+function inlineText(children: MarkdownInline[]): string {
+	return children
+		.map((child) => {
+			switch (child.type) {
+				case "text":
+					return child.value;
+				case "code":
+					return child.value;
+				case "emphasis":
+				case "strong":
+				case "link":
+				case "xref":
+					return inlineText(child.children);
+				case "image":
+					return inlineText(child.alt);
+				case "hardBreak":
+				case "softBreak":
+					return " ";
+				case "htmlInline":
+					return "";
+				case "footnoteReference":
+					return child.label ?? child.identifier;
+				case "citation":
+					return child.label ?? child.identifier;
+				default:
+					return "";
+			}
+		})
+		.join("")
+		.replace(/\s+/g, " ")
+		.trim();
+}
+
+function slugifyHeading(text: string): string {
+	return text
+		.toLowerCase()
+		.replace(/<\/?[a-z][^>]*>/gi, "")
+		.replace(/<([^>]+)>/g, "$1")
+		.replace(/[`*_~[\]()]/g, "")
+		.replace(/[^a-z0-9\s-]/g, "")
+		.trim()
+		.replace(/\s+/g, "-");
+}
+
+type HeadingRenderInfo = {
+	anchor: string;
+	block: Extract<MarkdownBlock, { type: "heading" }>;
+	depth: number;
+	index: number;
+	text: string;
+};
+
+function collectHeadingRenderInfo(
+	document: MarkdownDocument,
+): HeadingRenderInfo[] {
+	const numberingMode = document.renderOptions?.headingNumbering?.mode;
+	const headings = document.children.filter(
+		(block): block is Extract<MarkdownBlock, { type: "heading" }> =>
+			block.type === "heading",
+	);
+	const counters: number[] = [];
+
+	return headings.map((block, index) => {
+		const baseText = inlineText(block.children);
+		let text = baseText;
+
+		if (index > 0 && numberingMode !== undefined) {
+			const depth = block.depth;
+			while (counters.length <= depth) {
+				counters.push(0);
+			}
+			counters[depth] = (counters[depth] ?? 0) + 1;
+			for (
+				let childDepth = depth + 1;
+				childDepth < counters.length;
+				childDepth += 1
+			) {
+				counters[childDepth] = 0;
+			}
+
+			const prefix =
+				numberingMode === "book" && depth === 1
+					? `Chapter ${counters[depth]}. `
+					: `${counters.slice(1, depth + 1).join(".")}. `;
+			text = `${prefix}${baseText}`;
+		}
+
+		return {
+			anchor: slugifyHeading(text),
+			block,
+			depth: block.depth,
+			index,
+			text,
+		};
+	});
+}
+
+function renderTableOfContents(document: MarkdownDocument): string | undefined {
+	const tableOfContents = document.renderOptions?.tableOfContents;
+	if (tableOfContents === undefined) {
+		return undefined;
+	}
+
+	const entries = collectHeadingRenderInfo(document).slice(1);
+	if (entries.length === 0) {
+		return undefined;
+	}
+
+	const maxDepth = tableOfContents.maxDepth;
+	const visibleEntries = entries.filter((entry) =>
+		maxDepth === undefined ? true : entry.depth <= maxDepth,
+	);
+	if (visibleEntries.length === 0) {
+		return undefined;
+	}
+
+	const baseDepth = Math.min(...visibleEntries.map((entry) => entry.depth));
+	return [
+		"## Table of Contents",
+		"",
+		...visibleEntries.map(
+			(entry) =>
+				`${"  ".repeat(entry.depth - baseDepth)}- [${entry.text}](#${entry.anchor})`,
+		),
+	].join("\n");
+}
+
 function renderInline(
 	node: MarkdownInline,
 	flavor: MarkdownFlavorSpec,
@@ -71,10 +198,11 @@ function renderListItem(
 	blocks: MarkdownBlock[],
 	bullet: string,
 	flavor: MarkdownFlavorSpec,
+	context: RenderContext,
 ): string {
 	return blocks
 		.map((block, index) => {
-			const rendered = renderBlock(block, flavor).split("\n");
+			const rendered = renderBlock(block, flavor, context).split("\n");
 			const [firstLine, ...rest] = rendered;
 			const prefix = index === 0 ? `${bullet} ` : "  ";
 
@@ -90,10 +218,52 @@ function renderAdmonitionLabel(kind: string): string {
 	return kind.toUpperCase();
 }
 
-function renderBlock(block: MarkdownBlock, flavor: MarkdownFlavorSpec): string {
+type RenderContext = {
+	headingInfo: Map<MarkdownBlock, HeadingRenderInfo>;
+};
+
+function renderLabeledGroup(
+	block: Extract<MarkdownBlock, { type: "labeledGroup" }>,
+	flavor: MarkdownFlavorSpec,
+	context: RenderContext,
+): string {
+	const label = block.label
+		.map((child) => renderInline(child, flavor))
+		.join("");
+	const [firstChild, ...restChildren] = block.children;
+	if (firstChild?.type === "paragraph") {
+		const firstParagraph = firstChild.children
+			.map((child) => renderInline(child, flavor))
+			.join("");
+		const rest = restChildren.map((child) =>
+			renderBlock(child, flavor, context),
+		);
+		return [`**${label}:** ${firstParagraph}`, ...rest]
+			.filter((value) => value.length > 0)
+			.join("\n\n");
+	}
+
+	return [
+		`**${label}:**`,
+		...block.children.map((child) => renderBlock(child, flavor, context)),
+	]
+		.filter((value) => value.length > 0)
+		.join("\n\n");
+}
+
+function renderBlock(
+	block: MarkdownBlock,
+	flavor: MarkdownFlavorSpec,
+	context: RenderContext,
+): string {
 	switch (block.type) {
-		case "heading":
-			return `${"#".repeat(block.depth)} ${block.children.map((child) => renderInline(child, flavor)).join("")}`;
+		case "heading": {
+			const heading = context.headingInfo.get(block);
+			const text =
+				heading?.text ??
+				block.children.map((child) => renderInline(child, flavor)).join("");
+			return `${"#".repeat(block.depth)} ${text}`;
+		}
 		case "paragraph":
 			return block.children
 				.map((child) => renderInline(child, flavor))
@@ -134,7 +304,7 @@ function renderBlock(block: MarkdownBlock, flavor: MarkdownFlavorSpec): string {
 			return renderCodeBlock(block);
 		case "blockquote":
 			return block.children
-				.map((child) => renderBlock(child, flavor))
+				.map((child) => renderBlock(child, flavor, context))
 				.join("\n\n")
 				.split("\n")
 				.map((line) => (line.length > 0 ? `> ${line}` : ">"))
@@ -170,7 +340,7 @@ function renderBlock(block: MarkdownBlock, flavor: MarkdownFlavorSpec): string {
 						]
 					: [firstParagraph, ...block.children];
 			return children
-				.map((child) => renderBlock(child, flavor))
+				.map((child) => renderBlock(child, flavor, context))
 				.join("\n\n")
 				.split("\n")
 				.map((line) => (line.length > 0 ? `> ${line}` : ">"))
@@ -185,13 +355,16 @@ function renderBlock(block: MarkdownBlock, flavor: MarkdownFlavorSpec): string {
 							? `${(flavor.preserveOrderedListStart ? (block.start ?? 1) : 1) + index}.`
 							: "-",
 						flavor,
+						context,
 					),
 				)
 				.join("\n");
+		case "labeledGroup":
+			return renderLabeledGroup(block, flavor, context);
 		case "calloutList":
 			return block.items
 				.map((item) =>
-					renderListItem(item.children, `${item.ordinal}.`, flavor),
+					renderListItem(item.children, `${item.ordinal}.`, flavor, context),
 				)
 				.join("\n");
 		case "table": {
@@ -242,7 +415,7 @@ function renderBlock(block: MarkdownBlock, flavor: MarkdownFlavorSpec): string {
 				const lines = [
 					`[^${block.identifier}]: ${first.children.map((child) => renderInline(child, flavor)).join("")}`,
 					...rest.flatMap((child) =>
-						renderBlock(child, flavor)
+						renderBlock(child, flavor, context)
 							.split("\n")
 							.map((line) => `    ${line}`),
 					),
@@ -253,7 +426,7 @@ function renderBlock(block: MarkdownBlock, flavor: MarkdownFlavorSpec): string {
 			return [
 				`[^${block.identifier}]:`,
 				...block.children.flatMap((child) =>
-					renderBlock(child, flavor)
+					renderBlock(child, flavor, context)
 						.split("\n")
 						.map((line) => `    ${line}`),
 				),
@@ -269,8 +442,25 @@ export function renderMarkdown(
 	flavor: MarkdownFlavorName | MarkdownFlavorSpec = "gfm",
 ): string {
 	const resolvedFlavor = resolveMarkdownFlavor(flavor);
-	return `${document.children
-		.map((block) => renderBlock(block, resolvedFlavor))
-		.filter((block) => block.length > 0)
-		.join("\n\n")}\n`;
+	const headingInfo = new Map(
+		collectHeadingRenderInfo(document).map(
+			(entry) => [entry.block, entry] as const,
+		),
+	);
+	const context: RenderContext = { headingInfo };
+	const renderedBlocks = document.children
+		.map((block) => renderBlock(block, resolvedFlavor, context))
+		.filter((block) => block.length > 0);
+	const toc = renderTableOfContents(document);
+
+	if (toc === undefined) {
+		return `${renderedBlocks.join("\n\n")}\n`;
+	}
+
+	const [firstBlock, ...restBlocks] = renderedBlocks;
+	if (firstBlock === undefined) {
+		return `${toc}\n`;
+	}
+
+	return `${[firstBlock, toc, ...restBlocks].join("\n\n")}\n`;
 }

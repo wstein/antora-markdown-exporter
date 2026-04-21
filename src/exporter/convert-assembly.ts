@@ -8,6 +8,7 @@ import type {
 	MarkdownCodeBlock,
 	MarkdownDocument,
 	MarkdownHeading,
+	MarkdownHeadingNumberingMode,
 	MarkdownImage,
 	MarkdownIncludeDiagnostic,
 	MarkdownIncludeDirective,
@@ -15,6 +16,7 @@ import type {
 	MarkdownIncludeSemantics,
 	MarkdownIncludeTagSelection,
 	MarkdownInline,
+	MarkdownLabeledGroup,
 	MarkdownList,
 	MarkdownParagraph,
 	MarkdownTable,
@@ -28,6 +30,8 @@ import {
 } from "./include-metadata.js";
 
 const listMarkerPattern = /^\s*([*.]+)\s+(.*)$/;
+const labeledGroupPattern = /^(.+?)::(?:\s+(.*))?$/;
+const blockLabelPattern = /^\.(.+)$/u;
 const admonitionPattern = /^(NOTE|TIP|IMPORTANT|CAUTION|WARNING):\s+(.*)$/;
 const calloutPattern = /^<(\d+)>\s+(.*)$/;
 const includePattern = /^include::([^[]+)\[([^\]]*)\]$/;
@@ -40,6 +44,11 @@ type ParsedListMarker = {
 	content: string;
 	depth: number;
 	ordered: boolean;
+};
+
+type ParsedLabeledGroupMarker = {
+	content?: string;
+	label: string;
 };
 
 export type ConvertAssemblyToMarkdownIROptions = {
@@ -510,17 +519,6 @@ function parseInline(value: string): MarkdownInline[] {
 	return nodes;
 }
 
-function stripGeneratedHeadingPrefix(content: string, depth: number): string {
-	if (depth !== 1) {
-		return content;
-	}
-
-	return content.replace(
-		/^(?:Chapter|Appendix)\s+[0-9A-Z]+(?:\.[0-9A-Z]+)*\.\s+/u,
-		"",
-	);
-}
-
 function parseHeading(line: string): MarkdownHeading | undefined {
 	const match = line.match(/^(=+)\s+(.*)$/);
 	if (match === null) {
@@ -537,7 +535,105 @@ function parseHeading(line: string): MarkdownHeading | undefined {
 	return {
 		type: "heading",
 		depth,
-		children: parseInline(stripGeneratedHeadingPrefix(content.trim(), depth)),
+		children: parseInline(content.trim()),
+	};
+}
+
+function parseLabeledGroupMarker(
+	line: string,
+): ParsedLabeledGroupMarker | undefined {
+	const match = line.match(labeledGroupPattern);
+	if (match === null) {
+		return undefined;
+	}
+
+	const [, label, content] = match;
+	if (label === undefined) {
+		return undefined;
+	}
+
+	return {
+		label: label.trim(),
+		content: content?.trim(),
+	};
+}
+
+function parseBlockLabelMarker(
+	line: string,
+): ParsedLabeledGroupMarker | undefined {
+	const match = line.match(blockLabelPattern);
+	if (match === null) {
+		return undefined;
+	}
+
+	const [, raw] = match;
+	if (raw === undefined) {
+		return undefined;
+	}
+
+	const content = raw.trim();
+	if (content.length === 0) {
+		return undefined;
+	}
+	if (!/^\p{Lu}/u.test(content)) {
+		return undefined;
+	}
+
+	if (/^[\p{Lu}][\p{L}\p{N}/-]*(?: [\p{Lu}][\p{L}\p{N}/-]*)*$/u.test(content)) {
+		return {
+			label: content,
+		};
+	}
+
+	const separatorIndex = content.indexOf(" ");
+	if (separatorIndex === -1) {
+		return {
+			label: content,
+		};
+	}
+
+	const label = content.slice(0, separatorIndex).trim();
+	const remainder = content.slice(separatorIndex + 1).trim();
+	if (label.length === 0) {
+		return undefined;
+	}
+
+	return {
+		label,
+		content: remainder.length === 0 ? undefined : remainder,
+	};
+}
+
+function parseDocumentRenderOptions(
+	lines: string[],
+): MarkdownDocument["renderOptions"] {
+	const hasSectionNumbering = lines.some((line) => {
+		const trimmed = line.trim();
+		return trimmed === ":numbered:" || trimmed === ":sectnums:";
+	});
+	const hasBookDoctype = lines.some((line) => line.trim() === ":doctype: book");
+	const tocLine = lines.find((line) => line.trim().startsWith(":toc:"));
+	const toclevelsLine = lines.find((line) =>
+		line.trim().startsWith(":toclevels:"),
+	);
+	const maxDepthRaw = toclevelsLine?.split(":", 3)[2]?.trim();
+	const maxDepth =
+		maxDepthRaw === undefined ? undefined : Number.parseInt(maxDepthRaw, 10);
+
+	return {
+		headingNumbering: hasSectionNumbering
+			? {
+					mode: (hasBookDoctype
+						? "book"
+						: "section") satisfies MarkdownHeadingNumberingMode,
+				}
+			: undefined,
+		tableOfContents:
+			tocLine === undefined
+				? undefined
+				: {
+						maxDepth: Number.isFinite(maxDepth) ? maxDepth : undefined,
+					},
 	};
 }
 
@@ -693,6 +789,43 @@ function parseList(
 			],
 		});
 		index += 1;
+
+		let continuationIndex = index;
+		while (continuationIndex < lines.length) {
+			const continuationLine = lines[continuationIndex]?.trim() ?? "";
+			if (continuationLine.length === 0) {
+				break;
+			}
+			if (continuationLine !== "+") {
+				break;
+			}
+
+			continuationIndex += 1;
+			while (
+				continuationIndex < lines.length &&
+				(lines[continuationIndex]?.trim() ?? "").length === 0
+			) {
+				continuationIndex += 1;
+			}
+
+			if (continuationIndex >= lines.length) {
+				break;
+			}
+
+			const continuation = parseBlockAt(lines, continuationIndex);
+			if (continuation.blocks.length === 0) {
+				break;
+			}
+
+			const currentItem =
+				destinationList.items[destinationList.items.length - 1];
+			currentItem?.children.push(...continuation.blocks);
+			continuationIndex = continuation.nextIndex;
+		}
+		index = continuationIndex;
+		while (index < lines.length && (lines[index]?.trim() ?? "").length === 0) {
+			index += 1;
+		}
 	}
 
 	return { block: rootList, nextIndex: index };
@@ -812,6 +945,10 @@ function isCommentLine(line: string): boolean {
 	);
 }
 
+function isConditionalDirectiveLine(line: string): boolean {
+	return /^(?:ifdef|ifndef|ifeval|endif)::/.test(line);
+}
+
 function isGenericBlockAttributeLine(line: string): boolean {
 	return /^\[[^\]]+\]$/.test(line);
 }
@@ -887,6 +1024,189 @@ function parseStandaloneImage(line: string): MarkdownParagraph | undefined {
 				alt: parseInline(token.alt),
 			},
 		],
+	};
+}
+
+function parseSourceBlock(
+	lines: string[],
+	startIndex: number,
+): { block: MarkdownBlock; nextIndex: number } {
+	const line = lines[startIndex]?.trim() ?? "";
+	const sourceMatch = line.match(/^\[source,?([^\],]+)?(?:,([^\]]+))?\]$/);
+	const language = sourceMatch?.[1]?.trim() || undefined;
+	const meta = sourceMatch?.[2]?.trim() || undefined;
+	const openingFence = lines[startIndex + 1]?.trim();
+
+	if (openingFence !== "----") {
+		return {
+			block: {
+				type: "unsupported",
+				reason: "source block fence is not closed correctly",
+			},
+			nextIndex: startIndex + 1,
+		};
+	}
+
+	let index = startIndex + 2;
+	const codeLines: string[] = [];
+	const callouts = new Set<number>();
+	while (index < lines.length && lines[index]?.trim() !== "----") {
+		const codeLine = lines[index] ?? "";
+		for (const match of codeLine.matchAll(/<(\d+)>/g)) {
+			const rawNumber = match[1];
+			if (rawNumber !== undefined) {
+				callouts.add(Number(rawNumber));
+			}
+		}
+		codeLines.push(codeLine);
+		index += 1;
+	}
+
+	if (index >= lines.length) {
+		return {
+			block: {
+				type: "unsupported",
+				reason: "source block fence is not closed correctly",
+			},
+			nextIndex: index,
+		};
+	}
+
+	return {
+		block: <MarkdownCodeBlock>{
+			type: "codeBlock",
+			language,
+			meta,
+			value: codeLines.join("\n"),
+			callouts: callouts.size === 0 ? undefined : [...callouts],
+		},
+		nextIndex: index + 1,
+	};
+}
+
+function parseQuoteBlock(
+	lines: string[],
+	startIndex: number,
+): { block: MarkdownBlock; nextIndex: number } {
+	if (lines[startIndex + 1]?.trim() !== "____") {
+		return {
+			block: {
+				type: "unsupported",
+				reason: "quote block fence is not closed correctly",
+			},
+			nextIndex: startIndex + 1,
+		};
+	}
+
+	let index = startIndex + 2;
+	const quoteLines: string[] = [];
+	while (index < lines.length && lines[index]?.trim() !== "____") {
+		quoteLines.push(lines[index] ?? "");
+		index += 1;
+	}
+
+	if (index >= lines.length) {
+		return {
+			block: {
+				type: "unsupported",
+				reason: "quote block fence is not closed correctly",
+			},
+			nextIndex: index,
+		};
+	}
+
+	return {
+		block: <MarkdownBlockQuote>{
+			type: "blockquote",
+			children: parseBlocks(quoteLines),
+		},
+		nextIndex: index + 1,
+	};
+}
+
+function parseParagraphBlock(
+	lines: string[],
+	startIndex: number,
+): { block: MarkdownParagraph; nextIndex: number } {
+	const paragraphLines = [(lines[startIndex] ?? "").trim()];
+	let index = startIndex + 1;
+
+	while (index < lines.length) {
+		const nextLine = lines[index] ?? "";
+		if (nextLine.trim().length === 0) {
+			index += 1;
+			break;
+		}
+
+		if (isBlockBoundary(nextLine.trimStart())) {
+			break;
+		}
+
+		paragraphLines.push(nextLine.trim());
+		index += 1;
+	}
+
+	return {
+		block: <MarkdownParagraph>{
+			type: "paragraph",
+			children: parseInline(paragraphLines.join(" ")),
+		},
+		nextIndex: index,
+	};
+}
+
+function parseLabeledGroup(
+	lines: string[],
+	startIndex: number,
+): { block: MarkdownLabeledGroup; nextIndex: number } | undefined {
+	const marker = parseLabeledGroupMarker(lines[startIndex]?.trim() ?? "");
+	if (marker === undefined) {
+		return undefined;
+	}
+
+	if (marker.content !== undefined && marker.content.length > 0) {
+		return {
+			block: {
+				type: "labeledGroup",
+				label: parseInline(marker.label),
+				children: [
+					{
+						type: "paragraph",
+						children: parseInline(marker.content),
+					},
+				],
+			},
+			nextIndex: startIndex + 1,
+		};
+	}
+
+	let index = startIndex + 1;
+	while (index < lines.length && lines[index]?.trim().length === 0) {
+		index += 1;
+	}
+
+	const contentLines: string[] = [];
+	while (index < lines.length) {
+		const trimmed = lines[index]?.trim() ?? "";
+		if (
+			contentLines.length > 0 &&
+			(parseHeading(trimmed) !== undefined ||
+				parseLabeledGroupMarker(trimmed) !== undefined)
+		) {
+			break;
+		}
+
+		contentLines.push(lines[index] ?? "");
+		index += 1;
+	}
+
+	return {
+		block: {
+			type: "labeledGroup",
+			label: parseInline(marker.label),
+			children: parseBlocks(contentLines),
+		},
+		nextIndex: index,
 	};
 }
 
@@ -1323,10 +1643,13 @@ function isBlockBoundary(line: string): boolean {
 		parseHtmlAnchor(line) !== undefined ||
 		line.match(pageAliasesPattern) !== null ||
 		isAttributeEntry(line) ||
+		isConditionalDirectiveLine(line) ||
 		isCommentLine(line) ||
 		isGenericBlockAttributeLine(line) ||
 		parseTableAlignment(line) !== undefined ||
 		parseListMarker(line) !== undefined ||
+		parseLabeledGroupMarker(line) !== undefined ||
+		parseBlockLabelMarker(line) !== undefined ||
 		isOpenBlockDelimiter(line) ||
 		isPageBreak(line) ||
 		line === "[quote]" ||
@@ -1339,272 +1662,322 @@ function isBlockBoundary(line: string): boolean {
 	);
 }
 
+function attachAnchorsToHeadings(blocks: MarkdownBlock[]): MarkdownBlock[] {
+	const attached: MarkdownBlock[] = [];
+	let pendingAnchor: string | undefined;
+
+	for (const block of blocks) {
+		if (block.type === "anchor") {
+			pendingAnchor = block.identifier;
+			continue;
+		}
+
+		if (block.type === "heading" && pendingAnchor !== undefined) {
+			attached.push({
+				...block,
+				identifier: pendingAnchor,
+			});
+			pendingAnchor = undefined;
+			continue;
+		}
+
+		if (pendingAnchor !== undefined) {
+			attached.push({
+				type: "anchor",
+				identifier: pendingAnchor,
+			});
+			pendingAnchor = undefined;
+		}
+		attached.push(block);
+	}
+
+	if (pendingAnchor !== undefined) {
+		attached.push({
+			type: "anchor",
+			identifier: pendingAnchor,
+		});
+	}
+
+	return attached;
+}
+
+function parseBlockAt(
+	lines: string[],
+	startIndex: number,
+): { blocks: MarkdownBlock[]; nextIndex: number } {
+	const rawLine = lines[startIndex] ?? "";
+	const line = rawLine.trimEnd();
+
+	if (line.trim().length === 0) {
+		return { blocks: [], nextIndex: startIndex + 1 };
+	}
+
+	const heading = parseHeading(line.trimStart());
+	if (heading !== undefined) {
+		return {
+			blocks: [heading],
+			nextIndex: startIndex + 1,
+		};
+	}
+
+	const anchorId = parseAnchor(line.trim());
+	if (anchorId !== undefined) {
+		return {
+			blocks: [
+				{
+					type: "anchor",
+					identifier: anchorId,
+				},
+			],
+			nextIndex: startIndex + 1,
+		};
+	}
+
+	const htmlAnchorId = parseHtmlAnchor(line.trim());
+	if (htmlAnchorId !== undefined) {
+		return {
+			blocks: [
+				{
+					type: "anchor",
+					identifier: htmlAnchorId,
+				},
+			],
+			nextIndex: startIndex + 1,
+		};
+	}
+
+	const pageAliasesMatch = line.trim().match(pageAliasesPattern);
+	if (pageAliasesMatch?.[1] !== undefined) {
+		return {
+			blocks: [
+				{
+					type: "pageAliases",
+					aliases: pageAliasesMatch[1]
+						.split(",")
+						.map((alias) => alias.trim())
+						.filter(Boolean),
+				},
+			],
+			nextIndex: startIndex + 1,
+		};
+	}
+
+	if (
+		isAttributeEntry(line.trim()) ||
+		isConditionalDirectiveLine(line.trim()) ||
+		isCommentLine(line.trim()) ||
+		(isGenericBlockAttributeLine(line.trim()) &&
+			parseTableAlignment(line.trim()) === undefined &&
+			line.trim() !== "[quote]" &&
+			!line.trim().startsWith("[source"))
+	) {
+		return { blocks: [], nextIndex: startIndex + 1 };
+	}
+
+	const includeDirective = parseIncludeDirectiveMarker(line.trim());
+	if (includeDirective !== undefined) {
+		return {
+			blocks: [includeDirective],
+			nextIndex: startIndex + 1,
+		};
+	}
+
+	if (isPageBreak(line.trim()) || line.trim() === "'''") {
+		return {
+			blocks: [{ type: "thematicBreak" }],
+			nextIndex: startIndex + 1,
+		};
+	}
+
+	const tableAlignment = parseTableAlignment(line.trim());
+	if (
+		tableAlignment !== undefined &&
+		lines[startIndex + 1]?.trim() === "|==="
+	) {
+		const { block, nextIndex } = parseTable(
+			lines,
+			startIndex + 1,
+			tableAlignment,
+		);
+		return {
+			blocks: [block],
+			nextIndex,
+		};
+	}
+
+	if (isOpenBlockDelimiter(line.trim())) {
+		let index = startIndex + 1;
+		const blockLines: string[] = [];
+		while (index < lines.length && !isOpenBlockDelimiter(lines[index] ?? "")) {
+			blockLines.push(lines[index] ?? "");
+			index += 1;
+		}
+
+		if (index >= lines.length) {
+			return {
+				blocks: [
+					{
+						type: "unsupported",
+						reason: "open block fence is not closed correctly",
+					},
+				],
+				nextIndex: index,
+			};
+		}
+
+		return {
+			blocks: parseBlocks(blockLines),
+			nextIndex: index + 1,
+		};
+	}
+
+	if (parseListMarker(line) !== undefined) {
+		const { block, nextIndex } = parseList(lines, startIndex);
+		return {
+			blocks: [block],
+			nextIndex,
+		};
+	}
+
+	const labeledGroup = parseLabeledGroup(lines, startIndex);
+	if (labeledGroup !== undefined) {
+		return {
+			blocks: [labeledGroup.block],
+			nextIndex: labeledGroup.nextIndex,
+		};
+	}
+
+	const blockLabel = parseBlockLabelMarker(line.trim());
+	if (blockLabel !== undefined) {
+		if (blockLabel.content === undefined) {
+			let index = startIndex + 1;
+			while (
+				index < lines.length &&
+				(lines[index]?.trim() ?? "").length === 0
+			) {
+				index += 1;
+			}
+
+			const contentLines: string[] = [];
+			while (index < lines.length) {
+				const trimmed = lines[index]?.trim() ?? "";
+				if (
+					contentLines.length > 0 &&
+					(parseHeading(trimmed) !== undefined ||
+						parseLabeledGroupMarker(trimmed) !== undefined ||
+						parseBlockLabelMarker(trimmed) !== undefined)
+				) {
+					break;
+				}
+				contentLines.push(lines[index] ?? "");
+				index += 1;
+			}
+
+			return {
+				blocks: [
+					{
+						type: "labeledGroup",
+						label: parseInline(blockLabel.label),
+						children: parseBlocks(contentLines),
+					},
+				],
+				nextIndex: index,
+			};
+		}
+
+		return {
+			blocks: [
+				{
+					type: "labeledGroup",
+					label: parseInline(blockLabel.label),
+					children: [
+						{
+							type: "paragraph",
+							children: parseInline(blockLabel.content ?? ""),
+						},
+					],
+				},
+			],
+			nextIndex: startIndex + 1,
+		};
+	}
+
+	if (line.trim() === "|===") {
+		const { block, nextIndex } = parseTable(lines, startIndex);
+		return {
+			blocks: [block],
+			nextIndex,
+		};
+	}
+
+	if (line.trimStart().startsWith("include::")) {
+		return {
+			blocks: [
+				{
+					type: "unsupported",
+					reason: `include directive is not yet inlined: ${line.trim()}`,
+				},
+			],
+			nextIndex: startIndex + 1,
+		};
+	}
+
+	const admonition = parseAdmonition(line.trimStart());
+	if (admonition !== undefined) {
+		return {
+			blocks: [admonition],
+			nextIndex: startIndex + 1,
+		};
+	}
+
+	const standaloneImage = parseStandaloneImage(line);
+	if (standaloneImage !== undefined) {
+		return {
+			blocks: [standaloneImage],
+			nextIndex: startIndex + 1,
+		};
+	}
+
+	if (line.startsWith("[source")) {
+		const { block, nextIndex } = parseSourceBlock(lines, startIndex);
+		const blocks: MarkdownBlock[] = [block];
+		const { block: calloutList, nextIndex: calloutIndex } = parseCalloutList(
+			lines,
+			nextIndex,
+		);
+		if (calloutList !== undefined) {
+			blocks.push(calloutList);
+			return { blocks, nextIndex: calloutIndex };
+		}
+		return { blocks, nextIndex };
+	}
+
+	if (line.trim() === "[quote]") {
+		const { block, nextIndex } = parseQuoteBlock(lines, startIndex);
+		return {
+			blocks: [block],
+			nextIndex,
+		};
+	}
+
+	const { block, nextIndex } = parseParagraphBlock(lines, startIndex);
+	return {
+		blocks: [block],
+		nextIndex,
+	};
+}
+
 function parseBlocks(lines: string[]): MarkdownBlock[] {
 	const children: MarkdownBlock[] = [];
 	let index = 0;
 
 	while (index < lines.length) {
-		const rawLine = lines[index] ?? "";
-		const line = rawLine.trimEnd();
-
-		if (line.trim().length === 0) {
-			index += 1;
-			continue;
-		}
-
-		const heading = parseHeading(line.trimStart());
-		if (heading !== undefined) {
-			children.push(heading);
-			index += 1;
-			continue;
-		}
-
-		const anchorId = parseAnchor(line.trim());
-		if (anchorId !== undefined) {
-			children.push({
-				type: "anchor",
-				identifier: anchorId,
-			});
-			index += 1;
-			continue;
-		}
-
-		const htmlAnchorId = parseHtmlAnchor(line.trim());
-		if (htmlAnchorId !== undefined) {
-			children.push({
-				type: "anchor",
-				identifier: htmlAnchorId,
-			});
-			index += 1;
-			continue;
-		}
-
-		const pageAliasesMatch = line.trim().match(pageAliasesPattern);
-		if (pageAliasesMatch?.[1] !== undefined) {
-			children.push({
-				type: "pageAliases",
-				aliases: pageAliasesMatch[1]
-					.split(",")
-					.map((alias) => alias.trim())
-					.filter(Boolean),
-			});
-			index += 1;
-			continue;
-		}
-
-		if (
-			isAttributeEntry(line.trim()) ||
-			isCommentLine(line.trim()) ||
-			(isGenericBlockAttributeLine(line.trim()) &&
-				parseTableAlignment(line.trim()) === undefined &&
-				line.trim() !== "[quote]" &&
-				!line.trim().startsWith("[source"))
-		) {
-			index += 1;
-			continue;
-		}
-
-		const includeDirective = parseIncludeDirectiveMarker(line.trim());
-		if (includeDirective !== undefined) {
-			children.push(includeDirective);
-			index += 1;
-			continue;
-		}
-
-		if (isPageBreak(line.trim())) {
-			children.push({ type: "thematicBreak" });
-			index += 1;
-			continue;
-		}
-
-		if (line.trim() === "'''") {
-			children.push({ type: "thematicBreak" });
-			index += 1;
-			continue;
-		}
-
-		const tableAlignment = parseTableAlignment(line.trim());
-		if (tableAlignment !== undefined && lines[index + 1]?.trim() === "|===") {
-			const { block, nextIndex } = parseTable(lines, index + 1, tableAlignment);
-			children.push(block);
-			index = nextIndex;
-			continue;
-		}
-
-		if (isOpenBlockDelimiter(line.trim())) {
-			index += 1;
-			const blockLines: string[] = [];
-			while (
-				index < lines.length &&
-				!isOpenBlockDelimiter(lines[index] ?? "")
-			) {
-				blockLines.push(lines[index] ?? "");
-				index += 1;
-			}
-
-			if (index >= lines.length) {
-				children.push({
-					type: "unsupported",
-					reason: "open block fence is not closed correctly",
-				});
-				continue;
-			}
-
-			children.push(...parseBlocks(blockLines));
-			index += 1;
-			continue;
-		}
-
-		if (parseListMarker(line) !== undefined) {
-			const { block, nextIndex } = parseList(lines, index);
-			children.push(block);
-			index = nextIndex;
-			continue;
-		}
-
-		if (line.trim() === "|===") {
-			const { block, nextIndex } = parseTable(lines, index);
-			children.push(block);
-			index = nextIndex;
-			continue;
-		}
-
-		if (line.trimStart().startsWith("include::")) {
-			children.push({
-				type: "unsupported",
-				reason: `include directive is not yet inlined: ${line.trim()}`,
-			});
-			index += 1;
-			continue;
-		}
-
-		const admonition = parseAdmonition(line.trimStart());
-		if (admonition !== undefined) {
-			children.push(admonition);
-			index += 1;
-			continue;
-		}
-
-		const standaloneImage = parseStandaloneImage(line);
-		if (standaloneImage !== undefined) {
-			children.push(standaloneImage);
-			index += 1;
-			continue;
-		}
-
-		if (line.startsWith("[source")) {
-			const sourceMatch = line.match(/^\[source,?([^\],]+)?(?:,([^\]]+))?\]$/);
-			const language = sourceMatch?.[1]?.trim() || undefined;
-			const meta = sourceMatch?.[2]?.trim() || undefined;
-			const openingFence = lines[index + 1]?.trim();
-
-			if (openingFence !== "----") {
-				children.push({
-					type: "unsupported",
-					reason: "source block fence is not closed correctly",
-				});
-				index += 1;
-				continue;
-			}
-
-			index += 2;
-			const codeLines: string[] = [];
-			const callouts = new Set<number>();
-			while (index < lines.length && lines[index]?.trim() !== "----") {
-				const codeLine = lines[index] ?? "";
-				for (const match of codeLine.matchAll(/<(\d+)>/g)) {
-					const rawNumber = match[1];
-					if (rawNumber !== undefined) {
-						callouts.add(Number(rawNumber));
-					}
-				}
-				codeLines.push(codeLine);
-				index += 1;
-			}
-
-			if (index >= lines.length) {
-				children.push({
-					type: "unsupported",
-					reason: "source block fence is not closed correctly",
-				});
-				continue;
-			}
-
-			children.push(<MarkdownCodeBlock>{
-				type: "codeBlock",
-				language,
-				meta,
-				value: codeLines.join("\n"),
-				callouts: callouts.size === 0 ? undefined : [...callouts],
-			});
-			index += 1;
-
-			const { block: calloutList, nextIndex } = parseCalloutList(lines, index);
-			if (calloutList !== undefined) {
-				children.push(calloutList);
-				index = nextIndex;
-			}
-			continue;
-		}
-
-		if (line.trim() === "[quote]") {
-			if (lines[index + 1]?.trim() !== "____") {
-				children.push({
-					type: "unsupported",
-					reason: "quote block fence is not closed correctly",
-				});
-				index += 1;
-				continue;
-			}
-
-			index += 2;
-			const quoteLines: string[] = [];
-			while (index < lines.length && lines[index]?.trim() !== "____") {
-				quoteLines.push(lines[index] ?? "");
-				index += 1;
-			}
-
-			if (index >= lines.length) {
-				children.push({
-					type: "unsupported",
-					reason: "quote block fence is not closed correctly",
-				});
-				continue;
-			}
-
-			children.push(<MarkdownBlockQuote>{
-				type: "blockquote",
-				children: parseBlocks(quoteLines),
-			});
-			index += 1;
-			continue;
-		}
-
-		const paragraphLines = [line.trim()];
-		index += 1;
-
-		while (index < lines.length) {
-			const nextLine = lines[index] ?? "";
-			if (nextLine.trim().length === 0) {
-				index += 1;
-				break;
-			}
-
-			if (isBlockBoundary(nextLine.trimStart())) {
-				break;
-			}
-
-			paragraphLines.push(nextLine.trim());
-			index += 1;
-		}
-
-		children.push(<MarkdownParagraph>{
-			type: "paragraph",
-			children: parseInline(paragraphLines.join(" ")),
-		});
+		const { blocks, nextIndex } = parseBlockAt(lines, index);
+		children.push(...blocks);
+		index = nextIndex;
 	}
 
-	return children;
+	return attachAnchorsToHeadings(children);
 }
 
 export function convertAssemblyToMarkdownIR(
@@ -1616,6 +1989,7 @@ export function convertAssemblyToMarkdownIR(
 
 	return {
 		type: "document",
+		renderOptions: parseDocumentRenderOptions(lines),
 		children: parseBlocks(lines),
 	};
 }

@@ -1,7 +1,6 @@
 export { convertAssemblyToMarkdownIR } from "./exporter/convert-assembly.js";
 export {
 	createMarkdownConverter,
-	prependMarkdownTableOfContents,
 	register,
 	renderAssemblyMarkdown,
 } from "./extension/index.js";
