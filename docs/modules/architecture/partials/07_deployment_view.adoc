@@ -1,6 +1,5 @@
 [[section-deployment-view]]
 
-
 == Deployment View
 
 ifdef::arc42help[]
@@ -33,7 +32,6 @@ zoom into this black box using additional deployment diagrams:
 * UML offers deployment diagrams to express that view. Use it, probably with nested diagrams,
 when your infrastructure is more complex.
 * When your (hardware) stakeholders prefer other kinds of diagrams rather than a deployment diagram, let them use any kind that is able to show nodes and channels of the infrastructure.
-
 
 .Further Information
 
@@ -70,7 +68,6 @@ _<explanation in text form>_
 
 Mapping of Building Blocks to Infrastructure::
 _<description of the mapping>_
-
 
 === Infrastructure Level 2
 

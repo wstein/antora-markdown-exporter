@@ -1,7 +1,6 @@
 [[section-solution-strategy]]
 == Solution Strategy
 
-
 The repository follows one explicit toolchain policy: development commands are delegated through the `Makefile`, which defaults to `PM ?= bun`, while npm remains the explicit publish transport and alternate package-manager path. This keeps command behavior predictable and avoids lockfile-based branching.
 
 That toolchain strategy supports the broader architectural strategy:
@@ -9,8 +8,3 @@ That toolchain strategy supports the broader architectural strategy:
 * keep the core contract inside repository-owned TypeScript modules instead of delegating semantics to external document-conversion chains
 * keep development and CI entrypoints narrow and explicit through `make`, `package.json` scripts, and release-check automation
 * accept pragmatic extension through explicit policy and tests rather than by loosening invariants
-
-Provenance:
-
-* Note: `Build tooling uses bun-first package manager fallback`
-* Code: `Makefile`, `package.json`, `README.md`

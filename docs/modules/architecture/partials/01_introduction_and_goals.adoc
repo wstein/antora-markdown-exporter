@@ -30,11 +30,6 @@ The notes `Exporter pipeline uses Assembler and a direct TypeScript converter`, 
 
 One important uncertainty must remain explicit: the notes and README describe an Antora Assembler based pipeline, but the code currently exposes the post-assembly conversion boundary and a scaffolded extension helper rather than a full Antora extension registration contract. `src/extension/index.ts` exports `createAntoraExtensionScaffold()` with `kind: "scaffold"`, and no runtime registration flow equivalent to `registerAntoraExtension` exists yet. This is an intentional honesty boundary, not an implementation bug.
 
-Provenance:
-
-* Notes: `Exporter pipeline uses Assembler and a direct TypeScript converter`; `Markdown IR is the canonical render boundary`; `Flavor renderers are syntax adapters over one semantic layer`; `Fallback selection is centralized across markdown flavors`; `Transparent extensions are not fallback mechanisms`; `The architecture favors explicit extension over implicit degradation`; `Strict architecture must be extended without weakening invariants`; `Include metadata transport is an internal implementation detail`; `Xref target resolution is a separate lowering phase`; `Antora extension entrypoints must reflect actual integration maturity`
-* Code: `src/index.ts`, `src/extension/index.ts`, `src/exporter/convert-assembly.ts`, `src/exporter/include-metadata.ts`, `src/markdown/ir.ts`, `src/markdown/flavor.ts`, `src/markdown/fallback.ts`, `src/markdown/xref-resolution.ts`, `src/markdown/include-diagnostics.ts`
-
 === Quality Goals
 [options="header",cols="1,2,2"]
 |===
@@ -57,11 +52,6 @@ Provenance:
 |The note `Antora extension entrypoints must reflect actual integration maturity` requires naming and public examples to match what the package actually ships today.
 |===
 
-Provenance:
-
-* Notes: `Markdown IR is the canonical render boundary`; `Flavor renderers are syntax adapters over one semantic layer`; `Testing relies on golden fixtures and deterministic snapshots`; `Transparent extensions are not fallback mechanisms`; `The architecture favors explicit extension over implicit degradation`; `Strict architecture must be extended without weakening invariants`; `Inspection helpers expose normalized validation surfaces`; `Antora extension entrypoints must reflect actual integration maturity`
-* Code: `src/markdown/ir.ts`, `src/markdown/include-diagnostics.ts`, `tests/integration/fixture-golden.test.ts`, `tests/unit/extension-scaffold.test.ts`
-
 === Stakeholders
 [options="header",cols="1,2,2"]
 |===
@@ -83,8 +73,3 @@ Provenance:
 |Upstream AsciiDoc and Antora authors
 |Need preserved semantics for headings, xrefs, includes, admonitions, tables, images, anchors, aliases, and valid fenced extensions, plus visible degradation for unsupported constructs.
 |===
-
-Provenance:
-
-* Notes: `Release and package identity use scoped npm publishing`; `Inspection helpers expose normalized validation surfaces`; `Repository scripts and referenced files must stay in lockstep`; `Reference corpus should cover navigation xrefs includes and admonitions`
-* Code: `README.md`, `package.json`, `.github/workflows/ci.yml`, `.github/workflows/release.yml`, `scripts/inspection-report.ts`

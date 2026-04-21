@@ -1,7 +1,6 @@
 [[section-concepts]]
 == Cross-cutting Concepts
 
-
 === Deterministic Contract Testing
 
 The cross-cutting concept is the testing model described by the note `Testing relies on golden fixtures and deterministic snapshots`.
@@ -14,8 +13,3 @@ The repository validates architecture boundaries at multiple levels:
 * inspection-helper tests keep validation surfaces reusable and deterministic
 
 This concept cuts across the exporter, markdown kernel, inspection layer, packaging, and release automation. It is how the architecture proves that semantic decisions remain centralized and that flavor-specific behavior does not drift invisibly.
-
-Provenance:
-
-* Note: `Testing relies on golden fixtures and deterministic snapshots`
-* Code: `tests/unit/**`, `tests/integration/fixture-golden.test.ts`, `tests/integration/reference-antora.test.ts`, `tests/unit/include-diagnostics.test.ts`, `vitest.config.ts`

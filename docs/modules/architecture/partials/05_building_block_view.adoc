@@ -1,6 +1,5 @@
 [[section-building-block-view]]
 
-
 == Building Block View
 
 === Whitebox Overall System
@@ -83,8 +82,3 @@ Inspection helpers and scripts expose reusable validation outputs so downstream 
 Directory/File Location::
 
 `src/markdown/include-diagnostics.ts`, `scripts/inspection-report.ts`, `scripts/release-check.mjs`, `package.json`
-
-Provenance:
-
-* Notes: `Exporter pipeline uses Assembler and a direct TypeScript converter`; `Markdown IR is the canonical render boundary`; `Flavor renderers are syntax adapters over one semantic layer`; `Include metadata transport is an internal implementation detail`; `Xref target resolution is a separate lowering phase`; `Inspection helpers expose normalized validation surfaces`; `Release and package identity use scoped npm publishing`
-* Code: `src/exporter/convert-assembly.ts`, `src/exporter/include-metadata.ts`, `src/markdown/**`, `scripts/inspection-report.ts`, `scripts/release-check.mjs`, `package.json`

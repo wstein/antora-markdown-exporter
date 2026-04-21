@@ -1,7 +1,6 @@
 [[section-design-decisions]]
 == Architecture Decisions
 
-
 ifdef::arc42help[]
 [role="arc42help"]
 ****

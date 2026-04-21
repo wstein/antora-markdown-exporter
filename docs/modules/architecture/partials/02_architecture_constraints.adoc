@@ -1,7 +1,6 @@
 [[section-architecture-constraints]]
 == Architecture Constraints
 
-
 [options="header",cols="1,2,3"]
 |===
 |Constraint |Source |Implication
@@ -14,8 +13,3 @@
 |Note `Repository scripts and referenced files must stay in lockstep`; `tests/unit/repository-contract.test.ts`; `package.json`
 |Build, test, release, README examples, and package metadata may only reference files that actually exist. Cleanup of stale scaffolding is a correctness constraint, not optional polish.
 |===
-
-Provenance:
-
-* Notes: `Reference fixtures are curated and provenance locked`; `Repository scripts and referenced files must stay in lockstep`
-* Code: `tests/reference/manifest.json`, `tests/unit/repository-contract.test.ts`, `package.json`, `README.md`

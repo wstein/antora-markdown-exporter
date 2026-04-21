@@ -1,7 +1,6 @@
 [[section-runtime-view]]
 == Runtime View
 
-
 === Convert Assembled Content To Flavor-Specific Markdown
 
 This scenario is based on the notes `Exporter pipeline uses Assembler and a direct TypeScript converter` and `Release and package identity use scoped npm publishing`.
@@ -30,8 +29,3 @@ This scenario is based on the notes `Inspection helpers expose normalized valida
 Notable aspect::
 
 Validation uses one maintained normalized inspection surface instead of separate ad-hoc traversals in CI scripts.
-
-Provenance:
-
-* Notes: `Exporter pipeline uses Assembler and a direct TypeScript converter`; `Inspection helpers expose normalized validation surfaces`; `Release and package identity use scoped npm publishing`
-* Code: `src/exporter/convert-assembly.ts`, `src/markdown/normalize.ts`, `src/markdown/xref-resolution.ts`, `src/markdown/include-diagnostics.ts`, `scripts/inspection-report.ts`

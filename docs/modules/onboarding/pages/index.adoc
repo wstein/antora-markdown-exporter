@@ -26,11 +26,6 @@ Current conflict to keep in mind:
 
 As a contributor, assume the markdown kernel is real and tested, while the outer Antora registration story is still incomplete unless you can point to code that proves otherwise.
 
-Provenance:
-
-* Notes: `Antora extension entrypoints must reflect actual integration maturity`; `Exporter pipeline uses Assembler and a direct TypeScript converter`
-* Code: `src/extension/index.ts`, `README.md`
-
 === Think In Pipeline Stages
 
 The note `Exporter pipeline uses Assembler and a direct TypeScript converter` defines the core project shape:
@@ -51,11 +46,6 @@ This is why the implementation is split across:
 
 If you are touching behavior after conversion starts, your change should usually land in the exporter, IR, normalization, lowering, renderer, or tests, not in an external conversion shortcut.
 
-Provenance:
-
-* Note: `Exporter pipeline uses Assembler and a direct TypeScript converter`
-* Code: `src/exporter/convert-assembly.ts`, `src/markdown/ir.ts`, `src/markdown/normalize.ts`, `src/markdown/render/**`, `src/markdown/xref-resolution.ts`
-
 === The Markdown IR Is The Contract
 
 The note `Markdown IR is the canonical render boundary` is the main architectural rule for contributors.
@@ -69,11 +59,6 @@ Contributor rule of thumb:
 * if a feature cannot be represented semantically yet, do not hide that fact behind loose renderer behavior
 
 This separation is what keeps regressions explainable and testable.
-
-Provenance:
-
-* Note: `Markdown IR is the canonical render boundary`
-* Code: `src/markdown/ir.ts`, `src/markdown/normalize.ts`
 
 === Renderers Adapt Syntax, They Do Not Redefine Meaning
 
@@ -89,11 +74,6 @@ That means:
 
 When adding or changing a flavor, keep the semantic layer shared and the syntax surface explicit.
 
-Provenance:
-
-* Note: `Flavor renderers are syntax adapters over one semantic layer`
-* Code: `src/markdown/flavor.ts`, `src/markdown/render/**`
-
 === Fallback Is A Policy Layer
 
 The note `Fallback selection is centralized across markdown flavors` defines a contributor boundary that prevents subtle regressions.
@@ -107,11 +87,6 @@ This matters because fallback behavior is part of the contract:
 * regressions should be testable in one policy surface
 
 If you are about to add a one-off renderer branch for unsupported behavior, stop and check whether the change belongs in the fallback layer instead.
-
-Provenance:
-
-* Note: `Fallback selection is centralized across markdown flavors`
-* Code: `src/markdown/fallback.ts`, `tests/integration/raw-html-policy.test.ts`, `tests/unit/fallback.test.ts`
 
 === Transparent Extensions Are Not Fallback
 
@@ -129,11 +104,6 @@ For contributors, this distinction is critical:
 * fallback is for controlled degradation, not for every unfamiliar feature
 * strictness should lead to explicit extension points, not silent lossy rewrites
 
-Provenance:
-
-* Notes: `Transparent extensions are not fallback mechanisms`; `The architecture favors explicit extension over implicit degradation`; `Strict architecture must be extended without weakening invariants`
-* Code: `tests/integration/fenced-extension-policy.test.ts`, `tests/unit/render-code-blocks.test.ts`, `src/markdown/ir.ts`
-
 === Include Metadata Is Private, Include Semantics Are Public
 
 The note `Include metadata transport is an internal implementation detail` tells contributors what to preserve during refactors.
@@ -146,11 +116,6 @@ When touching includes:
 * preserve provenance
 * preserve inspectability
 * do not leak the raw marker format into unrelated parser or renderer code
-
-Provenance:
-
-* Note: `Include metadata transport is an internal implementation detail`
-* Code: `src/exporter/include-metadata.ts`, `tests/unit/include-metadata.test.ts`, `src/exporter/convert-assembly.ts`
 
 === Xref Routing Is Lowering, Not Rendering
 
@@ -165,11 +130,6 @@ If you need to change xref behavior, start by deciding whether you are changing:
 * final markdown string formatting
 
 Mixing those layers makes xref regressions much harder to reason about.
-
-Provenance:
-
-* Note: `Xref target resolution is a separate lowering phase`
-* Code: `src/markdown/xref-resolution.ts`, `tests/unit/xref-resolution.test.ts`, `src/markdown/render/markdown.ts`
 
 === One Toolchain Path Is Primary
 
@@ -186,11 +146,6 @@ Practical onboarding takeaway:
 * expect Bun to be the default runtime for day-to-day development
 * do not add new lockfile-detection or multi-package-manager branching
 
-Provenance:
-
-* Notes: `Build tooling uses bun-first package manager fallback`; `Toolchain policy must choose one primary execution path`
-* Code: `Makefile`, `package.json`
-
 == Core Workflows
 
 === First-Day Development Loop
@@ -205,11 +160,6 @@ The shortest reliable contributor path today is:
 This flow is intentionally explicit. The repository prefers a small set of stable entrypoints over clever tool detection.
 
 For package-level details, `package.json` is the durable source of truth. For contributor-friendly entrypoints, prefer `Makefile`.
-
-Provenance:
-
-* Notes: `Build tooling uses bun-first package manager fallback`; `Toolchain policy must choose one primary execution path`
-* Code: `Makefile`, `package.json`, `README.md`
 
 === Release Flow Uses `develop`, `main`, And Semver Tags
 
@@ -235,11 +185,6 @@ Why this matters for contributors:
 * it keeps release publication tied to one immutable tag input
 * it means `main` is not the branch for normal feature integration anymore
 
-Provenance:
-
-* Notes: `Develop should be the integration branch while main tracks published history`; `Tag pushes should publish only certified develop commits`; `Develop-main-tag release migration must be coordinated across code docs and automation`
-* Code: `scripts/release.js`, `.github/workflows/ci.yml`, `.github/workflows/release.yml`, `.github/workflows/pages.yml`, `antora-playbook.yml`
-
 === Where To Start When You Change Behavior
 
 Use this heuristic:
@@ -255,11 +200,6 @@ Use this heuristic:
 
 Then find the corresponding tests before editing code.
 
-Provenance:
-
-* Notes: `Exporter pipeline uses Assembler and a direct TypeScript converter`; `Markdown IR is the canonical render boundary`; `Fallback selection is centralized across markdown flavors`; `Xref target resolution is a separate lowering phase`
-* Code: `src/exporter/**`, `src/markdown/**`, `scripts/inspection-report.ts`
-
 === How To Reason About Documentation
 
 Onboarding, README, notes, and architecture docs are related but not interchangeable.
@@ -273,11 +213,6 @@ Use them this way:
 * architecture docs explain system boundaries and risks more formally
 
 If notes and implementation diverge, preserve the uncertainty and explain it instead of smoothing it away.
-
-Provenance:
-
-* Notes: `Antora extension entrypoints must reflect actual integration maturity`; `Toolchain policy must choose one primary execution path`
-* Code: `README.md`, `docs/modules/architecture/**`, `docs/modules/onboarding/**`
 
 == Core Architecture
 
@@ -305,11 +240,6 @@ Current uncertainty to preserve:
 
 That is the current contributor reality.
 
-Provenance:
-
-* Notes: `Exporter pipeline uses Assembler and a direct TypeScript converter`; `Markdown IR is the canonical render boundary`; `Antora extension entrypoints must reflect actual integration maturity`
-* Code: `src/index.ts`, `src/extension/index.ts`, `src/exporter/**`, `src/markdown/**`, `tests/**`
-
 == Quality And Guardrails
 
 === Exact Output Matters
@@ -325,11 +255,6 @@ A real golden test must:
 
 This is why `tests/integration/fixture-golden.test.ts` is a key contributor touchpoint. If your change affects rendering, expect golden outputs to be the primary review surface.
 
-Provenance:
-
-* Notes: `Testing relies on golden fixtures and deterministic snapshots`; `Golden tests require rendered output comparison`
-* Code: `tests/integration/fixture-golden.test.ts`, `tests/fixtures/**`
-
 === Reference Tests Serve A Different Purpose
 
 The notes `Reference testing uses official Antora documentation as a compatibility corpus`, `Reference fixtures are curated and provenance locked`, `Reference corpus should cover navigation xrefs includes and admonitions`, and `Reference tests check semantic invariants not exact bytes` describe the external compatibility suite.
@@ -342,11 +267,6 @@ New contributors should remember:
 * provenance and coverage tags are part of the contract
 
 When adding a new reference case, include a clear reason for why that case earns its place in the corpus.
-
-Provenance:
-
-* Notes: `Reference testing uses official Antora documentation as a compatibility corpus`; `Reference fixtures are curated and provenance locked`; `Reference corpus should cover navigation xrefs includes and admonitions`; `Reference tests check semantic invariants not exact bytes`
-* Code: `tests/reference/manifest.json`, `tests/reference/fixtures/**`, `tests/integration/reference-antora.test.ts`
 
 === Keep Repository Contracts Honest
 
@@ -361,11 +281,6 @@ A change is not complete if:
 
 Contributors should treat self-consistency as release readiness, not as optional cleanup work.
 
-Provenance:
-
-* Note: `Repository scripts and referenced files must stay in lockstep`
-* Code: `tests/unit/repository-contract.test.ts`, `package.json`, `README.md`, `.github/workflows/ci.yml`, `.github/workflows/release.yml`
-
 == Reference Notes
 
 The note `Toolchain policy must choose one primary execution path` is the best reference note to keep close while onboarding because it ties together contributor expectations across `README.md`, `Makefile`, `package.json`, CI, and validation scripts.
@@ -376,9 +291,3 @@ Read it alongside:
 * `Repository scripts and referenced files must stay in lockstep`
 
 Those three notes explain why contributor workflows are explicit, why Bun is currently the primary development path, and why documentation drift is treated as a correctness issue.
-
-Provenance:
-
-* Note: `Toolchain policy must choose one primary execution path`
-* Supporting notes: `Build tooling uses bun-first package manager fallback`; `Repository scripts and referenced files must stay in lockstep`
-* Code: `Makefile`, `package.json`, `README.md`

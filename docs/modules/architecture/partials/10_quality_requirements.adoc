@@ -1,7 +1,6 @@
 [[section-quality-scenarios]]
 == Quality Requirements
 
-
 === Quality Requirements Overview
 [options="header",cols="1,3"]
 |===
@@ -19,7 +18,6 @@
 |Honesty
 |Public package surfaces and docs must not imply a fuller Antora integration than the code currently implements.
 |===
-
 
 === Quality Scenarios
 ==== QS-1 Deterministic Golden Rendering
@@ -69,8 +67,3 @@ Response Measure:: Missing referenced files, stale scaffold paths, or misaligned
 Notes cited::
 
 `Repository scripts and referenced files must stay in lockstep`; `Golden tests require rendered output comparison`
-
-Provenance:
-
-* Notes: `Golden tests require rendered output comparison`; `Reference testing uses official Antora documentation as a compatibility corpus`; `Reference tests check semantic invariants not exact bytes`; `Reference fixtures are curated and provenance locked`; `Reference corpus should cover navigation xrefs includes and admonitions`; `Transparent extensions are not fallback mechanisms`; `The architecture favors explicit extension over implicit degradation`; `Repository scripts and referenced files must stay in lockstep`
-* Code: `tests/integration/fixture-golden.test.ts`, `tests/integration/reference-antora.test.ts`, `tests/reference/manifest.json`, `tests/unit/repository-contract.test.ts`, `tests/integration/fenced-extension-policy.test.ts`

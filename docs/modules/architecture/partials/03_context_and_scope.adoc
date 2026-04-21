@@ -1,7 +1,6 @@
 [[section-context-and-scope]]
 == Context and Scope
 
-
 ifdef::arc42help[]
 [role="arc42help"]
 ****
@@ -19,7 +18,6 @@ Various options:
 
 * Context diagrams
 * Lists of communication partners and their interfaces.
-
 
 .Further Information
 

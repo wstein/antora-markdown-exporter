@@ -1,7 +1,6 @@
 [[section-technical-risks]]
 == Risks and Technical Debts
 
-
 The main currently documented risk is the one described by the note `Scaffold leftovers must be removed before contract expansion`.
 
 Priority 1::
@@ -14,9 +13,3 @@ Mitigation::
 * remove dead scaffold artifacts before broadening public contracts
 * treat repository self-consistency checks as release gates
 * implement the real Antora registration slice before renaming scaffold boundaries to stronger terms
-
-Provenance:
-
-* Note: `Scaffold leftovers must be removed before contract expansion`
-* Supporting notes: `Repository scripts and referenced files must stay in lockstep`; `Antora extension entrypoints must reflect actual integration maturity`
-* Code: `src/extension/index.ts`, `tests/unit/repository-contract.test.ts`, `tests/unit/extension-scaffold.test.ts`
