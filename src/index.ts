@@ -1,6 +1,7 @@
 export { createAntoraExtensionScaffold } from "./extension/index.js";
 export { convertAssemblyToMarkdownIR } from "./exporter/convert-assembly.js";
 export {
+	collectMarkdownInspectionReport,
 	collectIncludeDiagnostics,
 	collectIncludeDirectives,
 	collectXrefs,

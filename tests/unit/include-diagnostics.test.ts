@@ -2,6 +2,7 @@ import { describe, expect, it } from "vitest";
 import {
 	collectIncludeDiagnostics,
 	collectIncludeDirectives,
+	collectMarkdownInspectionReport,
 	collectXrefTargets,
 	collectXrefs,
 } from "../../src/markdown/include-diagnostics.js";
@@ -166,5 +167,183 @@ describe("include diagnostics helpers", () => {
 				path: "diagram.png",
 			},
 		]);
+	});
+
+	it("covers recursive helper branches and combined inspection reports", () => {
+		const document = {
+			type: "document" as const,
+			children: [
+				{
+					type: "admonition" as const,
+					kind: "tip" as const,
+					children: [
+						{
+							type: "paragraph" as const,
+							children: [
+								{
+									type: "emphasis" as const,
+									children: [
+										{
+											type: "xref" as const,
+											url: "docs/tip.adoc",
+											target: {
+												raw: "docs:ROOT:tip.adoc",
+												component: "docs",
+												module: "ROOT",
+												family: {
+													kind: "page" as const,
+													name: "page",
+												},
+												path: "tip.adoc",
+											},
+											children: [{ type: "text" as const, value: "tip" }],
+										},
+									],
+								},
+							],
+						},
+						{
+							type: "calloutList" as const,
+							items: [
+								{
+									ordinal: 1,
+									children: [
+										{
+											type: "includeDirective" as const,
+											target: " notes/callout.adoc ",
+											attributes: {},
+											diagnostics: [
+												{
+													code: "invalid-leveloffset" as const,
+													message:
+														" include leveloffset must be a signed integer ",
+													source: " bad ",
+												},
+											],
+										},
+										{
+											type: "paragraph" as const,
+											children: [
+												{
+													type: "link" as const,
+													url: "https://example.com",
+													children: [
+														{
+															type: "xref" as const,
+															url: "docs/nested.adoc",
+															target: {
+																raw: "docs:ROOT:nested.adoc",
+																component: "docs",
+																module: "ROOT",
+																family: {
+																	kind: "page" as const,
+																	name: "page",
+																},
+																path: "nested.adoc",
+															},
+															children: [
+																{ type: "text" as const, value: "nested" },
+															],
+														},
+													],
+												},
+												{
+													type: "image" as const,
+													url: "diagram.png",
+													alt: [
+														{
+															type: "xref" as const,
+															url: "docs/2.0/ROOT/image/diagram.png",
+															target: {
+																raw: "2.0@docs:ROOT:image$diagram.png",
+																component: "docs",
+																version: "2.0",
+																module: "ROOT",
+																family: {
+																	kind: "image" as const,
+																	name: "image",
+																},
+																path: "diagram.png",
+															},
+															children: [
+																{ type: "text" as const, value: "diagram" },
+															],
+														},
+													],
+												},
+											],
+										},
+									],
+								},
+							],
+						},
+					],
+				},
+				{
+					type: "footnoteDefinition" as const,
+					identifier: "note-1",
+					children: [
+						{
+							type: "includeDirective" as const,
+							target: " footnotes/detail.adoc ",
+							attributes: {},
+						},
+						{
+							type: "paragraph" as const,
+							children: [
+								{
+									type: "strong" as const,
+									children: [
+										{
+											type: "xref" as const,
+											url: "docs/final.adoc",
+											target: {
+												raw: "docs:ROOT:final.adoc",
+												component: "docs",
+												module: "ROOT",
+												family: {
+													kind: "page" as const,
+													name: "page",
+												},
+												path: "final.adoc",
+											},
+											children: [{ type: "text" as const, value: "final" }],
+										},
+									],
+								},
+							],
+						},
+					],
+				},
+				{
+					type: "codeBlock" as const,
+					value: "const ignored = true;",
+				},
+			],
+		};
+
+		const report = collectMarkdownInspectionReport(document);
+
+		expect(report.includeDirectives).toEqual([
+			expect.objectContaining({ target: "notes/callout.adoc" }),
+			expect.objectContaining({ target: "footnotes/detail.adoc" }),
+		]);
+		expect(report.includeDiagnostics).toEqual([
+			{
+				target: "notes/callout.adoc",
+				diagnostic: {
+					code: "invalid-leveloffset",
+					message: "include leveloffset must be a signed integer",
+					source: "bad",
+				},
+			},
+		]);
+		expect(report.xrefs.map((xref) => xref.target.raw)).toEqual([
+			"docs:ROOT:tip.adoc",
+			"docs:ROOT:nested.adoc",
+			"2.0@docs:ROOT:image$diagram.png",
+			"docs:ROOT:final.adoc",
+		]);
+		expect(report.xrefTargets).toEqual(report.xrefs.map((xref) => xref.target));
 	});
 });

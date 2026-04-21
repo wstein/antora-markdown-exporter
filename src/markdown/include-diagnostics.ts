@@ -14,6 +14,13 @@ export type MarkdownIncludeDiagnosticEntry = {
 	target: string;
 };
 
+export type MarkdownInspectionReport = {
+	includeDiagnostics: MarkdownIncludeDiagnosticEntry[];
+	includeDirectives: MarkdownIncludeDirective[];
+	xrefTargets: MarkdownXrefTarget[];
+	xrefs: MarkdownXref[];
+};
+
 function collectIncludeDirectivesFromBlocks(
 	blocks: MarkdownBlock[],
 ): MarkdownIncludeDirective[] {
@@ -122,4 +129,26 @@ export function collectXrefTargets(
 	document: MarkdownDocument,
 ): MarkdownXrefTarget[] {
 	return collectXrefs(document).map((xref) => xref.target);
+}
+
+export function collectMarkdownInspectionReport(
+	document: MarkdownDocument,
+): MarkdownInspectionReport {
+	const normalized = normalizeMarkdownIR(document);
+	const includeDirectives = collectIncludeDirectivesFromBlocks(
+		normalized.children,
+	);
+	const xrefs = collectXrefsFromBlocks(normalized.children);
+
+	return {
+		includeDirectives,
+		includeDiagnostics: includeDirectives.flatMap((directive) =>
+			(directive.diagnostics ?? []).map((diagnostic) => ({
+				target: directive.target,
+				diagnostic,
+			})),
+		),
+		xrefs,
+		xrefTargets: xrefs.map((xref) => xref.target),
+	};
 }
