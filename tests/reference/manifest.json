@@ -376,6 +376,22 @@
 		}
 	},
 	{
+		"id": "antora-include-stepped",
+		"sourceProject": "antora/docs.antora.org",
+		"sourceUrl": "https://gitlab.com/antora/docs.antora.org",
+		"sourcePath": "modules/ROOT/pages/page-partials.adoc",
+		"sourceCapturedAt": "2026-04-21",
+		"localPath": "tests/reference/fixtures/antora-include-stepped/input.adoc",
+		"sha256": "fa9084716f45354a6621d9190a14d086e28f0901a102b2ab3ef6c624dcc760fc",
+		"coverage": ["includes", "line-selection", "stepped-ranges"],
+		"rationale": "Exercises stepped include ranges so compatibility checks prove the converter can sample deterministic line intervals instead of only contiguous slices.",
+		"expectations": {
+			"nodeTypes": ["heading", "paragraph"],
+			"renderedContains": ["First line. Third line. Fifth line."],
+			"renderedExcludes": ["Second line.", "Fourth line.", "Unsupported:"]
+		}
+	},
+	{
 		"id": "antora-xrefs-site-routing",
 		"sourceProject": "antora/docs.antora.org",
 		"sourceUrl": "https://gitlab.com/antora/docs.antora.org",
@@ -415,6 +431,58 @@
 						"[overview](docs/2.0/api/index.html#overview)",
 						"[diagram](docs/2.0/_images/diagram.png)",
 						"[guide](docs/2.0/_attachments/guide.pdf)"
+					]
+				}
+			}
+		}
+	},
+	{
+		"id": "antora-xrefs-mixed-routing",
+		"sourceProject": "antora/docs.antora.org",
+		"sourceUrl": "https://gitlab.com/antora/docs.antora.org",
+		"sourcePath": "modules/ROOT/pages/xref.adoc",
+		"sourceCapturedAt": "2026-04-21",
+		"localPath": "tests/reference/fixtures/antora-xrefs-mixed-routing/input.adoc",
+		"sha256": "02a3b0e19d459d076be308734fd4825b0c5f4d71d20b650ee2db3f82bb67969f",
+		"coverage": [
+			"xrefs",
+			"site-routing",
+			"asset-families",
+			"example-family",
+			"mixed-routing",
+			"multi-flavor"
+		],
+		"rationale": "Exercises page, example, image, attachment, and partial xrefs together so compatibility checks can review mixed family routing fixture by fixture across multiple flavors.",
+		"expectations": {
+			"nodeTypes": ["heading", "paragraph"],
+			"renderedContains": [
+				"[install](docs/ROOT/install.adoc)",
+				"[overview](docs/2.0/api/page/index.adoc#overview)",
+				"[diagram](docs/2.0/ROOT/image/diagram.png)",
+				"[guide](docs/2.0/ROOT/attachment/guide.pdf)",
+				"[example](docs/2.0/ROOT/example/sample.adoc)",
+				"[nav](docs/2.0/ROOT/partial/nav.adoc)"
+			],
+			"renderedExcludes": ["Unsupported:"],
+			"renderedByFlavor": {
+				"gitlab": {
+					"contains": [
+						"[install](docs/install.html)",
+						"[overview](docs/2.0/api/index.html#overview)",
+						"[diagram](docs/2.0/_images/diagram.png)",
+						"[guide](docs/2.0/_attachments/guide.pdf)",
+						"[example](docs/2.0/_examples/sample.adoc)",
+						"[nav](docs/2.0/ROOT/partial/nav.adoc)"
+					]
+				},
+				"strict": {
+					"contains": [
+						"[install](docs/install.html)",
+						"[overview](docs/2.0/api/index.html#overview)",
+						"[diagram](docs/2.0/_images/diagram.png)",
+						"[guide](docs/2.0/_attachments/guide.pdf)",
+						"[example](docs/2.0/_examples/sample.adoc)",
+						"[nav](docs/2.0/ROOT/partial/nav.adoc)"
 					]
 				}
 			}
