@@ -5,7 +5,7 @@
 PM ?= bun
 CLEAN_DIR ?= dist
 
-.PHONY: all install build test unit integration reference inspect-report check lint format fix release clean notes help
+.PHONY: all install build docs test unit integration reference inspect-report check lint format fix release clean notes help
 all: build
 
 install: ## Install dependencies with the configured package manager.
@@ -13,6 +13,9 @@ install: ## Install dependencies with the configured package manager.
 
 build: ## Build the project with the configured package manager.
 	$(PM) run build
+
+docs: ## Build the Antora documentation site with the configured package manager.
+	$(PM) run docs:build
 
 test: ## Run tests with the configured package manager.
 	$(PM) run test
@@ -48,4 +51,4 @@ clean: ## Remove generated output.
 	rm -rf node_modules dist "$(CLEAN_DIR)"
 
 help: ## Show available targets.
-	@printf "Available targets:\n  install build test unit integration reference inspect-report check lint format fix release clean notes\n"
+	@printf "Available targets:\n  install build docs test unit integration reference inspect-report check lint format fix release clean notes\n"

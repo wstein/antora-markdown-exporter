@@ -3,3 +3,6 @@ title: Antora Markdown Exporter
 version: ~
 nav:
   - modules/ROOT/nav.adoc
+  - modules/architecture/nav.adoc
+  - modules/manual/nav.adoc
+  - modules/onboarding/nav.adoc

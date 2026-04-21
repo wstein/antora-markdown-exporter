@@ -2,3 +2,9 @@
 :page-role: hub
 
 This section is the landing page for the Antora documentation set.
+
+Use the dedicated modules for the main documentation streams:
+
+* xref:architecture:index.adoc[Architecture]
+* xref:manual:index.adoc[Manual]
+* xref:onboarding:index.adoc[Onboarding]

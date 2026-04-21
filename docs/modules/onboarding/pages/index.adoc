@@ -1,0 +1,3 @@
+= Onboarding
+
+This module is for contributor onboarding, environment setup, and first-day workflows.

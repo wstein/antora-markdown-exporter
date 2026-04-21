@@ -4,20 +4,15 @@
 // ====================================
 
 // configure EN settings for asciidoc
-include::architecture/config.adoc[]
+include::partial$config.adoc[]
 
 = image:arc42-logo.png[arc42] Template
-:revnumber: {revnumber}
-:revdate: {revdate}
-:revremark: {revremark}
+ifndef::revnumber[:revnumber: n/a]
+ifndef::revdate[:revdate: n/a]
+ifndef::revremark[:revremark:]
 :toc-title: Table of Contents
 
-//additional style for arc42 help callouts
-include::architecture/../../../common/styles/arc42-help-style.adoc[]
-
-
-
-include::architecture/about-arc42.adoc[]
+include::partial$about-arc42.adoc[]
 
 // horizontal line
 ***
@@ -39,50 +34,48 @@ endif::arc42help[]
 
 <<<<
 // 1. Introduction and Goals
-include::architecture/01_introduction_and_goals.adoc[]
+include::partial$01_introduction_and_goals.adoc[]
 
 <<<<
 // 2. Architecture Constraints
-include::architecture/02_architecture_constraints.adoc[]
+include::partial$02_architecture_constraints.adoc[]
 
 <<<<
 // 3. Context and Scope
-include::architecture/03_context_and_scope.adoc[]
+include::partial$03_context_and_scope.adoc[]
 
 <<<<
 // 4. Solution Strategy
-include::architecture/04_solution_strategy.adoc[]
+include::partial$04_solution_strategy.adoc[]
 
 <<<<
 // 5. Building Block View
-include::architecture/05_building_block_view.adoc[]
+include::partial$05_building_block_view.adoc[]
 
 <<<<
 // 6. Runtime View
-include::architecture/06_runtime_view.adoc[]
+include::partial$06_runtime_view.adoc[]
 
 <<<<
 // 7. Deployment View
-include::architecture/07_deployment_view.adoc[]
+include::partial$07_deployment_view.adoc[]
 
 <<<<
 // 8. Concepts
-include::architecture/08_concepts.adoc[]
+include::partial$08_concepts.adoc[]
 
 <<<<
 // 9. Architecture Decisions
-include::architecture/09_architecture_decisions.adoc[]
+include::partial$09_architecture_decisions.adoc[]
 
 <<<<
 // 10. Quality Requirements
-include::architecture/10_quality_requirements.adoc[]
+include::partial$10_quality_requirements.adoc[]
 
 <<<<
 // 11. Technical Risks
-include::architecture/11_technical_risks.adoc[]
+include::partial$11_technical_risks.adoc[]
 
 <<<<
 // 12. Glossary
-include::architecture/12_glossary.adoc[]
-
-
+include::partial$12_glossary.adoc[]

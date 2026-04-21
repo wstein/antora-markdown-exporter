@@ -1,0 +1,3 @@
+= Manual
+
+This module is for task-oriented user documentation and operational procedures.
