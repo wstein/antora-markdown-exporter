@@ -731,4 +731,104 @@ describe("convertAssemblyToMarkdownIR", () => {
 			},
 		]);
 	});
+
+	it("parses source callouts and preserves explicit xref semantics while leaving invalid anchors literal", () => {
+		const document = convertAssemblyToMarkdownIR(
+			[
+				"[source,mermaid]",
+				"----",
+				"graph TD",
+				"  A --> B <1>",
+				"----",
+				"<1> Rendered by downstream tooling",
+				"",
+				"xref:2.0@install.adoc[Install guide]",
+				"xref:docs:ROOT:example$demo.adoc[Example asset]",
+				"xref:#[]",
+			].join("\n"),
+		);
+
+		expect(document.children).toEqual([
+			{
+				type: "codeBlock",
+				language: "mermaid",
+				meta: undefined,
+				value: "graph TD\n  A --> B <1>",
+				callouts: [1],
+			},
+			{
+				type: "calloutList",
+				items: [
+					{
+						ordinal: 1,
+						children: [
+							{
+								type: "paragraph",
+								children: [
+									{
+										type: "text",
+										value: "Rendered by downstream tooling",
+									},
+								],
+							},
+						],
+					},
+				],
+			},
+			{
+				type: "paragraph",
+				children: [
+					{
+						type: "xref",
+						url: "2.0/install.adoc",
+						target: {
+							raw: "2.0@install.adoc",
+							component: undefined,
+							version: "2.0",
+							module: undefined,
+							family: { kind: "page", name: "page" },
+							path: "install.adoc",
+							fragment: undefined,
+						},
+						children: [{ type: "text", value: "Install guide" }],
+					},
+					{ type: "text", value: " " },
+					{
+						type: "xref",
+						url: "docs/ROOT/example/demo.adoc",
+						target: {
+							raw: "docs:ROOT:example$demo.adoc",
+							component: "docs",
+							version: undefined,
+							module: "ROOT",
+							family: { kind: "example", name: "example" },
+							path: "demo.adoc",
+							fragment: undefined,
+						},
+						children: [{ type: "text", value: "Example asset" }],
+					},
+					{ type: "text", value: " xref:#[]" },
+				],
+			},
+		]);
+	});
+
+	it("keeps empty aligned tables visible as unsupported before continuing with later blocks", () => {
+		const document = convertAssemblyToMarkdownIR(
+			['[cols=">1,^1"]', "|===", "|===", "", "Paragraph after table"].join(
+				"\n",
+			),
+		);
+
+		expect(document.children).toEqual([
+			{
+				type: "unsupported",
+				reason: "table requires at least one header row",
+			},
+			{
+				type: "paragraph",
+				children: [{ type: "text", value: "Paragraph after table" }],
+			},
+		]);
+	});
 });
