@@ -14,6 +14,7 @@ npm install @wsmy/antora-markdown-exporter
 
 ```ts
 import {
+  collectMarkdownInspectionReport,
   convertAssemblyToMarkdownIR,
   collectIncludeDiagnostics,
   collectXrefTargets,
@@ -31,6 +32,7 @@ console.log(renderGfm(normalized));
 console.log(renderMarkdown(normalized, "commonmark"));
 console.log(includeDiagnostics);
 console.log(xrefTargets);
+console.log(collectMarkdownInspectionReport(normalized));
 ```
 
 ### Validation Helpers
@@ -38,6 +40,7 @@ console.log(xrefTargets);
 ```ts
 import {
   collectIncludeDiagnostics,
+  collectMarkdownInspectionReport,
   collectXrefTargets,
   convertAssemblyToMarkdownIR,
 } from "@wsmy/antora-markdown-exporter";
@@ -57,6 +60,34 @@ for (const target of collectXrefTargets(document)) {
   console.log(
     `[xref:${target.family?.kind ?? "page"}] ${target.raw} -> ${target.path}`,
   );
+}
+
+const report = collectMarkdownInspectionReport(document);
+console.log(report.includeDirectives.length, report.xrefs.length);
+```
+
+### CI And Release Validation
+
+```ts
+import {
+  collectMarkdownInspectionReport,
+  convertAssemblyToMarkdownIR,
+} from "@wsmy/antora-markdown-exporter";
+
+const document = convertAssemblyToMarkdownIR(source, { sourcePath });
+const report = collectMarkdownInspectionReport(document);
+
+if (report.includeDiagnostics.length > 0) {
+  for (const entry of report.includeDiagnostics) {
+    console.error(
+      `[validation:${entry.target}] ${entry.diagnostic.code}: ${entry.diagnostic.message}`,
+    );
+  }
+  process.exitCode = 1;
+}
+
+for (const target of report.xrefTargets) {
+  console.log(`[xref:${target.family?.kind ?? "page"}] ${target.raw}`);
 }
 ```
 

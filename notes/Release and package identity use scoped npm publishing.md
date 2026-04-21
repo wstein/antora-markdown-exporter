@@ -33,11 +33,14 @@ Set the package name, exports map, files list, build scripts, and release valida
 
 Keep publishable assets in `dist/**`, validate package contents in CI, and separate build-time and test-time TypeScript configuration.
 
+When release or publish validation needs semantic checks, prefer library-provided inspection helpers over ad-hoc repository scripts so diagnostics and xref-target analysis stay aligned with the canonical IR.
+
 
 ## Links
 
 
 - [[Exporter pipeline uses Assembler and a direct TypeScript converter]] - The exported package wraps the pipeline implementation.
+- [[Inspection helpers expose normalized validation surfaces]] - Validation tooling should consume stable inspection APIs.
 - [[Testing relies on golden fixtures and deterministic snapshots]] - Release confidence depends on deterministic contract tests.
 - package.json - Package metadata and exports.
 - .github/workflows/release.yml - Release validation and publish workflow.

@@ -18,6 +18,7 @@ The test suite separates concerns:
 - renderer tests for flavor behavior
 - integration tests for exporter wiring
 - fixture golden tests for exact output
+- validation-helper tests for reusable inspection surfaces
 
 
 ## Why
@@ -37,6 +38,8 @@ Place fixtures under `tests/fixtures/**` with `input.adoc` and `expected.<flavor
 
 Use `vitest.config.ts` with `@vitest/coverage-v8` and keep render tests stable enough to run in CI without regeneration side effects.
 
+When a fixture asserts diagnostics or validation metadata, keep those expectations explicit and separate from rendered Markdown snapshots so output stability and diagnosability are both reviewable.
+
 
 Do not rely only on broad smoke tests.
 
@@ -46,6 +49,7 @@ Do not rely only on broad smoke tests.
 
 - [[Markdown IR is the canonical render boundary]] - Normalized IR is what the render contract tests exercise.
 - [[Flavor renderers are syntax adapters over one semantic layer]] - Each flavor needs explicit golden outputs.
+- [[Inspection helpers expose normalized validation surfaces]] - Validation helpers should be tested as reusable contract surfaces.
 - src/markdown/normalize.ts - Normalization behavior needs unit coverage.
 - tests/integration/fixture-golden.test.ts - Exact-output contract tests.
 - vitest.config.ts - Coverage and test configuration.
