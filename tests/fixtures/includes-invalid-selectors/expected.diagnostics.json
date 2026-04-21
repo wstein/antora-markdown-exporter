@@ -1,0 +1,27 @@
+[
+	{
+		"target": "partials/snippet.adoc",
+		"diagnostics": [
+			{
+				"code": "empty-tag-selection",
+				"message": "include tag selection must contain at least one tag",
+				"source": ""
+			},
+			{
+				"code": "invalid-line-range",
+				"message": "include line selectors must be positive integers or ranges",
+				"source": "-2"
+			},
+			{
+				"code": "invalid-line-range",
+				"message": "include line ranges cannot omit both bounds",
+				"source": ".."
+			},
+			{
+				"code": "invalid-indent",
+				"message": "include indent must be a positive integer",
+				"source": "-1"
+			}
+		]
+	}
+]

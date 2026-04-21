@@ -4,12 +4,14 @@ import { resolve } from "node:path";
 import { describe, expect, it } from "vitest";
 import { convertAssemblyToMarkdownIR } from "../../src/exporter/convert-assembly.js";
 import type { MarkdownFlavorName } from "../../src/markdown/flavor.js";
+import type { MarkdownIncludeDirective } from "../../src/markdown/ir.js";
 import { normalizeMarkdownIR } from "../../src/markdown/normalize.js";
 import { renderGfm, renderMarkdown } from "../../src/markdown/render/index.js";
 
 interface ReferenceManifestEntry {
 	coverage: string[];
 	expectations: {
+		includeDiagnosticCodes?: string[];
 		nodeTypes: string[];
 		renderedByFlavor?: Partial<
 			Record<
@@ -61,6 +63,17 @@ describe("reference Antora compatibility tests", () => {
 
 			for (const nodeType of entry.expectations.nodeTypes) {
 				expect(ir.children.some((child) => child.type === nodeType)).toBe(true);
+			}
+
+			if (entry.expectations.includeDiagnosticCodes !== undefined) {
+				const includeDiagnostics = ir.children.flatMap((child) =>
+					child.type === "includeDirective"
+						? ((child as MarkdownIncludeDirective).diagnostics ?? [])
+						: [],
+				);
+				expect(includeDiagnostics.map((diagnostic) => diagnostic.code)).toEqual(
+					entry.expectations.includeDiagnosticCodes,
+				);
 			}
 
 			for (const marker of entry.expectations.renderedContains) {

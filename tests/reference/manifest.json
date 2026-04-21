@@ -392,6 +392,33 @@
 		}
 	},
 	{
+		"id": "antora-include-invalid-selectors",
+		"sourceProject": "antora/docs.antora.org",
+		"sourceUrl": "https://gitlab.com/antora/docs.antora.org",
+		"sourcePath": "modules/ROOT/pages/page-partials.adoc",
+		"sourceCapturedAt": "2026-04-21",
+		"localPath": "tests/reference/fixtures/antora-include-invalid-selectors/input.adoc",
+		"sha256": "0fcaa24031c8d5b000ba80eee5b6f19e4940dac2a32ccc003fd24836c26d4ed7",
+		"coverage": [
+			"includes",
+			"diagnostics",
+			"invalid-selectors",
+			"negative-cases"
+		],
+		"rationale": "Exercises invalid include selectors so compatibility checks prove diagnostics remain visible in the IR while rendering still falls back to stable inlined content.",
+		"expectations": {
+			"nodeTypes": ["heading", "paragraph", "includeDirective"],
+			"includeDiagnosticCodes": [
+				"empty-tag-selection",
+				"invalid-line-range",
+				"invalid-line-range",
+				"invalid-indent"
+			],
+			"renderedContains": ["First line. Second line. Third line."],
+			"renderedExcludes": ["Unsupported:"]
+		}
+	},
+	{
 		"id": "antora-xrefs-site-routing",
 		"sourceProject": "antora/docs.antora.org",
 		"sourceUrl": "https://gitlab.com/antora/docs.antora.org",
