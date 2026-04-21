@@ -16,7 +16,7 @@ The repository currently ships explicit `gfm`, `commonmark`, `gitlab`, and `stri
 GLFM and GFM share core Markdown features based on the CommonMark specification, but each has its own extensions. GLFM includes GFM extensions and also adds GitLab-specific enhancements, while GFM remains the baseline GitHub-compatible syntax. This distinction matters when renderer behavior or fallback policy differs by platform support.
 
 
-Flavor-specific behavior includes constructs such as admonition serialization, callout-list serialization, nested-list indentation, table emission, fence style, heading ID behavior, HTML tolerance, and family-aware xref routing for page, image, attachment, and example targets.
+Flavor-specific behavior includes constructs such as admonition serialization, callout-list serialization, nested-list indentation, table emission, fence style, heading ID behavior, transparent fenced extension preservation, HTML tolerance, and family-aware xref routing for page, image, attachment, and example targets.
 
 
 ## Why
@@ -35,6 +35,8 @@ Implement concrete renderers in `src/markdown/render/**` and keep flavor capabil
 
 Route unsupported blocks, unsupported inline degradation, and raw HTML allowance decisions through `src/markdown/fallback.ts` instead of duplicating fallback policy inside renderers.
 
+Preserve valid `codeBlock` language tags verbatim, including transparent extensions such as `mermaid`. That preservation is semantic rendering, not fallback.
+
 
 Keep flavor support, render policy, escaping, and fallback rules explicit. Unsupported constructs must degrade deterministically and visibly.
 
@@ -48,6 +50,7 @@ Do not allow renderer-local semantics that bypass the IR or normalization passes
 - [[Markdown IR is the canonical render boundary]] - Semantic meaning is defined upstream of flavor rendering.
 - [[Fallback selection is centralized across markdown flavors]] - Renderer-specific fallback drift should be avoided.
 - [[Raw HTML is a controlled fallback not a default rendering path]] - HTML passthrough must be an explicit flavor policy, not renderer default behavior.
+- [[Transparent fenced extensions preserve authored language semantics]] - Valid fenced blocks should preserve authored language tags verbatim.
 - [[Markdown Guide Extended Syntax is a capability reference not a specification]] - Feature discovery must not override explicit flavor capabilities.
 - [[Testing relies on golden fixtures and deterministic snapshots]] - Per-flavor golden outputs verify this boundary.
 - src/markdown/fallback.ts - Centralized fallback policy for unsupported and raw HTML handling.

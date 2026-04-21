@@ -15,6 +15,8 @@ Raw HTML is not part of the semantic Markdown IR. Instead, it appears as a fallb
 - semantic fallback would lose too much structure
 - the selected flavor policy allows HTML emission through `src/markdown/fallback.ts`
 
+Transparent fenced extensions are a separate category. A valid `codeBlock` with a language tag such as `mermaid` remains a semantic Markdown node and must not be rerouted through raw HTML fallback.
+
 Fallback priority must be:
 
 1. semantic Markdown representation
@@ -68,11 +70,13 @@ Default behavior:
 - gitlab -> allow policy-mediated inline raw HTML and annotated block-level raw HTML fallback
 
 Do not use raw HTML for core constructs such as headings, lists, links, or paragraphs.
+Do not use raw HTML to preserve valid fenced code blocks or other transparent extensions.
 
 ## Links
 
 - [[Markdown IR is the canonical render boundary]] - Raw HTML must not bypass semantic representation.
 - [[Fallback selection is centralized across markdown flavors]] - HTML allowance and visible degradation should flow through one fallback layer.
 - [[Flavor renderers are syntax adapters over one semantic layer]] - HTML usage depends on flavor policy.
+- [[Transparent fenced extensions preserve authored language semantics]] - Valid fenced code blocks are preserved semantically instead of routed through HTML fallback.
 - [[Reference tests check semantic invariants not exact bytes]] - HTML fallback must remain visible and testable.
 - src/markdown/fallback.ts - Fallback selection logic.
