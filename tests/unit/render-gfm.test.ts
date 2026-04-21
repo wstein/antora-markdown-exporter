@@ -268,6 +268,74 @@ describe("renderGfm", () => {
 		);
 	});
 
+	it("renders raw html inline fallbacks and both footnote block shapes", () => {
+		const rendered = renderGfm({
+			type: "document",
+			children: [
+				{
+					type: "paragraph",
+					children: [
+						{ type: "htmlInline", value: "<sup>1</sup>" },
+						{ type: "text", value: " " },
+						{
+							type: "xref",
+							url: "docs/ROOT/index.adoc",
+							target: {
+								raw: "docs:ROOT:index.adoc",
+								component: "docs",
+								module: "ROOT",
+								path: "",
+							},
+							children: [{ type: "text", value: "home" }],
+						},
+					],
+				},
+				{
+					type: "footnoteDefinition",
+					identifier: "note-1",
+					children: [
+						{
+							type: "paragraph",
+							children: [{ type: "text", value: "First paragraph." }],
+						},
+						{
+							type: "paragraph",
+							children: [{ type: "text", value: "Second paragraph." }],
+						},
+					],
+				},
+				{
+					type: "footnoteDefinition",
+					identifier: "note-2",
+					children: [
+						{
+							type: "blockquote",
+							children: [
+								{
+									type: "paragraph",
+									children: [{ type: "text", value: "Quoted note." }],
+								},
+							],
+						},
+					],
+				},
+			],
+		});
+
+		expect(rendered).toBe(
+			[
+				"<sup>1</sup> [home](docs/ROOT/index.adoc)",
+				"",
+				"[^note-1]: First paragraph.",
+				"    Second paragraph.",
+				"",
+				"[^note-2]:",
+				"    > Quoted note.",
+				"",
+			].join("\n"),
+		);
+	});
+
 	it("renders dedicated admonition and callout list nodes deterministically", () => {
 		const rendered = renderGfm({
 			type: "document",

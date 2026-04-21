@@ -1,5 +1,9 @@
 import { describe, expect, it } from "vitest";
 import {
+	markdownFlavorSpecs,
+	resolveMarkdownFlavor,
+} from "../../src/markdown/flavor.js";
+import {
 	renderCommonMark,
 	renderGitLab,
 	renderMarkdown,
@@ -106,6 +110,20 @@ describe("flavor-aware markdown rendering", () => {
 		expect(rendered).toContain(
 			"> Unsupported: table rendering requires table-capable markdown",
 		);
+	});
+
+	it("escapes inline raw html in flavors that do not allow it", () => {
+		const rendered = renderStrict({
+			type: "document",
+			children: [
+				{
+					type: "paragraph" as const,
+					children: [{ type: "htmlInline" as const, value: "<kbd>Ctrl</kbd>" }],
+				},
+			],
+		});
+
+		expect(rendered).toBe("\\<kbd\\>Ctrl\\</kbd\\>\n");
 	});
 
 	it("shapes Antora xref destinations per flavor policy", () => {
@@ -265,6 +283,59 @@ describe("flavor-aware markdown rendering", () => {
 		);
 		expect(renderGitLab(documentWithFamilyTargets)).toContain(
 			"[diagram](docs/2.0/_images/diagram.png) [guide](docs/2.0/_attachments/guide.pdf) [overview](docs/2.0/api/index.html#overview) [example](docs/2.0/_examples/example.adoc)",
+		);
+	});
+
+	it("accepts pre-resolved flavor specs and covers site fallbacks for empty xref paths", () => {
+		const flavor = resolveMarkdownFlavor(markdownFlavorSpecs.gitlab);
+		const rendered = renderMarkdown(
+			{
+				type: "document",
+				children: [
+					{
+						type: "paragraph" as const,
+						children: [
+							{
+								type: "xref" as const,
+								url: "docs/ROOT/index.adoc#overview",
+								target: {
+									raw: "docs:ROOT:index.adoc#overview",
+									component: "docs",
+									module: "ROOT",
+									family: {
+										kind: "page" as const,
+										name: "page",
+									},
+									path: "",
+									fragment: "overview",
+								},
+								children: [{ type: "text" as const, value: "overview" }],
+							},
+							{ type: "text" as const, value: " " },
+							{
+								type: "xref" as const,
+								url: "docs/ROOT/index.adoc",
+								target: {
+									raw: "docs:ROOT:index.adoc",
+									component: "docs",
+									module: "ROOT",
+									family: {
+										kind: "page" as const,
+										name: "page",
+									},
+									path: "",
+								},
+								children: [{ type: "text" as const, value: "home" }],
+							},
+						],
+					},
+				],
+			},
+			flavor,
+		);
+
+		expect(rendered).toContain(
+			"[overview](#overview) [home](docs/ROOT/index.adoc)",
 		);
 	});
 });
