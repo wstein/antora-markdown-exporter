@@ -274,4 +274,89 @@ describe("convertAssemblyToMarkdownIR", () => {
 			},
 		]);
 	});
+
+	it("normalizes reversed line ranges and keeps invalid open-ended ranges visible as diagnostics", () => {
+		const document = convertAssemblyToMarkdownIR(
+			"include::snippet.adoc[lines=4..2;-2..4;7]",
+			{
+				sourcePath: "/virtual/page.adoc",
+				includeResolver: (target) => {
+					if (target !== "snippet.adoc") {
+						return undefined;
+					}
+
+					return [
+						"line 1",
+						"line 2",
+						"line 3",
+						"line 4",
+						"line 5",
+						"line 6",
+						"line 7",
+					].join("\n");
+				},
+			},
+		);
+
+		expect(document.children).toEqual([
+			expect.objectContaining({
+				type: "includeDirective",
+				target: "snippet.adoc",
+				diagnostics: [
+					{
+						code: "invalid-line-range",
+						message:
+							"include line ranges must use positive line numbers or open-ended bounds",
+						source: "-2..4",
+					},
+				],
+				semantics: {
+					tagSelection: undefined,
+					lineRanges: [
+						{ start: 2, end: 4 },
+						{ start: 7, end: 7 },
+					],
+					indent: undefined,
+					levelOffset: undefined,
+				},
+			}),
+			{
+				type: "paragraph",
+				children: [{ type: "text", value: "line 2 line 3 line 4 line 7" }],
+			},
+		]);
+	});
+
+	it("leaves non-heading lines unchanged when level offsets are otherwise valid", () => {
+		const document = convertAssemblyToMarkdownIR(
+			"include::snippet.adoc[leveloffset=+2]",
+			{
+				sourcePath: "/virtual/page.adoc",
+				includeResolver: (target) => {
+					if (target !== "snippet.adoc") {
+						return undefined;
+					}
+
+					return ["plain line", "another plain line"].join("\n");
+				},
+			},
+		);
+
+		expect(document.children).toEqual([
+			expect.objectContaining({
+				type: "includeDirective",
+				target: "snippet.adoc",
+				semantics: {
+					tagSelection: undefined,
+					lineRanges: undefined,
+					indent: undefined,
+					levelOffset: 2,
+				},
+			}),
+			{
+				type: "paragraph",
+				children: [{ type: "text", value: "plain line another plain line" }],
+			},
+		]);
+	});
 });

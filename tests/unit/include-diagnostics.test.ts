@@ -546,4 +546,27 @@ describe("include diagnostics helpers", () => {
 			}),
 		]);
 	});
+
+	it("returns an empty inspection report for documents without directives or xrefs", () => {
+		const report = collectMarkdownInspectionReport({
+			type: "document",
+			children: [
+				{
+					type: "codeBlock",
+					value: "const ignored = true;",
+				},
+				{
+					type: "unsupported",
+					reason: "still ignored",
+				},
+			],
+		});
+
+		expect(report).toEqual({
+			includeDiagnostics: [],
+			includeDirectives: [],
+			xrefs: [],
+			xrefTargets: [],
+		});
+	});
 });

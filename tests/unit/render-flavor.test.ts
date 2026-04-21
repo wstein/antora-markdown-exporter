@@ -442,4 +442,42 @@ describe("flavor-aware markdown rendering", () => {
 			["> - Parent item", ">   > Nested quote", ""].join("\n"),
 		);
 	});
+
+	it("renders deeply nested blockquote and ordered-list combinations predictably", () => {
+		const document = {
+			type: "document" as const,
+			children: [
+				{
+					type: "blockquote" as const,
+					children: [
+						{
+							type: "blockquote" as const,
+							children: [
+								{
+									type: "list" as const,
+									ordered: true,
+									start: 3,
+									items: [
+										{
+											children: [
+												{
+													type: "paragraph" as const,
+													children: [
+														{ type: "text" as const, value: "Deep item" },
+													],
+												},
+											],
+										},
+									],
+								},
+							],
+						},
+					],
+				},
+			],
+		};
+
+		expect(renderGitLab(document)).toBe(["> > 3. Deep item", ""].join("\n"));
+		expect(renderStrict(document)).toBe(["> > 1. Deep item", ""].join("\n"));
+	});
 });
