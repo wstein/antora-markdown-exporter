@@ -1,0 +1,6 @@
+== Custom language block
+
+[source,foobarlang]
+----
+alpha()
+----

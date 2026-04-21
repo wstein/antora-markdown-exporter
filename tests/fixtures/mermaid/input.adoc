@@ -1,0 +1,7 @@
+== Architecture diagram
+
+[source,mermaid]
+----
+graph TD
+  A --> B
+----
