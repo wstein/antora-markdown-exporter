@@ -45,7 +45,7 @@
 		"format": "biome format --write bin src tests scripts package.json biome.json tsconfig.json tsconfig.build.json vitest.config.ts",
 		"check": "biome check bin src tests scripts package.json biome.json tsconfig.json tsconfig.build.json vitest.config.ts && vitest run --coverage",
 		"release:check": "node scripts/release-check.mjs",
-		"release": "npm publish",
+		"release": "bun scripts/release.js",
 		"prepublishOnly": "npm run build && npm run check && npm run release:check"
 	},
 	"publishConfig": {

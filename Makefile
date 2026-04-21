@@ -44,8 +44,8 @@ format: ## Run the format script with the configured package manager.
 fix: ## Run the fix script with the configured package manager.
 	$(PM) run fix
 
-release: ## Run the release script with the configured package manager.
-	$(PM) run release
+release: ## Run the develop/tag release wizard with the configured package manager.
+	$(PM) run release -- $(VERSION) $(if $(YES),--yes)
 
 clean: ## Remove generated output.
 	rm -rf node_modules dist "$(CLEAN_DIR)"

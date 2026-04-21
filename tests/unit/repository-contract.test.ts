@@ -16,6 +16,7 @@ describe("repository contract", () => {
 		expect(existsSync(resolve(root, "Makefile"))).toBe(true);
 		expect(existsSync(resolve(root, "LICENSE"))).toBe(true);
 		expect(existsSync(resolve(root, "README.md"))).toBe(true);
+		expect(existsSync(resolve(root, "scripts/release.js"))).toBe(true);
 		expect(existsSync(resolve(root, "scripts/inspection-report.ts"))).toBe(
 			true,
 		);
@@ -48,6 +49,7 @@ describe("repository contract", () => {
 		expect(packageJson.scripts.reference).toContain(
 			"tests/integration/reference-antora.test.ts",
 		);
+		expect(packageJson.scripts.release).toBe("bun scripts/release.js");
 		expect(packageJson.scripts["inspect:report"]).toBe(
 			"bun scripts/inspection-report.ts",
 		);
