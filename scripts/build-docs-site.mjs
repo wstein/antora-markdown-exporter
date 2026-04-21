@@ -1,87 +1,19 @@
 import { spawnSync } from "node:child_process";
-import {
-	mkdirSync,
-	mkdtempSync,
-	readFileSync,
-	rmSync,
-	writeFileSync,
-} from "node:fs";
+import { mkdirSync, mkdtempSync, rmSync, writeFileSync } from "node:fs";
 import { dirname, resolve } from "node:path";
 import { fileURLToPath } from "node:url";
 
-const DOCUMENT_TITLE_PATTERN = /^=\s+.+\n?/;
-const PDF_MODULES = ["architecture", "manual", "onboarding"];
+export {
+	createArchitectureModuleSource as createArchitecturePdfSource,
+	createDocumentationModuleSource as createModulePdfSource,
+	getDocumentationModuleNames as getPdfModuleNames,
+	stripDocumentTitle,
+} from "./docs-module-sources.mjs";
 
-export function stripDocumentTitle(source) {
-	return source.replace(DOCUMENT_TITLE_PATTERN, "");
-}
-
-function createBookPreamble(title) {
-	return `= ${title}
-:doctype: book
-:toc:
-:toclevels: 3
-:sectnums:
-:reproducible:
-
-`;
-}
-
-export function createArchitecturePdfSource(rootDir) {
-	const partialsDir = resolve(rootDir, "docs/modules/architecture/partials");
-	const imagesDir = resolve(rootDir, "docs/modules/architecture/images");
-
-	return `${createBookPreamble("Architecture")}:imagesdir: ${imagesDir}
-
-include::${resolve(partialsDir, "config.adoc")}[]
-
-include::${resolve(partialsDir, "01_introduction_and_goals.adoc")}[]
-include::${resolve(partialsDir, "02_architecture_constraints.adoc")}[]
-include::${resolve(partialsDir, "03_context_and_scope.adoc")}[]
-include::${resolve(partialsDir, "04_solution_strategy.adoc")}[]
-include::${resolve(partialsDir, "05_building_block_view.adoc")}[]
-include::${resolve(partialsDir, "06_runtime_view.adoc")}[]
-include::${resolve(partialsDir, "07_deployment_view.adoc")}[]
-include::${resolve(partialsDir, "08_concepts.adoc")}[]
-include::${resolve(partialsDir, "09_architecture_decisions.adoc")}[]
-include::${resolve(partialsDir, "10_quality_requirements.adoc")}[]
-include::${resolve(partialsDir, "11_technical_risks.adoc")}[]
-include::${resolve(partialsDir, "12_glossary.adoc")}[]
-`;
-}
-
-function readModulePageBody(rootDir, moduleName) {
-	return stripDocumentTitle(
-		readFileSync(
-			resolve(rootDir, `docs/modules/${moduleName}/pages/index.adoc`),
-			"utf8",
-		),
-	).trim();
-}
-
-export function createModulePdfSource(rootDir, moduleName) {
-	if (moduleName === "architecture") {
-		return createArchitecturePdfSource(rootDir);
-	}
-
-	if (moduleName === "manual") {
-		return `${createBookPreamble("Operator Manual")}${readModulePageBody(
-			rootDir,
-			moduleName,
-		)}
-`;
-	}
-
-	if (moduleName === "onboarding") {
-		return `${createBookPreamble("Onboarding")}${readModulePageBody(
-			rootDir,
-			moduleName,
-		)}
-`;
-	}
-
-	throw new Error(`Unsupported PDF module: ${moduleName}`);
-}
+import {
+	createDocumentationModuleSource as createModulePdfSource,
+	getDocumentationModuleNames as getPdfModuleNames,
+} from "./docs-module-sources.mjs";
 
 function runCommand(command, args, cwd) {
 	const result = spawnSync(command, args, {
@@ -103,17 +35,13 @@ export function getPdfOutputPath(rootDir, moduleName) {
 	);
 }
 
-export function getPdfModuleNames() {
-	return [...PDF_MODULES];
-}
-
 export function buildDocsPdf(rootDir) {
 	const buildDir = resolve(rootDir, "build");
 	mkdirSync(buildDir, { recursive: true });
 	const tempDir = mkdtempSync(resolve(buildDir, "pdf-build-"));
 
 	try {
-		for (const moduleName of PDF_MODULES) {
+		for (const moduleName of getPdfModuleNames()) {
 			const pdfSourcePath = resolve(tempDir, `${moduleName}.pdf.adoc`);
 			const pdfOutputPath = getPdfOutputPath(rootDir, moduleName);
 			writeFileSync(pdfSourcePath, createModulePdfSource(rootDir, moduleName));

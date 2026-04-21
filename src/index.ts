@@ -1,5 +1,10 @@
 export { convertAssemblyToMarkdownIR } from "./exporter/convert-assembly.js";
-export { createAntoraExtensionScaffold } from "./extension/index.js";
+export {
+	createMarkdownConverter,
+	prependMarkdownTableOfContents,
+	register,
+	renderAssemblyMarkdown,
+} from "./extension/index.js";
 export type {
 	MarkdownFlavorName,
 	MarkdownFlavorSpec,
@@ -28,5 +33,5 @@ export {
 export const PACKAGE_NAME = "@wsmy/antora-markdown-exporter";
 
 export function describePackage() {
-	return "Antora Assembler based Markdown exporter scaffold with semantic IR and a first GitHub Flavored Markdown rendering path.";
+	return "Antora Assembler based Markdown exporter with semantic IR and explicit Markdown flavor rendering paths.";
 }

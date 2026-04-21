@@ -55,11 +55,13 @@ try {
 	}
 
 	if (
-		typeof esmExtension.createAntoraExtensionScaffold !== "function" ||
-		typeof cjsExtension.createAntoraExtensionScaffold !== "function"
+		typeof esmExtension.createMarkdownConverter !== "function" ||
+		typeof cjsExtension.createMarkdownConverter !== "function" ||
+		typeof esmExtension.register !== "function" ||
+		typeof cjsExtension.register !== "function"
 	) {
 		throw new Error(
-			"Extension package exports must expose createAntoraExtensionScaffold in both module formats",
+			"Extension package exports must expose createMarkdownConverter and register in both module formats",
 		);
 	}
 

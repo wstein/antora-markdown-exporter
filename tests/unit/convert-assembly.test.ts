@@ -5,6 +5,78 @@ import { describe, expect, it } from "vitest";
 import { convertAssemblyToMarkdownIR } from "../../src/exporter/convert-assembly.js";
 
 describe("convertAssemblyToMarkdownIR", () => {
+	it("handles assembler-emitted anchors, attributes, open blocks, and page breaks semantically", () => {
+		const document = convertAssemblyToMarkdownIR(
+			[
+				"= Title",
+				":doctype: book",
+				":page-component-name: antora-markdown-exporter",
+				"",
+				'<a id="section-one"></a>',
+				"[discrete#section-one]",
+				"== Section One",
+				"",
+				'[role="example"]',
+				"****",
+				"Wrapped paragraph",
+				"****",
+				"",
+				'[options="header",cols="1,2"]',
+				"|===",
+				"|Key",
+				"|Value",
+				"",
+				"|Alpha",
+				"|42",
+				"|===",
+				"",
+				"<<<<",
+			].join("\n"),
+		);
+
+		expect(document.children).toEqual([
+			{
+				type: "heading",
+				depth: 1,
+				children: [{ type: "text", value: "Title" }],
+			},
+			{
+				type: "anchor",
+				identifier: "section-one",
+			},
+			{
+				type: "heading",
+				depth: 1,
+				children: [{ type: "text", value: "Section One" }],
+			},
+			{
+				type: "paragraph",
+				children: [{ type: "text", value: "Wrapped paragraph" }],
+			},
+			{
+				type: "table",
+				align: [null, null],
+				header: {
+					cells: [
+						{ children: [{ type: "text", value: "Key" }] },
+						{ children: [{ type: "text", value: "Value" }] },
+					],
+				},
+				rows: [
+					{
+						cells: [
+							{ children: [{ type: "text", value: "Alpha" }] },
+							{ children: [{ type: "text", value: "42" }] },
+						],
+					},
+				],
+			},
+			{
+				type: "thematicBreak",
+			},
+		]);
+	});
+
 	it("keeps unresolved include directives visible when no source path is available", () => {
 		const document = convertAssemblyToMarkdownIR(
 			"Before\ninclude::partials/missing.adoc[]\nAfter",

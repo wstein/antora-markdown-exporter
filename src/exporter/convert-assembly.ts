@@ -32,6 +32,7 @@ const admonitionPattern = /^(NOTE|TIP|IMPORTANT|CAUTION|WARNING):\s+(.*)$/;
 const calloutPattern = /^<(\d+)>\s+(.*)$/;
 const includePattern = /^include::([^[]+)\[([^\]]*)\]$/;
 const pageAliasesPattern = /^:page-aliases:\s+(.+)$/;
+const attributeEntryPattern = /^:(!?[\p{Alpha}0-9_][^:]*):(?:\s+.*)?$/u;
 const tagStartPattern = /^\s*\/\/\s*tag::([A-Za-z0-9:_-]+)\[\]\s*$/;
 const tagEndPattern = /^\s*\/\/\s*end::([A-Za-z0-9:_-]+)\[\]\s*$/;
 
@@ -783,10 +784,37 @@ function parseAnchor(line: string): string | undefined {
 	return doubleBracketMatch?.[1];
 }
 
+function parseHtmlAnchor(line: string): string | undefined {
+	const match = line.match(/^<a id="([^"]+)"><\/a>$/);
+	return match?.[1];
+}
+
+function isAttributeEntry(line: string): boolean {
+	return attributeEntryPattern.test(line);
+}
+
+function isCommentLine(line: string): boolean {
+	return (
+		line.startsWith("//") && !line.startsWith("// include cycle prevented")
+	);
+}
+
+function isGenericBlockAttributeLine(line: string): boolean {
+	return /^\[[^\]]+\]$/.test(line);
+}
+
+function isOpenBlockDelimiter(line: string): boolean {
+	return line.trim() === "****";
+}
+
+function isPageBreak(line: string): boolean {
+	return line.trim() === "<<<<";
+}
+
 function parseTableAlignment(
 	line: string,
 ): Array<"left" | "center" | "right" | null> | undefined {
-	const match = line.match(/^\[cols="?([^"\]]+)"?\]$/);
+	const match = line.match(/^\[[^\]]*\bcols="?([^"\]]+)"?[^\]]*\]$/);
 	if (match?.[1] === undefined) {
 		return undefined;
 	}
@@ -1279,9 +1307,15 @@ function isBlockBoundary(line: string): boolean {
 	return (
 		parseHeading(line) !== undefined ||
 		parseAnchor(line) !== undefined ||
+		parseHtmlAnchor(line) !== undefined ||
 		line.match(pageAliasesPattern) !== null ||
+		isAttributeEntry(line) ||
+		isCommentLine(line) ||
+		isGenericBlockAttributeLine(line) ||
 		parseTableAlignment(line) !== undefined ||
 		parseListMarker(line) !== undefined ||
+		isOpenBlockDelimiter(line) ||
+		isPageBreak(line) ||
 		line === "[quote]" ||
 		line.startsWith("[source") ||
 		line === "|===" ||
@@ -1322,6 +1356,16 @@ function parseBlocks(lines: string[]): MarkdownBlock[] {
 			continue;
 		}
 
+		const htmlAnchorId = parseHtmlAnchor(line.trim());
+		if (htmlAnchorId !== undefined) {
+			children.push({
+				type: "anchor",
+				identifier: htmlAnchorId,
+			});
+			index += 1;
+			continue;
+		}
+
 		const pageAliasesMatch = line.trim().match(pageAliasesPattern);
 		if (pageAliasesMatch?.[1] !== undefined) {
 			children.push({
@@ -1335,9 +1379,27 @@ function parseBlocks(lines: string[]): MarkdownBlock[] {
 			continue;
 		}
 
+		if (
+			isAttributeEntry(line.trim()) ||
+			isCommentLine(line.trim()) ||
+			(isGenericBlockAttributeLine(line.trim()) &&
+				parseTableAlignment(line.trim()) === undefined &&
+				line.trim() !== "[quote]" &&
+				!line.trim().startsWith("[source"))
+		) {
+			index += 1;
+			continue;
+		}
+
 		const includeDirective = parseIncludeDirectiveMarker(line.trim());
 		if (includeDirective !== undefined) {
 			children.push(includeDirective);
+			index += 1;
+			continue;
+		}
+
+		if (isPageBreak(line.trim())) {
+			children.push({ type: "thematicBreak" });
 			index += 1;
 			continue;
 		}
@@ -1353,6 +1415,30 @@ function parseBlocks(lines: string[]): MarkdownBlock[] {
 			const { block, nextIndex } = parseTable(lines, index + 1, tableAlignment);
 			children.push(block);
 			index = nextIndex;
+			continue;
+		}
+
+		if (isOpenBlockDelimiter(line.trim())) {
+			index += 1;
+			const blockLines: string[] = [];
+			while (
+				index < lines.length &&
+				!isOpenBlockDelimiter(lines[index] ?? "")
+			) {
+				blockLines.push(lines[index] ?? "");
+				index += 1;
+			}
+
+			if (index >= lines.length) {
+				children.push({
+					type: "unsupported",
+					reason: "open block fence is not closed correctly",
+				});
+				continue;
+			}
+
+			children.push(...parseBlocks(blockLines));
+			index += 1;
 			continue;
 		}
 

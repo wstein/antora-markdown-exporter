@@ -1,25 +1,41 @@
-import { mkdir, readFile, rm, stat, writeFile } from "node:fs/promises";
-import { resolve } from "node:path";
+import { mkdir, rm, stat } from "node:fs/promises";
+import { dirname, resolve } from "node:path";
 import { pathToFileURL } from "node:url";
+import loadAsciiDoc from "@antora/asciidoc-loader";
+import { assembleContent } from "@antora/assembler";
+import aggregateContent from "@antora/content-aggregator";
+import classifyContent from "@antora/content-classifier";
+import convertDocuments from "@antora/document-converter";
+import buildNavigation from "@antora/navigation-builder";
+import buildPlaybook from "@antora/playbook-builder";
 import {
-	convertAssemblyToMarkdownIR,
+	createMarkdownConverter,
 	type MarkdownFlavorName,
-	normalizeMarkdownIR,
-	renderMarkdown,
-} from "../src/index.js";
+} from "../src/extension/index.ts";
 
 export type ExportAntoraModulesOptions = {
 	flavor: MarkdownFlavorName;
-	modulesRoot: string;
 	outputRoot: string;
+	playbookPath: string;
 };
 
 export type ExportedMarkdownFile = {
-	inputPath: string;
 	moduleName: string;
 	outputPath: string;
-	relativeInputPath: string;
 	relativeOutputPath: string;
+};
+
+type NavigationEntry = {
+	content?: string;
+	items?: NavigationEntry[];
+	url?: string;
+	urlType?: string;
+};
+
+type ComponentVersionWithNavigation = {
+	name: string;
+	version: string;
+	navigation?: NavigationEntry[];
 };
 
 const markdownFlavors = new Set<MarkdownFlavorName>([
@@ -28,165 +44,30 @@ const markdownFlavors = new Set<MarkdownFlavorName>([
 	"gitlab",
 	"strict",
 ]);
-const asciidocControlLinePattern =
-	/^(?:\/\/|ifdef::|ifndef::|endif::|:[A-Za-z0-9_-]+:|<<<<\s*)/;
-const exportableModules = ["architecture", "manual", "onboarding"] as const;
 
 function usage(): string {
 	return [
-		"Usage: bun scripts/export-antora-modules.ts [--modules-root <dir>] [--output-root <dir>] [--flavor <gfm|commonmark|gitlab|strict>]",
+		"Usage: bun scripts/export-antora-modules.ts [--playbook <file>] [--output-root <dir>] [--flavor <gfm|commonmark|gitlab|strict>]",
 		"",
-		"Export one assembled Markdown document per Antora module using the repository pipeline.",
+		"Export assembled Antora documentation modules to Markdown using Antora and the repository exporter extension.",
 	].join("\n");
-}
-
-export function getExportableModuleNames(): string[] {
-	return [...exportableModules];
-}
-
-export function sanitizeAntoraPageSource(source: string): string {
-	const sanitizedLines: string[] = [];
-	let skippingArc42Help = false;
-
-	for (const line of source.split(/\r?\n/)) {
-		if (line.startsWith("ifdef::arc42help[]")) {
-			skippingArc42Help = true;
-			continue;
-		}
-
-		if (line.startsWith("endif::arc42help[]")) {
-			skippingArc42Help = false;
-			continue;
-		}
-
-		if (skippingArc42Help || asciidocControlLinePattern.test(line)) {
-			continue;
-		}
-
-		sanitizedLines.push(line);
-	}
-
-	return `${sanitizedLines.join("\n").trim()}\n`;
-}
-
-export function cleanRenderedMarkdown(markdown: string): string {
-	return markdown
-		.replaceAll(/\\<!-- md-ir-include .*?--\\>\s*/g, "")
-		.replaceAll(
-			/\n> Unsupported: include directive is not yet inlined: include::[^\n]+\n?/g,
-			"\n",
-		)
-		.replaceAll(/ifdef::arc42help\\\[\\\].*?endif::arc42help\\\[\\\]\n*/gs, "")
-		.replaceAll(/^\/\/.*$/gm, "")
-		.replaceAll(/^:.*$/gm, "")
-		.replaceAll(/^\\?\[(?:options|cols).*$/gm, "")
-		.replaceAll(/^\*\*<[^>\n]+>\*\*$/gm, "")
-		.replaceAll(/^\\?\*{2,}.*<[^>\n]+>.*$/gm, "")
-		.replaceAll(/\n{3,}/g, "\n\n")
-		.trim();
-}
-
-function slugifyHeading(text: string): string {
-	return text
-		.toLowerCase()
-		.replace(/<[^>]+>/g, "")
-		.replace(/[`*_~[\]()]/g, "")
-		.replace(/[^a-z0-9\s-]/g, "")
-		.trim()
-		.replace(/\s+/g, "-");
-}
-
-export function addMarkdownTableOfContents(markdown: string): string {
-	const lines = markdown.split("\n");
-	const entries: Array<{
-		href: string;
-		level: number;
-		text: string;
-	}> = [];
-	let firstHeadingSeen = false;
-
-	for (let index = 0; index < lines.length; index += 1) {
-		const line = lines[index];
-		const headingMatch = line?.match(/^(#{1,6})\s+(.+)$/);
-		if (headingMatch === null || headingMatch === undefined) {
-			continue;
-		}
-
-		const [, markers, rawText] = headingMatch;
-		if (markers === undefined || rawText === undefined) {
-			continue;
-		}
-
-		if (!firstHeadingSeen) {
-			firstHeadingSeen = true;
-			continue;
-		}
-
-		let anchorMatch: RegExpMatchArray | null = null;
-		for (
-			let previousIndex = index - 1;
-			previousIndex >= 0;
-			previousIndex -= 1
-		) {
-			const previousLine = lines[previousIndex]?.trim() ?? "";
-			if (previousLine.length === 0) {
-				continue;
-			}
-
-			anchorMatch = previousLine.match(/^<a id="([^"]+)"><\/a>$/);
-			break;
-		}
-		const text = rawText.trim();
-		const href = anchorMatch?.[1] ?? slugifyHeading(text);
-		entries.push({
-			href: `#${href}`,
-			level: markers.length,
-			text,
-		});
-	}
-
-	if (entries.length === 0) {
-		return markdown;
-	}
-
-	const baseLevel = Math.min(...entries.map((entry) => entry.level));
-	const toc = [
-		"## Table of Contents",
-		"",
-		...entries.map(
-			(entry) =>
-				`${"  ".repeat(entry.level - baseLevel)}- [${entry.text}](${entry.href})`,
-		),
-	].join("\n");
-
-	const [firstLine, ...rest] = lines;
-	if (firstLine === undefined) {
-		return markdown;
-	}
-
-	return [firstLine, "", toc, "", ...rest]
-		.join("\n")
-		.replaceAll(/\n{3,}/g, "\n\n");
 }
 
 export function parseArguments(argv: string[]): ExportAntoraModulesOptions {
 	let flavor: MarkdownFlavorName = "gfm";
-	let modulesRoot = resolve("docs/modules");
 	let outputRoot = resolve("build/markdown");
+	let playbookPath = resolve("antora-playbook.yml");
 
 	for (let index = 0; index < argv.length; index += 1) {
 		const argument = argv[index];
-		if (argument === undefined) {
-			continue;
-		}
+		if (argument === undefined) continue;
 
-		if (argument === "--modules-root") {
+		if (argument === "--playbook") {
 			const value = argv[index + 1];
 			if (value === undefined) {
-				throw new Error("Missing value for --modules-root");
+				throw new Error("Missing value for --playbook");
 			}
-
-			modulesRoot = resolve(value);
+			playbookPath = resolve(value);
 			index += 1;
 			continue;
 		}
@@ -196,7 +77,6 @@ export function parseArguments(argv: string[]): ExportAntoraModulesOptions {
 			if (value === undefined) {
 				throw new Error("Missing value for --output-root");
 			}
-
 			outputRoot = resolve(value);
 			index += 1;
 			continue;
@@ -221,105 +101,177 @@ export function parseArguments(argv: string[]): ExportAntoraModulesOptions {
 		throw new Error(`Unknown option: ${argument}`);
 	}
 
+	return { flavor, outputRoot, playbookPath };
+}
+
+function isNavigationEntry(value: unknown): value is NavigationEntry {
+	return value !== null && typeof value === "object";
+}
+
+function createAssemblerConfigSource(
+	outputRoot: string,
+): Record<string, unknown> {
 	return {
-		flavor,
-		modulesRoot,
-		outputRoot,
+		componentVersionFilter: {
+			names: ["antora-markdown-exporter"],
+		},
+		assembly: {
+			insertStartPage: false,
+			rootLevel: 1,
+		},
+		build: {
+			clean: false,
+			dir: outputRoot,
+			mkdirs: true,
+			publish: false,
+		},
 	};
 }
 
-export function getAntoraModuleRoot(
-	modulesRoot: string,
-	moduleName: string,
-): string {
-	return resolve(modulesRoot, moduleName);
-}
-
-export function getAntoraModuleIndexPath(
-	modulesRoot: string,
-	moduleName: string,
-): string {
-	return resolve(
-		getAntoraModuleRoot(modulesRoot, moduleName),
-		"pages/index.adoc",
-	);
-}
-
-export function mapAntoraModuleToMarkdownPath(
-	outputRoot: string,
-	moduleName: string,
-): ExportedMarkdownFile {
-	const relativeInputPath = `${moduleName}/pages/index.adoc`;
-	const relativeOutputPath = `${moduleName}.md`;
-
+function createAntoraEnvironment(playbookPath: string): NodeJS.ProcessEnv {
 	return {
-		inputPath: relativeInputPath,
-		moduleName,
-		outputPath: resolve(outputRoot, relativeOutputPath),
-		relativeInputPath,
-		relativeOutputPath,
+		...process.env,
+		ANTORA_CACHE_DIR: resolve(dirname(playbookPath), "build/.antora-cache"),
+	};
+}
+
+function getTargetComponentVersion(contentCatalog: {
+	getComponent: (
+		name: string,
+	) => { versions?: ComponentVersionWithNavigation[] } | undefined;
+}): ComponentVersionWithNavigation {
+	const component = contentCatalog.getComponent("antora-markdown-exporter");
+	const [componentVersion] = component?.versions ?? [];
+	if (componentVersion === undefined) {
+		throw new Error("Could not resolve component antora-markdown-exporter");
+	}
+
+	return componentVersion;
+}
+
+function findModuleRootEntry(
+	entry: NavigationEntry,
+): NavigationEntry | undefined {
+	if (!Array.isArray(entry.items) || entry.items.length === 0) {
+		return undefined;
+	}
+
+	const [candidate] = entry.items;
+	return isNavigationEntry(candidate) ? candidate : undefined;
+}
+
+function extractModuleNameFromUrl(url: string | undefined): string | undefined {
+	if (typeof url !== "string") {
+		return undefined;
+	}
+
+	const match = /\/([^/]+)\/index\.html$/u.exec(url);
+	return match?.[1];
+}
+
+export function getDocumentationModuleEntries(
+	componentVersion: ComponentVersionWithNavigation,
+): Array<{ moduleName: string; navigation: NavigationEntry }> {
+	return (componentVersion.navigation ?? [])
+		.map(findModuleRootEntry)
+		.filter((entry): entry is NavigationEntry => entry !== undefined)
+		.map((entry) => ({
+			moduleName: extractModuleNameFromUrl(entry.url),
+			navigation: entry,
+		}))
+		.filter(
+			(entry): entry is { moduleName: string; navigation: NavigationEntry } =>
+				entry.moduleName === "architecture" ||
+				entry.moduleName === "manual" ||
+				entry.moduleName === "onboarding",
+		);
+}
+
+export function createModuleNavigationCatalog(
+	componentVersion: ComponentVersionWithNavigation,
+	moduleNavigation: NavigationEntry,
+) {
+	return {
+		getNavigation(component: string, version: string): NavigationEntry[] {
+			if (
+				component === componentVersion.name &&
+				version === componentVersion.version
+			) {
+				return [moduleNavigation];
+			}
+
+			return [];
+		},
 	};
 }
 
 export async function exportAntoraModulesToMarkdown(
 	options: ExportAntoraModulesOptions,
 ): Promise<ExportedMarkdownFile[]> {
-	const modulesStats = await stat(options.modulesRoot).catch(() => undefined);
-	if (modulesStats === undefined || !modulesStats.isDirectory()) {
-		throw new Error(
-			`Antora modules root does not exist or is not a directory: ${options.modulesRoot}`,
-		);
-	}
-
-	if (options.modulesRoot === options.outputRoot) {
-		throw new Error("Output root must be different from the modules root");
+	const playbookStats = await stat(options.playbookPath).catch(() => undefined);
+	if (playbookStats === undefined || !playbookStats.isFile()) {
+		throw new Error(`Antora playbook does not exist: ${options.playbookPath}`);
 	}
 
 	if (!markdownFlavors.has(options.flavor)) {
 		throw new Error(`Unsupported markdown flavor: ${options.flavor}`);
 	}
 
+	const playbook = buildPlaybook(
+		["--playbook", options.playbookPath, "--quiet"],
+		createAntoraEnvironment(options.playbookPath),
+	);
+	playbook.runtime.quiet = true;
+
+	const siteAsciiDocConfig = loadAsciiDoc.resolveAsciiDocConfig(playbook);
+	siteAsciiDocConfig.keepSource = true;
+	const contentAggregate = await aggregateContent(playbook);
+	const contentCatalog = classifyContent(
+		playbook,
+		contentAggregate,
+		siteAsciiDocConfig,
+	);
+	convertDocuments(contentCatalog, siteAsciiDocConfig);
+	buildNavigation(contentCatalog, siteAsciiDocConfig);
 	await rm(options.outputRoot, { force: true, recursive: true });
 	await mkdir(options.outputRoot, { recursive: true });
 
+	const componentVersion = getTargetComponentVersion(contentCatalog);
+	const moduleEntries = getDocumentationModuleEntries(componentVersion);
 	const exportedFiles: ExportedMarkdownFile[] = [];
 
-	for (const moduleName of exportableModules) {
-		const moduleIndexPath = getAntoraModuleIndexPath(
-			options.modulesRoot,
-			moduleName,
+	for (const moduleEntry of moduleEntries) {
+		const files = await assembleContent(
+			playbook,
+			contentCatalog,
+			createMarkdownConverter({ flavor: options.flavor }),
+			{
+				configSource: createAssemblerConfigSource(options.outputRoot),
+				navigationCatalog: createModuleNavigationCatalog(
+					componentVersion,
+					moduleEntry.navigation,
+				),
+			},
 		);
-		const moduleIndexStats = await stat(moduleIndexPath).catch(() => undefined);
-		if (moduleIndexStats === undefined || !moduleIndexStats.isFile()) {
-			throw new Error(`Module index page does not exist: ${moduleIndexPath}`);
+
+		for (const file of files) {
+			const relativeOutputPath =
+				typeof file?.src?.relative === "string" ? file.src.relative : undefined;
+			if (relativeOutputPath === undefined) {
+				continue;
+			}
+
+			exportedFiles.push({
+				moduleName: moduleEntry.moduleName,
+				outputPath: resolve(options.outputRoot, relativeOutputPath),
+				relativeOutputPath,
+			});
 		}
-
-		const source = sanitizeAntoraPageSource(
-			await readFile(moduleIndexPath, "utf8"),
-		);
-		const mapping = mapAntoraModuleToMarkdownPath(
-			options.outputRoot,
-			moduleName,
-		);
-		const document = normalizeMarkdownIR(
-			convertAssemblyToMarkdownIR(source, {
-				includeRootDir: getAntoraModuleRoot(options.modulesRoot, moduleName),
-				sourcePath: moduleIndexPath,
-			}),
-		);
-		const markdown = cleanRenderedMarkdown(
-			renderMarkdown(document, options.flavor),
-		);
-		const withToc = addMarkdownTableOfContents(markdown);
-
-		await writeFile(mapping.outputPath, `${withToc}\n`);
-		exportedFiles.push({
-			...mapping,
-			inputPath: moduleIndexPath,
-		});
 	}
 
-	return exportedFiles;
+	return exportedFiles.sort((left, right) =>
+		left.relativeOutputPath.localeCompare(right.relativeOutputPath),
+	);
 }
 
 async function main(): Promise<void> {
@@ -331,10 +283,9 @@ async function main(): Promise<void> {
 			{
 				count: exportedFiles.length,
 				flavor: options.flavor,
-				modulesRoot: options.modulesRoot,
 				outputRoot: options.outputRoot,
+				playbookPath: options.playbookPath,
 				files: exportedFiles.map((entry) => ({
-					inputPath: entry.relativeInputPath,
 					moduleName: entry.moduleName,
 					outputPath: entry.relativeOutputPath,
 				})),
