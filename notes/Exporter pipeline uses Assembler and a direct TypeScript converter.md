@@ -36,7 +36,7 @@ This also keeps Antora-specific concerns near the extension boundary while prese
 Implement the Antora integration in `src/extension/**` and the assembly conversion boundary in `src/exporter/**`.
 
 
-Treat the assembled AsciiDoc document as the last Antora-facing artifact. After that point, all decisions must move through the Markdown semantic layer in `src/markdown/**`, including dedicated xref target metadata, dedicated anchors, page-alias metadata, include-directive metadata, images, admonitions, aligned tables, callouts, and recursive include inlining with tagged-region and `leveloffset` handling when source context is available.
+Treat the assembled AsciiDoc document as the last Antora-facing artifact. After that point, all decisions must move through the Markdown semantic layer in `src/markdown/**`, including dedicated xref target metadata, dedicated anchors, page-alias metadata, include-directive metadata, images, admonitions, aligned tables, callouts, and recursive include inlining with tagged regions, multi-tag selection, line ranges, indentation, and `leveloffset` handling when source context is available. Renderer flavor policy may then shape page-family xrefs into source-like or site-like destinations without discarding the original Antora coordinates.
 
 
 Do not add Pandoc, DocBook, or HTML-to-Markdown fallback chains to the primary path.

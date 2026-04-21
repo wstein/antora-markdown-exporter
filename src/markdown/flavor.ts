@@ -12,6 +12,7 @@ export type MarkdownFlavorSpec = {
 	supportsFootnotes: boolean;
 	supportsRawHtml: boolean;
 	supportsTables: boolean;
+	xrefStyle: "site" | "source";
 };
 
 export const markdownFlavorSpecs: Record<
@@ -30,6 +31,7 @@ export const markdownFlavorSpecs: Record<
 		preserveOrderedListStart: true,
 		citationStyle: "plain",
 		blockFallbackLabel: "Unsupported",
+		xrefStyle: "source",
 	},
 	commonmark: {
 		name: "commonmark",
@@ -43,6 +45,7 @@ export const markdownFlavorSpecs: Record<
 		preserveOrderedListStart: true,
 		citationStyle: "plain",
 		blockFallbackLabel: "Unsupported",
+		xrefStyle: "source",
 	},
 	gitlab: {
 		name: "gitlab",
@@ -56,6 +59,7 @@ export const markdownFlavorSpecs: Record<
 		preserveOrderedListStart: true,
 		citationStyle: "at",
 		blockFallbackLabel: "Unsupported",
+		xrefStyle: "site",
 	},
 	strict: {
 		name: "strict",
@@ -69,6 +73,7 @@ export const markdownFlavorSpecs: Record<
 		preserveOrderedListStart: false,
 		citationStyle: "plain",
 		blockFallbackLabel: "Unsupported",
+		xrefStyle: "site",
 	},
 };
 

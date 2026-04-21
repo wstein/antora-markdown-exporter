@@ -107,4 +107,65 @@ describe("flavor-aware markdown rendering", () => {
 			"> Unsupported: table rendering requires table-capable markdown",
 		);
 	});
+
+	it("shapes Antora xref destinations per flavor policy", () => {
+		const documentWithXrefs = {
+			type: "document" as const,
+			children: [
+				{
+					type: "paragraph" as const,
+					children: [
+						{
+							type: "xref" as const,
+							url: "docs/ROOT/install.adoc",
+							target: {
+								raw: "docs:ROOT:install.adoc",
+								component: "docs",
+								module: "ROOT",
+								path: "install.adoc",
+							},
+							children: [{ type: "text" as const, value: "install" }],
+						},
+						{ type: "text" as const, value: " " },
+						{
+							type: "xref" as const,
+							url: "docs/2.0/ROOT/install.adoc#cli",
+							target: {
+								raw: "2.0@docs:ROOT:install.adoc#cli",
+								component: "docs",
+								version: "2.0",
+								module: "ROOT",
+								path: "install.adoc",
+								fragment: "cli",
+							},
+							children: [{ type: "text" as const, value: "cli" }],
+						},
+						{ type: "text" as const, value: " " },
+						{
+							type: "xref" as const,
+							url: "docs/ROOT/partial/nav.adoc",
+							target: {
+								raw: "docs:ROOT:partial$nav.adoc",
+								component: "docs",
+								module: "ROOT",
+								family: "partial",
+								path: "nav.adoc",
+							},
+							children: [{ type: "text" as const, value: "nav" }],
+						},
+					],
+				},
+			],
+		};
+
+		expect(renderMarkdown(documentWithXrefs, "gfm")).toContain(
+			"[install](docs/ROOT/install.adoc) [cli](docs/2.0/ROOT/install.adoc#cli) [nav](docs/ROOT/partial/nav.adoc)",
+		);
+		expect(renderGitLab(documentWithXrefs)).toContain(
+			"[install](docs/ROOT/install.html) [cli](docs/2.0/ROOT/install.html#cli) [nav](docs/ROOT/partial/nav.adoc)",
+		);
+		expect(renderStrict(documentWithXrefs)).toContain(
+			"[install](docs/ROOT/install.html) [cli](docs/2.0/ROOT/install.html#cli) [nav](docs/ROOT/partial/nav.adoc)",
+		);
+	});
 });

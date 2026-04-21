@@ -1,6 +1,11 @@
 import type { MarkdownFlavorName, MarkdownFlavorSpec } from "../flavor.js";
 import { resolveMarkdownFlavor } from "../flavor.js";
-import type { MarkdownBlock, MarkdownDocument, MarkdownInline } from "../ir.js";
+import type {
+	MarkdownBlock,
+	MarkdownDocument,
+	MarkdownInline,
+	MarkdownXref,
+} from "../ir.js";
 
 function escapeMarkdownText(value: string): string {
 	return value.replace(/[\\*_`[\]<>]/g, "\\$&");
@@ -12,6 +17,36 @@ function escapeMarkdownTitle(value: string): string {
 
 function renderLinkDestination(url: string, title?: string): string {
 	return title === undefined ? url : `${url} "${escapeMarkdownTitle(title)}"`;
+}
+
+function stripAsciiDocExtension(value: string): string {
+	return value.replace(/\.adoc$/i, ".html");
+}
+
+function renderXrefDestination(
+	node: MarkdownXref,
+	flavor: MarkdownFlavorSpec,
+): string {
+	if (flavor.xrefStyle === "source") {
+		return node.url;
+	}
+
+	const { target } = node;
+	if (target.path.length === 0) {
+		return target.fragment === undefined ? node.url : `#${target.fragment}`;
+	}
+
+	if (target.family !== undefined && target.family !== "page") {
+		return node.url;
+	}
+
+	const segments = [target.component, target.version, target.module].filter(
+		(segment): segment is string => segment !== undefined && segment.length > 0,
+	);
+	segments.push(stripAsciiDocExtension(target.path));
+	const path = segments.join("/");
+
+	return target.fragment === undefined ? path : `${path}#${target.fragment}`;
 }
 
 function renderUnsupported(reason: string, flavor: MarkdownFlavorSpec): string {
@@ -32,8 +67,9 @@ function renderInline(
 		case "code":
 			return `\`${node.value.replace(/`/g, "\\`")}\``;
 		case "link":
-		case "xref":
 			return `[${node.children.map((child) => renderInline(child, flavor)).join("")}](${renderLinkDestination(node.url, node.title)})`;
+		case "xref":
+			return `[${node.children.map((child) => renderInline(child, flavor)).join("")}](${renderLinkDestination(renderXrefDestination(node, flavor), node.title)})`;
 		case "image":
 			return `![${node.alt.map((child) => renderInline(child, flavor)).join("")}](${renderLinkDestination(node.url, node.title)})`;
 		case "hardBreak":

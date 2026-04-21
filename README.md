@@ -27,7 +27,7 @@ console.log(renderGfm(normalized));
 console.log(renderMarkdown(normalized, "commonmark"));
 ```
 
-Current scaffold coverage includes headings, paragraphs, inline links, dedicated xref nodes with inspectable Antora target metadata, dedicated anchor and page-alias nodes, images, ordered and unordered lists, nested lists, thematic breaks, aligned tables, raw HTML nodes, footnote placeholders, fenced code blocks with dedicated callout-list nodes, block quotes, dedicated admonition nodes, and recursive include inlining with dedicated include-directive metadata, for both `partial$` and relative include paths, including tagged-region selection and `leveloffset`, when source-path context is available.
+Current scaffold coverage includes headings, paragraphs, inline links, dedicated xref nodes with inspectable Antora target metadata, dedicated anchor and page-alias nodes, images, ordered and unordered lists, nested lists, thematic breaks, aligned tables, raw HTML nodes, footnote placeholders, fenced code blocks with dedicated callout-list nodes, block quotes, dedicated admonition nodes, and recursive include inlining with dedicated include-directive metadata, for both `partial$` and relative include paths, including tagged-region selection, multi-tag extraction, line ranges, indentation, and `leveloffset`, when source-path context is available. Flavor policies can now render page-family xrefs either as source-shaped `.adoc` destinations or as site-shaped `.html` routes while leaving non-page families source-visible.
 
 ### Extension scaffold
 
