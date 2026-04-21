@@ -36,7 +36,7 @@ This also keeps Antora-specific concerns near the extension boundary while prese
 Implement the Antora integration in `src/extension/**` and the assembly conversion boundary in `src/exporter/**`.
 
 
-Treat the assembled AsciiDoc document as the last Antora-facing artifact. After that point, all decisions must move through the Markdown semantic layer in `src/markdown/**`, including dedicated xref target metadata, dedicated anchors, page-alias metadata, include-directive metadata, images, admonitions, aligned tables, callouts, and recursive include inlining with tagged regions, multi-tag selection, line ranges, indentation, and `leveloffset` handling when source context is available. Xref destination shaping is a separate lowering phase in `src/markdown/xref-resolution.ts`, so renderers can serialize already-resolved destinations without owning Antora routing policy.
+Treat the assembled AsciiDoc document as the last Antora-facing artifact. After that point, all decisions must move through the Markdown semantic layer in `src/markdown/**`, including dedicated xref target metadata, dedicated anchors, page-alias metadata, include-directive metadata, images, admonitions, aligned tables, callouts, and recursive include inlining with tagged regions, multi-tag selection, line ranges, indentation, and `leveloffset` handling when source context is available. Xref destination shaping is a separate lowering phase in `src/markdown/xref-resolution.ts`, so renderers can serialize already-resolved destinations without owning Antora routing policy. Include metadata transport is isolated behind `src/exporter/include-metadata.ts`, so the converter no longer hardcodes the HTML-comment marker format in its general parsing logic.
 
 
 Do not add Pandoc, DocBook, or HTML-to-Markdown fallback chains to the primary path.
@@ -47,6 +47,7 @@ Do not add Pandoc, DocBook, or HTML-to-Markdown fallback chains to the primary p
 
 - [[Markdown IR is the canonical render boundary]] - The semantic layer formalizes the direct conversion contract.
 - [[Flavor renderers are syntax adapters over one semantic layer]] - Renderer implementations depend on this pipeline boundary.
+- [[Include metadata transport is an internal implementation detail]] - Include marker transport should stay isolated from general conversion logic.
 - [[Xref target resolution is a separate lowering phase]] - Xref routing is resolved before markdown link serialization.
 - src/extension/index.ts - Antora extension registration entrypoint.
 - src/exporter/convert-assembly.ts - Assembly-to-IR conversion boundary.

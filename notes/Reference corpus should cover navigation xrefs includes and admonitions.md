@@ -13,7 +13,7 @@ Reference cases should deliberately represent the highest-value Antora authoring
 - mixed ordered and unordered list hierarchies
 - intra-page and inter-page xrefs, including component/module/version-qualified targets and cases where page, image, attachment, example, and partial families differ by output policy
 - anchors and page-alias metadata
-- include-heavy pages, including recursive partial chains, tagged-region selection, line slicing, stepped and open-ended ranges, indentation, multi-tag selection, diagnostics, and level offsets
+- include-heavy pages, including recursive partial chains, tagged-region selection, line slicing, stepped and open-ended ranges, indentation, multi-tag selection, diagnostics, level offsets, and behavior that remains stable across internal metadata-transport refactors
 - admonitions and block variants
 - code listings and callout-adjacent structures
 - tables and images
@@ -37,5 +37,6 @@ Refresh the coverage plan when a new renderer feature or regression class appear
 
 - [[Reference fixtures are curated and provenance locked]] - Curation policy keeps the corpus reproducible.
 - [[Reference tests check semantic invariants not exact bytes]] - Coverage themes guide compatibility assertions.
+- [[Include metadata transport is an internal implementation detail]] - Reference cases should pin include semantics, not the private marker transport.
 - tests/reference/manifest.json - Coverage tags and provenance.
 - tests/fixtures - Local exact-output fixtures for reduced cases.

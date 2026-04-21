@@ -22,6 +22,10 @@ import type {
 	MarkdownXrefFamily,
 	MarkdownXrefTarget,
 } from "../markdown/ir.js";
+import {
+	decodeIncludeDirectiveMarker,
+	encodeIncludeDirectiveMarker,
+} from "./include-metadata.js";
 
 const listMarkerPattern = /^\s*([*.]+)\s+(.*)$/;
 const admonitionPattern = /^(NOTE|TIP|IMPORTANT|CAUTION|WARNING):\s+(.*)$/;
@@ -1180,7 +1184,7 @@ function expandIncludes(
 		);
 		const parsedSemantics = parseIncludeSemantics(directive.attributes);
 		expandedLines.push(
-			`<!-- md-ir-include ${JSON.stringify({
+			encodeIncludeDirectiveMarker({
 				target: includeTarget,
 				attributes: directive.attributes,
 				diagnostics:
@@ -1195,7 +1199,7 @@ function expandIncludes(
 					includingSourcePath: options.sourcePath,
 					resolvedPath,
 				},
-			})} -->`,
+			}),
 		);
 		if (visited.has(resolvedPath)) {
 			expandedLines.push(
@@ -1237,26 +1241,7 @@ function expandIncludes(
 function parseIncludeDirectiveMarker(
 	line: string,
 ): MarkdownIncludeDirective | undefined {
-	const match = line.trim().match(/^<!-- md-ir-include (.+) -->$/);
-	if (match?.[1] === undefined) {
-		return undefined;
-	}
-
-	const payload = JSON.parse(match[1]) as {
-		attributes: Record<string, string>;
-		diagnostics?: MarkdownIncludeDirective["diagnostics"];
-		provenance?: MarkdownIncludeDirective["provenance"];
-		semantics?: MarkdownIncludeDirective["semantics"];
-		target: string;
-	};
-	return {
-		type: "includeDirective",
-		target: payload.target,
-		attributes: payload.attributes,
-		diagnostics: payload.diagnostics,
-		semantics: payload.semantics,
-		provenance: payload.provenance,
-	};
+	return decodeIncludeDirectiveMarker(line);
 }
 
 function isBlockBoundary(line: string): boolean {
