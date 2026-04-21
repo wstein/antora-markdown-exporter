@@ -569,4 +569,92 @@ describe("include diagnostics helpers", () => {
 			xrefTargets: [],
 		});
 	});
+
+	it("keeps combined inspection reports normalized and in document order", () => {
+		const report = collectMarkdownInspectionReport({
+			type: "document",
+			children: [
+				{
+					type: "paragraph",
+					children: [
+						{
+							type: "xref",
+							url: " docs/ROOT/second.adoc ",
+							target: {
+								raw: " docs:ROOT:second.adoc ",
+								component: " docs ",
+								module: " ROOT ",
+								family: {
+									kind: "page",
+									name: " page ",
+								},
+								path: " second.adoc ",
+							},
+							children: [{ type: "text", value: " second " }],
+						},
+					],
+				},
+				{
+					type: "blockquote",
+					children: [
+						{
+							type: "includeDirective",
+							target: " nested/first.adoc ",
+							attributes: {},
+							diagnostics: [
+								{
+									code: "invalid-indent",
+									message: " include indent must be a positive integer ",
+									source: " -2 ",
+								},
+							],
+						},
+						{
+							type: "paragraph",
+							children: [
+								{
+									type: "xref",
+									url: " docs/ROOT/third.adoc ",
+									target: {
+										raw: " docs:ROOT:third.adoc ",
+										component: " docs ",
+										module: " ROOT ",
+										family: {
+											kind: "page",
+											name: " page ",
+										},
+										path: " third.adoc ",
+									},
+									children: [{ type: "text", value: " third " }],
+								},
+							],
+						},
+					],
+				},
+				{
+					type: "includeDirective",
+					target: " root/second.adoc ",
+					attributes: {},
+				},
+			],
+		});
+
+		expect(
+			report.includeDirectives.map((directive) => directive.target),
+		).toEqual(["nested/first.adoc", "root/second.adoc"]);
+		expect(report.includeDiagnostics).toEqual([
+			{
+				target: "nested/first.adoc",
+				diagnostic: {
+					code: "invalid-indent",
+					message: "include indent must be a positive integer",
+					source: "-2",
+				},
+			},
+		]);
+		expect(report.xrefTargets.map((target) => target.raw)).toEqual([
+			"docs:ROOT:second.adoc",
+			"docs:ROOT:third.adoc",
+		]);
+	});
 });

@@ -16,6 +16,12 @@ type InspectionCliOptions = {
 	sourcePath: string;
 };
 
+type InspectionReportPayload = {
+	inputPath: string;
+	report: ReturnType<typeof collectMarkdownInspectionReport>;
+	sourcePath: string;
+};
+
 function parseArguments(argv: string[]): InspectionCliOptions {
 	const positional: string[] = [];
 	let failOnDiagnostics = false;
@@ -133,14 +139,25 @@ function resolveIncludeDiagnosticAnnotationLevel(
 	}
 }
 
-function emitGitHubActionsAnnotations(
+function buildInspectionReportPayload(
 	options: InspectionCliOptions,
 	source: string,
-): void {
+): InspectionReportPayload {
 	const document = convertAssemblyToMarkdownIR(source, {
 		sourcePath: options.sourcePath,
 	});
-	const report = collectMarkdownInspectionReport(document);
+	return {
+		inputPath: options.inputPath,
+		sourcePath: options.sourcePath,
+		report: collectMarkdownInspectionReport(document),
+	};
+}
+
+function emitGitHubActionsAnnotations(
+	payload: InspectionReportPayload,
+	failOnDiagnostics: boolean,
+): void {
+	const { report, sourcePath } = payload;
 
 	for (const entry of report.includeDiagnostics) {
 		const level = resolveIncludeDiagnosticAnnotationLevel(
@@ -152,7 +169,7 @@ function emitGitHubActionsAnnotations(
 				: ` (source: ${entry.diagnostic.source})`
 		}`;
 		console.log(
-			`::${level} file=${escapeGitHubAnnotationValue(options.sourcePath)},title=${escapeGitHubAnnotationValue(`include:${entry.target}`)}::${escapeGitHubAnnotationValue(message)}`,
+			`::${level} file=${escapeGitHubAnnotationValue(sourcePath)},title=${escapeGitHubAnnotationValue(`include:${entry.target}`)}::${escapeGitHubAnnotationValue(message)}`,
 		);
 	}
 
@@ -162,7 +179,7 @@ function emitGitHubActionsAnnotations(
 		)}`,
 	);
 
-	if (options.failOnDiagnostics && report.includeDiagnostics.length > 0) {
+	if (failOnDiagnostics && report.includeDiagnostics.length > 0) {
 		process.exitCode = 1;
 	}
 }
@@ -172,30 +189,19 @@ async function main(): Promise<void> {
 	const source = options.readFromStdin
 		? await readStdin()
 		: await readFile(options.inputPath, "utf8");
+	const payload = buildInspectionReportPayload(options, source);
 
 	if (options.format === "github-actions") {
-		emitGitHubActionsAnnotations(options, source);
+		emitGitHubActionsAnnotations(payload, options.failOnDiagnostics);
 		return;
 	}
 
-	const document = convertAssemblyToMarkdownIR(source, {
-		sourcePath: options.sourcePath,
-	});
-	const report = collectMarkdownInspectionReport(document);
+	console.log(JSON.stringify(payload, null, 2));
 
-	console.log(
-		JSON.stringify(
-			{
-				inputPath: options.inputPath,
-				sourcePath: options.sourcePath,
-				report,
-			},
-			null,
-			2,
-		),
-	);
-
-	if (options.failOnDiagnostics && report.includeDiagnostics.length > 0) {
+	if (
+		options.failOnDiagnostics &&
+		payload.report.includeDiagnostics.length > 0
+	) {
 		process.exitCode = 1;
 	}
 }

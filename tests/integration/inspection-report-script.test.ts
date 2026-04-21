@@ -1,4 +1,4 @@
-import { execFileSync } from "node:child_process";
+import { execFileSync, spawnSync } from "node:child_process";
 import { resolve } from "node:path";
 import { describe, expect, it } from "vitest";
 
@@ -125,6 +125,36 @@ describe("inspection report script integration", () => {
 			  },
 			  "sourcePath": "<root>/tests/fixtures/includes-invalid-steps/input.adoc",
 			}
+		`);
+	});
+
+	it("keeps the GitHub Actions output stable end to end", () => {
+		const inputPath = resolve(
+			root,
+			"tests/fixtures/includes-invalid-steps/input.adoc",
+		);
+		const result = spawnSync(
+			"bun",
+			[
+				"scripts/inspection-report.ts",
+				inputPath,
+				"--format",
+				"github-actions",
+				"--fail-on-diagnostics",
+			],
+			{
+				cwd: root,
+				encoding: "utf8",
+			},
+		);
+
+		expect(result.status).toBe(1);
+		expect(result.stderr).toBe("");
+		expect(result.stdout.replaceAll(root, "<root>")).toMatchInlineSnapshot(`
+			"::error file=<root>/tests/fixtures/includes-invalid-steps/input.adoc,title=include%3Apartials/snippet.adoc::invalid-line-step%3A include line steps must be positive integers (source%3A 1..5..0)
+			::error file=<root>/tests/fixtures/includes-invalid-steps/input.adoc,title=include%3Apartials/snippet.adoc::invalid-line-range%3A include line selectors must be positive integers or ranges (source%3A 1..5..bad)
+			::notice title=inspection-report::includeDirectives=1 includeDiagnostics=2 xrefs=0
+			"
 		`);
 	});
 });

@@ -66,6 +66,8 @@ const report = collectMarkdownInspectionReport(document);
 console.log(report.includeDirectives.length, report.xrefs.length);
 ```
 
+Inspection helpers normalize before traversal and return entries in document order, so the combined report is stable enough for CI, release validation, and snapshot-style contract tests.
+
 ### CI And Release Validation
 
 ```ts
@@ -91,7 +93,7 @@ for (const target of report.xrefTargets) {
 }
 ```
 
-For machine-readable CI output, the repository also ships a Bun-native example script:
+For machine-readable CI output, the repository also ships a Bun-native example script. JSON and GitHub Actions modes are alternate serializations of the same normalized inspection report.
 
 ```bash
 bun run inspect:report -- tests/fixtures/includes-invalid-steps/input.adoc \
@@ -210,7 +212,7 @@ make format
 make fix
 ```
 
-The primary development path uses Bun through the Makefile delegate targets. npm remains available as an explicit alternate path when needed:
+The primary development path uses Bun through the Makefile delegate targets. npm remains available as an explicit alternate path when needed and remains the publish channel used by `make release`:
 
 ```bash
 make install

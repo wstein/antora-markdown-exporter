@@ -102,43 +102,11 @@ function collectXrefsFromBlocks(blocks: MarkdownBlock[]): MarkdownXref[] {
 	});
 }
 
-export function collectIncludeDirectives(
-	document: MarkdownDocument,
-): MarkdownIncludeDirective[] {
-	const normalized = normalizeMarkdownIR(document);
-	return collectIncludeDirectivesFromBlocks(normalized.children);
-}
-
-export function collectIncludeDiagnostics(
-	document: MarkdownDocument,
-): MarkdownIncludeDiagnosticEntry[] {
-	return collectIncludeDirectives(document).flatMap((directive) =>
-		(directive.diagnostics ?? []).map((diagnostic) => ({
-			target: directive.target,
-			diagnostic,
-		})),
-	);
-}
-
-export function collectXrefs(document: MarkdownDocument): MarkdownXref[] {
-	const normalized = normalizeMarkdownIR(document);
-	return collectXrefsFromBlocks(normalized.children);
-}
-
-export function collectXrefTargets(
-	document: MarkdownDocument,
-): MarkdownXrefTarget[] {
-	return collectXrefs(document).map((xref) => xref.target);
-}
-
-export function collectMarkdownInspectionReport(
-	document: MarkdownDocument,
+function collectInspectionReportFromBlocks(
+	blocks: MarkdownBlock[],
 ): MarkdownInspectionReport {
-	const normalized = normalizeMarkdownIR(document);
-	const includeDirectives = collectIncludeDirectivesFromBlocks(
-		normalized.children,
-	);
-	const xrefs = collectXrefsFromBlocks(normalized.children);
+	const includeDirectives = collectIncludeDirectivesFromBlocks(blocks);
+	const xrefs = collectXrefsFromBlocks(blocks);
 
 	return {
 		includeDirectives,
@@ -151,4 +119,40 @@ export function collectMarkdownInspectionReport(
 		xrefs,
 		xrefTargets: xrefs.map((xref) => xref.target),
 	};
+}
+
+function collectNormalizedInspectionReport(
+	document: MarkdownDocument,
+): MarkdownInspectionReport {
+	return collectInspectionReportFromBlocks(
+		normalizeMarkdownIR(document).children,
+	);
+}
+
+export function collectIncludeDirectives(
+	document: MarkdownDocument,
+): MarkdownIncludeDirective[] {
+	return collectNormalizedInspectionReport(document).includeDirectives;
+}
+
+export function collectIncludeDiagnostics(
+	document: MarkdownDocument,
+): MarkdownIncludeDiagnosticEntry[] {
+	return collectNormalizedInspectionReport(document).includeDiagnostics;
+}
+
+export function collectXrefs(document: MarkdownDocument): MarkdownXref[] {
+	return collectNormalizedInspectionReport(document).xrefs;
+}
+
+export function collectXrefTargets(
+	document: MarkdownDocument,
+): MarkdownXrefTarget[] {
+	return collectNormalizedInspectionReport(document).xrefTargets;
+}
+
+export function collectMarkdownInspectionReport(
+	document: MarkdownDocument,
+): MarkdownInspectionReport {
+	return collectNormalizedInspectionReport(document);
 }

@@ -17,6 +17,8 @@ The repository exposes helper functions that consume a Markdown document and ret
 
 These helpers should normalize the document first and then traverse the full recursive block structure.
 
+Their output order should follow normalized document order so JSON reports, CLI output, and release validation remain deterministic without extra consumer-side sorting.
+
 The inspection API exists for validation and reporting, not rendering.
 
 ## Why
@@ -44,6 +46,8 @@ If multiple validation consumers need the same traversal, add one combined inspe
 When repository automation needs machine-readable output, provide one maintained script example that serializes the combined inspection report as JSON instead of leaving each CI pipeline to invent its own formatting layer.
 
 If CI consumers need native platform feedback, keep that as an explicit alternate output mode over the same normalized inspection report rather than a separate ad-hoc validation implementation. For example, GitHub Actions annotations should be emitted from the same inspection data that powers the JSON report.
+
+The repository currently treats Bun as the primary development runtime for the inspection script, while npm remains the publish channel rather than a separate validation implementation path.
 
 Do not mix inspection helpers into renderer policy or export conversion logic.
 
