@@ -33,6 +33,8 @@ This makes new flavors additive instead of invasive.
 
 Implement concrete renderers in `src/markdown/render/**` and keep flavor capabilities explicit in `src/markdown/flavor.ts`.
 
+Route unsupported blocks, unsupported inline degradation, and raw HTML allowance decisions through `src/markdown/fallback.ts` instead of duplicating fallback policy inside renderers.
+
 
 Keep flavor support, render policy, escaping, and fallback rules explicit. Unsupported constructs must degrade deterministically and visibly.
 
@@ -47,6 +49,7 @@ Do not allow renderer-local semantics that bypass the IR or normalization passes
 - [[Raw HTML is a controlled fallback not a default rendering path]] - HTML passthrough must be an explicit flavor policy, not renderer default behavior.
 - [[Markdown Guide Extended Syntax is a capability reference not a specification]] - Feature discovery must not override explicit flavor capabilities.
 - [[Testing relies on golden fixtures and deterministic snapshots]] - Per-flavor golden outputs verify this boundary.
+- src/markdown/fallback.ts - Centralized fallback policy for unsupported and raw HTML handling.
 - src/markdown/flavor.ts - Flavor capability and policy definitions.
 - src/markdown/render/gfm.ts - GFM renderer.
 - src/markdown/render/commonmark.ts - CommonMark-oriented renderer.

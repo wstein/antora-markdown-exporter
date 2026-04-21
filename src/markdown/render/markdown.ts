@@ -1,3 +1,4 @@
+import { renderUnsupportedBlock, resolveRawHtmlFallback } from "../fallback.js";
 import type { MarkdownFlavorName, MarkdownFlavorSpec } from "../flavor.js";
 import { resolveMarkdownFlavor } from "../flavor.js";
 import type {
@@ -67,10 +68,6 @@ function renderXrefDestination(
 	return target.fragment === undefined ? path : `${path}#${target.fragment}`;
 }
 
-function renderUnsupported(reason: string, flavor: MarkdownFlavorSpec): string {
-	return `> ${flavor.blockFallbackLabel}: ${reason}`;
-}
-
 function renderInline(
 	node: MarkdownInline,
 	flavor: MarkdownFlavorSpec,
@@ -95,9 +92,11 @@ function renderInline(
 		case "softBreak":
 			return flavor.softBreakStyle === "space" ? " " : "\n";
 		case "htmlInline":
-			return flavor.supportsRawHtml
-				? node.value
-				: escapeMarkdownText(node.value);
+			return resolveRawHtmlFallback(node, flavor, {
+				annotate: false,
+				fallbackReason: "html-inline",
+				unsupportedReason: "raw HTML inline is not allowed in this flavor",
+			});
 		case "footnoteReference":
 			return flavor.supportsFootnotes
 				? `[^${node.identifier}]`
@@ -145,19 +144,33 @@ function renderBlock(block: MarkdownBlock, flavor: MarkdownFlavorSpec): string {
 				.map((child) => renderInline(child, flavor))
 				.join("");
 		case "anchor":
-			return flavor.supportsRawHtml
-				? `<a id="${block.identifier}"></a>`
-				: renderUnsupported(
+			return resolveRawHtmlFallback(
+				{
+					type: "htmlBlock",
+					value: `<a id="${block.identifier}"></a>`,
+				},
+				flavor,
+				{
+					annotate: false,
+					fallbackReason: "anchor",
+					unsupportedReason:
 						"anchor blocks require raw HTML support in this flavor",
-						flavor,
-					);
+				},
+			);
 		case "pageAliases":
-			return flavor.supportsRawHtml
-				? `<!-- page-aliases: ${block.aliases.join(", ")} -->`
-				: renderUnsupported(
+			return resolveRawHtmlFallback(
+				{
+					type: "htmlBlock",
+					value: `<!-- page-aliases: ${block.aliases.join(", ")} -->`,
+				},
+				flavor,
+				{
+					annotate: false,
+					fallbackReason: "page-aliases",
+					unsupportedReason:
 						"page alias metadata requires raw HTML support in this flavor",
-						flavor,
-					);
+				},
+			);
 		case "includeDirective":
 			return "";
 		case "thematicBreak":
@@ -228,7 +241,7 @@ function renderBlock(block: MarkdownBlock, flavor: MarkdownFlavorSpec): string {
 				.join("\n");
 		case "table": {
 			if (!flavor.supportsTables) {
-				return renderUnsupported(
+				return renderUnsupportedBlock(
 					"table rendering requires table-capable markdown",
 					flavor,
 				);
@@ -257,15 +270,13 @@ function renderBlock(block: MarkdownBlock, flavor: MarkdownFlavorSpec): string {
 			return [header, separator, ...rows].join("\n");
 		}
 		case "htmlBlock":
-			return flavor.supportsRawHtml
-				? block.value
-				: renderUnsupported(
-						"raw HTML blocks are not allowed in this flavor",
-						flavor,
-					);
+			return resolveRawHtmlFallback(block, flavor, {
+				fallbackReason: "html-block",
+				unsupportedReason: "raw HTML blocks are not allowed in this flavor",
+			});
 		case "footnoteDefinition": {
 			if (!flavor.supportsFootnotes) {
-				return renderUnsupported(
+				return renderUnsupportedBlock(
 					"footnote definitions require footnote-capable markdown",
 					flavor,
 				);
@@ -294,7 +305,7 @@ function renderBlock(block: MarkdownBlock, flavor: MarkdownFlavorSpec): string {
 			].join("\n");
 		}
 		case "unsupported":
-			return renderUnsupported(block.reason, flavor);
+			return renderUnsupportedBlock(block.reason, flavor);
 	}
 }
 

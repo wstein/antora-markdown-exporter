@@ -13,7 +13,7 @@ The repository supports raw HTML emission as a fallback in Markdown output, but 
 Raw HTML is not part of the semantic Markdown IR. Instead, it appears as a fallback strategy when:
 - a construct cannot be represented in Markdown
 - semantic fallback would lose too much structure
-- the selected flavor policy allows HTML emission
+- the selected flavor policy allows HTML emission through `src/markdown/fallback.ts`
 
 Fallback priority must be:
 
@@ -44,15 +44,14 @@ Represent HTML fallback explicitly in the IR or fallback layer:
 
 - use a dedicated node or fallback descriptor
 - attach a reason for the fallback
-- surround output with explanatory comments
+- annotate block-level raw HTML when it is emitted as a generic fallback
 
 Example:
 
 ```md
-<!-- fallback: raw_html reason=complex-table -->
-<table>
-  ...
-</table>
+<!-- fallback: raw_html reason=html-block -->
+<div>raw</div>
+<!-- /fallback: raw_html -->
 ```
 
 Flavor policies must define whether HTML is:
@@ -63,10 +62,10 @@ Flavor policies must define whether HTML is:
 
 Default behavior:
 
-- strict -> forbid
-- gfm -> allow limited subset
-- commonmark -> allow only when explicitly enabled
-- glfm -> allow limited subset aligned with GitLab behavior
+- strict -> forbid block and inline raw HTML, and emit visible unsupported markers instead
+- gfm -> allow policy-mediated inline raw HTML and annotated block-level raw HTML fallback
+- commonmark -> allow policy-mediated inline raw HTML and annotated block-level raw HTML fallback
+- gitlab -> allow policy-mediated inline raw HTML and annotated block-level raw HTML fallback
 
 Do not use raw HTML for core constructs such as headings, lists, links, or paragraphs.
 

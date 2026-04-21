@@ -75,7 +75,9 @@ describe("flavor-aware markdown rendering", () => {
 		expect(rendered).toContain("Line one\\\nLine two");
 		expect(rendered).toContain("[^note-1] [cite:Source]");
 		expect(rendered).toContain("| Name | Value |");
-		expect(rendered).toContain("<div>raw</div>");
+		expect(rendered).toContain(
+			"<!-- fallback: raw_html reason=html-block -->\n<div>raw</div>\n<!-- /fallback: raw_html -->",
+		);
 		expect(rendered).toContain("[^note-1]: Footnote body.");
 	});
 
@@ -90,7 +92,9 @@ describe("flavor-aware markdown rendering", () => {
 		expect(rendered).toContain(
 			"> Unsupported: footnote definitions require footnote-capable markdown",
 		);
-		expect(rendered).toContain("<div>raw</div>");
+		expect(rendered).toContain(
+			"<!-- fallback: raw_html reason=html-block -->\n<div>raw</div>\n<!-- /fallback: raw_html -->",
+		);
 	});
 
 	it("preserves citations for the gitlab profile", () => {
@@ -123,7 +127,9 @@ describe("flavor-aware markdown rendering", () => {
 			],
 		});
 
-		expect(rendered).toBe("\\<kbd\\>Ctrl\\</kbd\\>\n");
+		expect(rendered).toBe(
+			"[Unsupported: raw HTML inline is not allowed in this flavor]\n",
+		);
 	});
 
 	it("shapes Antora xref destinations per flavor policy", () => {
