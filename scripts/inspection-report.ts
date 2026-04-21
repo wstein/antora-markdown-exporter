@@ -6,6 +6,7 @@ import {
 } from "../src/index.js";
 
 type InspectionCliFormat = "github-actions" | "json";
+type InspectionAnnotationLevel = "error" | "warning";
 
 type InspectionCliOptions = {
 	failOnDiagnostics: boolean;
@@ -121,6 +122,17 @@ function escapeGitHubAnnotationValue(value: string): string {
 		.replaceAll(",", "%2C");
 }
 
+function resolveIncludeDiagnosticAnnotationLevel(
+	code: string,
+): InspectionAnnotationLevel {
+	switch (code) {
+		case "empty-tag-selection":
+			return "warning";
+		default:
+			return "error";
+	}
+}
+
 function emitGitHubActionsAnnotations(
 	options: InspectionCliOptions,
 	source: string,
@@ -131,13 +143,16 @@ function emitGitHubActionsAnnotations(
 	const report = collectMarkdownInspectionReport(document);
 
 	for (const entry of report.includeDiagnostics) {
+		const level = resolveIncludeDiagnosticAnnotationLevel(
+			entry.diagnostic.code,
+		);
 		const message = `${entry.diagnostic.code}: ${entry.diagnostic.message}${
 			entry.diagnostic.source === undefined
 				? ""
 				: ` (source: ${entry.diagnostic.source})`
 		}`;
 		console.log(
-			`::error file=${escapeGitHubAnnotationValue(options.sourcePath)},title=${escapeGitHubAnnotationValue(`include:${entry.target}`)}::${escapeGitHubAnnotationValue(message)}`,
+			`::${level} file=${escapeGitHubAnnotationValue(options.sourcePath)},title=${escapeGitHubAnnotationValue(`include:${entry.target}`)}::${escapeGitHubAnnotationValue(message)}`,
 		);
 	}
 

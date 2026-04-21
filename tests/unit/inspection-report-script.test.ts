@@ -94,6 +94,24 @@ describe("inspection report script", () => {
 		expect(result.stdout).toContain("::notice title=inspection-report::");
 	});
 
+	it("emits warnings for lower-severity diagnostics in GitHub Actions mode", () => {
+		const result = spawnSync(
+			"bun",
+			["scripts/inspection-report.ts", "--stdin", "--format", "github-actions"],
+			{
+				cwd: root,
+				encoding: "utf8",
+				input: "== Validation\n\ninclude::partials/snippet.adoc[tags=]\n",
+			},
+		);
+
+		expect(result.status).toBe(0);
+		expect(result.stdout).toContain("::warning file=<stdin>");
+		expect(result.stdout).toContain(
+			"empty-tag-selection%3A include tag selection must contain at least one tag",
+		);
+	});
+
 	it("accepts an explicit source path in the emitted report", () => {
 		const inputPath = resolve(root, "tests/fixtures/sample/input.adoc");
 		const sourcePath = "/virtual/component/modules/ROOT/pages/sample.adoc";

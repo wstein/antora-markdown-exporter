@@ -13,6 +13,7 @@ describe("Makefile package manager policy", () => {
 		expect(makefile).toContain("$(PM) run unit");
 		expect(makefile).toContain("$(PM) run integration");
 		expect(makefile).toContain("$(PM) run reference");
+		expect(makefile).toContain("$(PM) run inspect:report -- $(INPUT)");
 		expect(makefile).toContain("$(PM) run check");
 		expect(makefile).toContain("$(PM) run lint");
 		expect(makefile).toContain("$(PM) run format");
@@ -29,6 +30,7 @@ describe("Makefile package manager policy", () => {
 		expect(makefile).not.toContain("bun.lock");
 		expect(makefile).not.toContain("$(BUN)");
 		expect(makefile).not.toContain("$(NPM)");
+		expect(makefile).not.toContain("if [ -f");
 		expect(makefile).not.toContain("pnpm");
 		expect(makefile).not.toContain("yarn");
 	});

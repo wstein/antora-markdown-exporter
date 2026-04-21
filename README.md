@@ -114,6 +114,8 @@ bun run inspect:report -- tests/fixtures/includes-invalid-steps/input.adoc \
   --fail-on-diagnostics
 ```
 
+Current GitHub Actions mode emits `::error` annotations for hard include diagnostics and `::warning` for degradations that still preserve usable output, such as an empty tag selection.
+
 The emitted JSON contains the normalized inspection report plus the resolved input and source paths:
 
 ```json
@@ -180,6 +182,7 @@ make test
 make unit
 make integration
 make reference
+make inspect-report INPUT=tests/fixtures/sample/input.adoc
 bun run inspect:report -- tests/fixtures/sample/input.adoc
 bun run inspect:report -- --stdin --source-path /virtual/page.adoc < tests/fixtures/sample/input.adoc
 make format
