@@ -26,6 +26,11 @@ const antoraPlaybook = readFileSync(
 	resolve(root, "antora-playbook.yml"),
 	"utf8",
 );
+const agentGuidance = readFileSync(resolve(root, "AGENT.md"), "utf8");
+const exportScript = readFileSync(
+	resolve(root, "scripts/export-antora-modules.ts"),
+	"utf8",
+);
 
 describe("repository contract", () => {
 	it("keeps referenced package files in the tree", () => {
@@ -83,6 +88,15 @@ describe("repository contract", () => {
 		);
 	});
 
+	it("keeps module export machine-readable output explicit and opt-in", () => {
+		expect(exportScript).toContain('format: "human" | "json"');
+		expect(exportScript).toContain('let format: "human" | "json" = "human"');
+		expect(exportScript).toContain('if (argument === "--json")');
+		expect(exportScript).toContain('if (options.format === "json")');
+		expect(exportScript).toContain("Exported ");
+		expect(exportScript).toContain("Output root:");
+	});
+
 	it("keeps CI and release workflows aligned with the develop/tag operating model", () => {
 		expect(ciWorkflow).toContain("branches: [develop]");
 		expect(ciWorkflow).toContain("ruby/setup-ruby@v1");
@@ -115,5 +129,15 @@ describe("repository contract", () => {
 		expect(antoraPlaybook).toContain(
 			"url: https://wstein.github.io/antora-markdown-exporter",
 		);
+	});
+
+	it("keeps AGENT guidance aligned with the real extension runtime", () => {
+		expect(agentGuidance).toContain("real Antora extension entrypoint");
+		expect(agentGuidance).toContain("@antora/assembler.configure()");
+		expect(agentGuidance).toContain(
+			"explicit machine-readable module-export mode",
+		);
+		expect(agentGuidance).not.toContain("scaffolded extension entrypoint");
+		expect(agentGuidance).not.toContain("not full Antora registration");
 	});
 });
