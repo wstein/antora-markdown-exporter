@@ -98,6 +98,22 @@ bun run inspect:report -- tests/fixtures/includes-invalid-steps/input.adoc \
   --fail-on-diagnostics > inspection-report.json
 ```
 
+The same script can stream AsciiDoc from stdin in CI without creating a temporary file:
+
+```bash
+cat generated-page.adoc | bun run inspect:report -- --stdin \
+  --source-path /workspace/modules/ROOT/pages/generated-page.adoc \
+  --fail-on-diagnostics > inspection-report.json
+```
+
+When a workflow wants GitHub Actions annotations instead of JSON, use the alternate format:
+
+```bash
+bun run inspect:report -- tests/fixtures/includes-invalid-steps/input.adoc \
+  --format github-actions \
+  --fail-on-diagnostics
+```
+
 The emitted JSON contains the normalized inspection report plus the resolved input and source paths:
 
 ```json
@@ -165,6 +181,7 @@ make unit
 make integration
 make reference
 bun run inspect:report -- tests/fixtures/sample/input.adoc
+bun run inspect:report -- --stdin --source-path /virtual/page.adoc < tests/fixtures/sample/input.adoc
 make format
 make fix
 ```

@@ -43,6 +43,8 @@ If multiple validation consumers need the same traversal, add one combined inspe
 
 When repository automation needs machine-readable output, provide one maintained script example that serializes the combined inspection report as JSON instead of leaving each CI pipeline to invent its own formatting layer.
 
+If CI consumers need native platform feedback, keep that as an explicit alternate output mode over the same normalized inspection report rather than a separate ad-hoc validation implementation. For example, GitHub Actions annotations should be emitted from the same inspection data that powers the JSON report.
+
 Do not mix inspection helpers into renderer policy or export conversion logic.
 
 ## Links
