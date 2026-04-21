@@ -46,11 +46,37 @@ try {
 	}
 
 	if (
+		typeof esmEntry.collectMarkdownInspectionReport !== "function" ||
+		typeof cjsEntry.collectMarkdownInspectionReport !== "function"
+	) {
+		throw new Error(
+			"Root package exports must expose collectMarkdownInspectionReport in both module formats",
+		);
+	}
+
+	if (
 		typeof esmExtension.createAntoraExtensionScaffold !== "function" ||
 		typeof cjsExtension.createAntoraExtensionScaffold !== "function"
 	) {
 		throw new Error(
 			"Extension package exports must expose createAntoraExtensionScaffold in both module formats",
+		);
+	}
+
+	const sampleDocument = esmEntry.convertAssemblyToMarkdownIR(
+		"== Release Check\n\ninclude::partials/snippet.adoc[lines=1..5..0]\n",
+		{
+			sourcePath: resolve(
+				root,
+				"tests/fixtures/includes-invalid-steps/input.adoc",
+			),
+		},
+	);
+	const sampleReport = esmEntry.collectMarkdownInspectionReport(sampleDocument);
+
+	if (sampleReport.includeDiagnostics.length === 0) {
+		throw new Error(
+			"Inspection report release checks must retain include diagnostics",
 		);
 	}
 

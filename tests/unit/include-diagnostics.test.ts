@@ -346,4 +346,146 @@ describe("include diagnostics helpers", () => {
 		]);
 		expect(report.xrefTargets).toEqual(report.xrefs.map((xref) => xref.target));
 	});
+
+	it("collects directives and xrefs from lists, footnotes, and table rows", () => {
+		const document = {
+			type: "document" as const,
+			children: [
+				{
+					type: "list" as const,
+					ordered: true,
+					start: 3,
+					items: [
+						{
+							children: [
+								{
+									type: "includeDirective" as const,
+									target: " list/item.adoc ",
+									attributes: {},
+								},
+								{
+									type: "paragraph" as const,
+									children: [
+										{
+											type: "xref" as const,
+											url: "docs/list.adoc",
+											target: {
+												raw: "docs:ROOT:list.adoc",
+												component: "docs",
+												module: "ROOT",
+												family: {
+													kind: "page" as const,
+													name: "page",
+												},
+												path: "list.adoc",
+											},
+											children: [{ type: "text" as const, value: "list" }],
+										},
+									],
+								},
+							],
+						},
+					],
+				},
+				{
+					type: "footnoteDefinition" as const,
+					identifier: "note-1",
+					children: [
+						{
+							type: "includeDirective" as const,
+							target: " footnote/item.adoc ",
+							attributes: {},
+						},
+						{
+							type: "paragraph" as const,
+							children: [
+								{
+									type: "xref" as const,
+									url: "docs/footnote.adoc",
+									target: {
+										raw: "docs:ROOT:footnote.adoc",
+										component: "docs",
+										module: "ROOT",
+										family: {
+											kind: "page" as const,
+											name: "page",
+										},
+										path: "footnote.adoc",
+									},
+									children: [{ type: "text" as const, value: "footnote" }],
+								},
+							],
+						},
+					],
+				},
+				{
+					type: "table" as const,
+					header: {
+						cells: [{ children: [{ type: "text" as const, value: "Header" }] }],
+					},
+					rows: [
+						{
+							cells: [
+								{
+									children: [
+										{
+											type: "xref" as const,
+											url: "docs/row.adoc",
+											target: {
+												raw: "docs:ROOT:row.adoc",
+												component: "docs",
+												module: "ROOT",
+												family: {
+													kind: "page" as const,
+													name: "page",
+												},
+												path: "row.adoc",
+											},
+											children: [{ type: "text" as const, value: "row" }],
+										},
+									],
+								},
+							],
+						},
+					],
+				},
+			],
+		};
+
+		expect(collectIncludeDirectives(document)).toEqual([
+			{
+				type: "includeDirective",
+				target: "list/item.adoc",
+				attributes: {},
+			},
+			{
+				type: "includeDirective",
+				target: "footnote/item.adoc",
+				attributes: {},
+			},
+		]);
+		expect(collectXrefTargets(document)).toEqual([
+			{
+				raw: "docs:ROOT:list.adoc",
+				component: "docs",
+				module: "ROOT",
+				family: { kind: "page", name: "page" },
+				path: "list.adoc",
+			},
+			{
+				raw: "docs:ROOT:footnote.adoc",
+				component: "docs",
+				module: "ROOT",
+				family: { kind: "page", name: "page" },
+				path: "footnote.adoc",
+			},
+			{
+				raw: "docs:ROOT:row.adoc",
+				component: "docs",
+				module: "ROOT",
+				family: { kind: "page", name: "page" },
+				path: "row.adoc",
+			},
+		]);
+	});
 });

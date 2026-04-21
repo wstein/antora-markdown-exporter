@@ -60,6 +60,40 @@ describe("inspection report script", () => {
 		expect(report.report.xrefTargets).toEqual([]);
 	});
 
+	it("accepts stdin and can emit GitHub Actions annotations", () => {
+		const sourcePath = "/virtual/project/page.adoc";
+		const result = spawnSync(
+			"bun",
+			[
+				"scripts/inspection-report.ts",
+				"--stdin",
+				"--source-path",
+				sourcePath,
+				"--format",
+				"github-actions",
+				"--fail-on-diagnostics",
+			],
+			{
+				cwd: root,
+				encoding: "utf8",
+				input:
+					"== Validation\n\ninclude::partials/snippet.adoc[lines=1..5..0,indent=-1]\n",
+			},
+		);
+
+		expect(result.status).toBe(1);
+		expect(result.stderr).toBe("");
+		expect(result.stdout).toContain("::error file=/virtual/project/page.adoc");
+		expect(result.stdout).toContain("title=include%3Apartials/snippet.adoc");
+		expect(result.stdout).toContain(
+			"invalid-line-step%3A include line steps must be positive integers",
+		);
+		expect(result.stdout).toContain(
+			"invalid-indent%3A include indent must be a positive integer",
+		);
+		expect(result.stdout).toContain("::notice title=inspection-report::");
+	});
+
 	it("accepts an explicit source path in the emitted report", () => {
 		const inputPath = resolve(root, "tests/fixtures/sample/input.adoc");
 		const sourcePath = "/virtual/component/modules/ROOT/pages/sample.adoc";
@@ -82,5 +116,24 @@ describe("inspection report script", () => {
 		expect(report.inputPath).toBe(inputPath);
 		expect(report.sourcePath).toBe(sourcePath);
 		expect(report.report.includeDirectives).toEqual([]);
+	});
+
+	it("rejects mixed stdin and file inputs with a usage message", () => {
+		const inputPath = resolve(root, "tests/fixtures/sample/input.adoc");
+		const result = spawnSync(
+			"bun",
+			["scripts/inspection-report.ts", "--stdin", inputPath],
+			{
+				cwd: root,
+				encoding: "utf8",
+				input: "== Ignored\n",
+			},
+		);
+
+		expect(result.status).toBe(1);
+		expect(result.stderr).toContain(
+			"Provide either an input path or --stdin, not both",
+		);
+		expect(result.stderr).toContain("Usage: bun scripts/inspection-report.ts");
 	});
 });
