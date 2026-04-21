@@ -74,7 +74,8 @@ That export emits:
 
 * flat module documents at `build/markdown/architecture.md`, `build/markdown/manual.md`, and `build/markdown/onboarding.md`
 * one assembled `.md` file for each exported documentation module
-* output rendered through the same conversion, normalization, and flavor pipeline used by the package API
+* output built from the same assembled module sources as the repository PDFs and rendered through the same conversion, normalization, and flavor pipeline used by the package API
+* no post-render Markdown cleanup layer; if the generated Markdown is wrong, the fix belongs in the converter or renderer
 
 . Let the Pages workflow publish the static site only after a successful tag-triggered `Release` workflow:
 +
@@ -239,7 +240,7 @@ Important conflict to preserve:
 |Emits a machine-readable inspection report for one input file by delegating to `bun run inspect:report`.
 
 |`make markdown`
-|Exports assembled module documents to `build/markdown/architecture.md`, `build/markdown/manual.md`, and `build/markdown/onboarding.md` by delegating to `bun run export:modules`.
+|Exports assembled module documents to `build/markdown/architecture.md`, `build/markdown/manual.md`, and `build/markdown/onboarding.md` by delegating to `bun run export:modules`. The export uses the same assembled module sources as the repository PDFs and the same converter path as the package API.
 
 |`make pdf`
 |Builds the assembled architecture, manual, and onboarding PDFs at `build/site/antora-markdown-exporter/*.pdf` without rebuilding the full Antora HTML site.

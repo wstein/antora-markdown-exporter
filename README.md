@@ -273,7 +273,7 @@ To export the main Antora modules to Markdown using the repository pipeline, run
 make markdown
 ```
 
-This emits flat module documents under `build/markdown/architecture.md`, `build/markdown/manual.md`, and `build/markdown/onboarding.md` using the same conversion path as the library API: AsciiDoc assembly mapping, normalization, and flavor rendering. Use `ARGS="--flavor gitlab"` or alternate `--output-root` / `--modules-root` values when you need a different target.
+This emits flat module documents under `build/markdown/architecture.md`, `build/markdown/manual.md`, and `build/markdown/onboarding.md` using the same assembled module sources as the repository PDFs and the same conversion path as the library API: AsciiDoc to IR mapping, normalization, and flavor rendering. The export path does not post-process rendered Markdown. If output needs improvement, fix the converter or renderer. Use `ARGS="--flavor gitlab"` or an alternate `--output-root` when you need a different target.
 
 To build only the assembled module PDFs without rebuilding the full Antora HTML site, run:
 
