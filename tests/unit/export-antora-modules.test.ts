@@ -122,7 +122,12 @@ describe("export antora modules script", () => {
 			"utf8",
 		);
 		expect(architectureMarkdown).toContain("## Table of Contents");
-		expect(architectureMarkdown).toContain("- [Introduction and Goals](#");
+		expect(architectureMarkdown).toContain(
+			"- [Chapter 1. Introduction and Goals](#",
+		);
+		expect(architectureMarkdown).toContain(
+			"# Chapter 2. Architecture Constraints",
+		);
 		expect(architectureMarkdown).toContain(
 			"| 1 | Deterministic, reviewable output |",
 		);

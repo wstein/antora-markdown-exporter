@@ -45,6 +45,8 @@ type TocEntry = {
 	text: string;
 };
 
+type NumberingMode = "book" | "section";
+
 const defaultFlavor: MarkdownFlavorName = "gfm";
 
 function inlineText(children: MarkdownInline[]): string {
@@ -131,6 +133,85 @@ function collectHeadingTocEntries(document: MarkdownDocument): TocEntry[] {
 	return entries;
 }
 
+function cloneChildrenWithPrefixedText(
+	children: MarkdownInline[],
+	prefix: string,
+): MarkdownInline[] {
+	if (children.length === 0) {
+		return [{ type: "text", value: prefix.trim() }];
+	}
+
+	const [firstChild, ...rest] = children;
+	if (firstChild === undefined) {
+		return [{ type: "text", value: prefix.trim() }];
+	}
+
+	if (firstChild.type === "text") {
+		return [{ ...firstChild, value: `${prefix}${firstChild.value}` }, ...rest];
+	}
+
+	return [{ type: "text", value: prefix }, firstChild, ...rest];
+}
+
+function detectHeadingNumberingMode(source: string): NumberingMode | undefined {
+	const hasNumberingDirective =
+		source.includes("\n:numbered:") || source.includes("\n:sectnums:");
+	if (!hasNumberingDirective) {
+		return undefined;
+	}
+
+	if (source.includes("\n:doctype: book")) {
+		return "book";
+	}
+
+	return "section";
+}
+
+function applyHeadingNumbering(
+	document: MarkdownDocument,
+	mode: NumberingMode | undefined,
+): MarkdownDocument {
+	if (mode === undefined) {
+		return document;
+	}
+
+	const counters: number[] = [];
+	let seenTitle = false;
+
+	return {
+		...document,
+		children: document.children.map((block) => {
+			if (block.type !== "heading") {
+				return block;
+			}
+
+			if (!seenTitle) {
+				seenTitle = true;
+				return block;
+			}
+
+			const depth = block.depth;
+			while (counters.length <= depth) {
+				counters.push(0);
+			}
+			counters[depth] = (counters[depth] ?? 0) + 1;
+			for (let index = depth + 1; index < counters.length; index += 1) {
+				counters[index] = 0;
+			}
+
+			const prefix =
+				mode === "book" && depth === 1
+					? `Chapter ${counters[depth]}. `
+					: `${counters.slice(1, depth + 1).join(".")}. `;
+
+			return {
+				...block,
+				children: cloneChildrenWithPrefixedText(block.children, prefix),
+			};
+		}),
+	};
+}
+
 export function prependMarkdownTableOfContents(
 	document: MarkdownDocument,
 	markdown: string,
@@ -165,11 +246,15 @@ export function renderAssemblyMarkdown(
 	flavor: MarkdownFlavorName = defaultFlavor,
 	sourcePath = "assembly.adoc",
 ): string {
-	const document = normalizeMarkdownIR(
-		convertAssemblyToMarkdownIR(source, {
-			sourcePath,
-			includeRootDir: dirname(sourcePath),
-		}),
+	const numberingMode = detectHeadingNumberingMode(source);
+	const document = applyHeadingNumbering(
+		normalizeMarkdownIR(
+			convertAssemblyToMarkdownIR(source, {
+				sourcePath,
+				includeRootDir: dirname(sourcePath),
+			}),
+		),
+		numberingMode,
 	);
 	const markdown = renderMarkdown(document, flavor);
 	return prependMarkdownTableOfContents(document, markdown);

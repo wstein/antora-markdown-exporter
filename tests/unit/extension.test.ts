@@ -61,6 +61,32 @@ describe("markdown exporter extension", () => {
 		expect(markdown).toContain("| Alpha | 42 |");
 	});
 
+	it("applies book-style chapter numbering when the assembly enables numbering", () => {
+		const markdown = renderAssemblyMarkdown(
+			[
+				"= Title",
+				":doctype: book",
+				":numbered:",
+				"",
+				"== Introduction and Goals",
+				"",
+				"== Architecture Constraints",
+				"",
+				"=== Constraint Detail",
+			].join("\n"),
+		);
+
+		expect(markdown).toContain(
+			"- [Chapter 1. Introduction and Goals](#chapter-1-introduction-and-goals)",
+		);
+		expect(markdown).toContain(
+			"- [Chapter 2. Architecture Constraints](#chapter-2-architecture-constraints)",
+		);
+		expect(markdown).toContain("# Chapter 1. Introduction and Goals");
+		expect(markdown).toContain("# Chapter 2. Architecture Constraints");
+		expect(markdown).toContain("## 2.1. Constraint Detail");
+	});
+
 	it("creates a markdown converter with the expected metadata", () => {
 		const converter = createMarkdownConverter({ flavor: "gitlab" });
 
