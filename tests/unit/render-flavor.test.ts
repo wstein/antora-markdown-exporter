@@ -338,4 +338,64 @@ describe("flavor-aware markdown rendering", () => {
 			"[overview](#overview) [home](docs/ROOT/index.adoc)",
 		);
 	});
+
+	it("renders admonitions with non-paragraph bodies and respects ordered-list start policy", () => {
+		const document = {
+			type: "document" as const,
+			children: [
+				{
+					type: "admonition" as const,
+					kind: "warning" as const,
+					children: [
+						{
+							type: "list" as const,
+							ordered: true,
+							start: 4,
+							items: [
+								{
+									children: [
+										{
+											type: "paragraph" as const,
+											children: [
+												{ type: "text" as const, value: "First warning" },
+											],
+										},
+									],
+								},
+								{
+									children: [
+										{
+											type: "paragraph" as const,
+											children: [
+												{ type: "text" as const, value: "Second warning" },
+											],
+										},
+									],
+								},
+							],
+						},
+					],
+				},
+			],
+		};
+
+		expect(renderGitLab(document)).toBe(
+			[
+				"> **WARNING:**",
+				">",
+				"> 4. First warning",
+				"> 5. Second warning",
+				"",
+			].join("\n"),
+		);
+		expect(renderStrict(document)).toBe(
+			[
+				"> **WARNING:**",
+				">",
+				"> 1. First warning",
+				"> 2. Second warning",
+				"",
+			].join("\n"),
+		);
+	});
 });

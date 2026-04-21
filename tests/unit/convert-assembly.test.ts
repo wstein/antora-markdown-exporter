@@ -163,4 +163,67 @@ describe("convertAssemblyToMarkdownIR", () => {
 			},
 		]);
 	});
+
+	it("applies tag selection, zero level offsets, and overlapping line unions deterministically", () => {
+		const document = convertAssemblyToMarkdownIR(
+			"include::snippet.adoc[tags=intro;details,leveloffset=0,lines=2..4;3..4,indent=2]",
+			{
+				sourcePath: "/virtual/page.adoc",
+				includeResolver: (target) => {
+					if (target !== "snippet.adoc") {
+						return undefined;
+					}
+
+					return [
+						"// tag::intro[]",
+						"== Intro",
+						"Shared line",
+						"// end::intro[]",
+						"// tag::details[]",
+						"=== Detail",
+						"Shared line",
+						"// end::details[]",
+					].join("\n");
+				},
+			},
+		);
+
+		expect(document.children).toEqual([
+			expect.objectContaining({
+				type: "includeDirective",
+				target: "snippet.adoc",
+				attributes: {
+					tags: "intro;details",
+					leveloffset: "0",
+					lines: "2..4;3..4",
+					indent: "2",
+				},
+				semantics: {
+					tagSelection: {
+						precedence: "document-order",
+						tags: ["intro", "details"],
+					},
+					lineRanges: [
+						{ start: 2, end: 4 },
+						{ start: 3, end: 4 },
+					],
+					indent: 2,
+					levelOffset: 0,
+				},
+			}),
+			{
+				type: "paragraph",
+				children: [{ type: "text", value: "Shared line" }],
+			},
+			{
+				type: "heading",
+				depth: 2,
+				children: [{ type: "text", value: "Detail" }],
+			},
+			{
+				type: "paragraph",
+				children: [{ type: "text", value: "Shared line" }],
+			},
+		]);
+	});
 });
