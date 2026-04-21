@@ -132,12 +132,9 @@ Example GitHub Actions step using the Makefile delegate target, artifact upload,
 
 - name: Emit inspection annotations
   run: |
-    make inspect-report INPUT=tests/fixtures/includes-invalid-steps/input.adoc \
-      PM=bun \
-      > /dev/null
     bun run inspect:report -- tests/fixtures/includes-invalid-steps/input.adoc \
       --format github-actions \
-      --fail-on-diagnostics
+      || true
 ```
 
 The emitted JSON contains the normalized inspection report plus the resolved input and source paths:

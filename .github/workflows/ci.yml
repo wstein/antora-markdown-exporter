@@ -17,6 +17,15 @@ jobs:
       - run: bun install --frozen-lockfile
       - run: bun run lint
       - run: bun run build
+      - name: Generate inspection report
+        run: make inspect-report INPUT=tests/fixtures/includes-invalid-steps/input.adoc > inspection-report.json
+      - name: Upload inspection report
+        uses: actions/upload-artifact@v4
+        with:
+          name: inspection-report
+          path: inspection-report.json
+      - name: Emit inspection annotations
+        run: bun run inspect:report -- tests/fixtures/includes-invalid-steps/input.adoc --format github-actions || true
       - run: bun run unit
       - run: bun run check
       - run: bun run release:check
