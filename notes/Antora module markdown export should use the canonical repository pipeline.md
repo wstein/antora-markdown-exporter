@@ -1,5 +1,7 @@
 ---
+id: 20260421120000
 title: Antora module markdown export should use the canonical repository pipeline
+target: current
 ---
 
 # Antora module markdown export should use the canonical repository pipeline
