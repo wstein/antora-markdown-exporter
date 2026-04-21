@@ -225,7 +225,7 @@ In practical terms:
 * release candidates are prepared on `develop`
 * finalization is done by pushing a semver tag from a certified `develop` commit
 * `main` is advanced only after the tagged release workflow succeeds
-* after the `Release` workflow succeeds and promotes `main`, the public Antora documentation site is rebuilt from `main` and published through GitHub Pages at `https://wstein.github.io/antora-markdown-exporter`
+* after a tag-triggered `Release` workflow succeeds and promotes `main`, the public Antora documentation site is rebuilt from `main` and published through GitHub Pages at `https://wstein.github.io/antora-markdown-exporter`
 
 For local operators and maintainers, `make release VERSION=vX.Y.Z` starts or finalizes the release depending on whether the requested version matches the current package version.
 

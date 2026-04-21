@@ -84,7 +84,9 @@ describe("repository contract", () => {
 	it("keeps GitHub Pages deployment aligned with the published docs site", () => {
 		expect(pagesWorkflow).toContain("workflow_run:");
 		expect(pagesWorkflow).toContain('workflows: ["Release"]');
+		expect(pagesWorkflow).not.toContain("workflow_dispatch:");
 		expect(pagesWorkflow).toContain("conclusion == 'success'");
+		expect(pagesWorkflow).toContain("event == 'push'");
 		expect(pagesWorkflow).toContain("ref: main");
 		expect(pagesWorkflow).toContain("actions/configure-pages@v5");
 		expect(pagesWorkflow).toContain("actions/upload-pages-artifact@v3");

@@ -51,7 +51,7 @@ make reference
 make docs
 ----
 
-. Let the Pages workflow publish the static site after the `Release` workflow completes successfully:
+. Let the Pages workflow publish the static site only after a successful tag-triggered `Release` workflow:
 +
 * local docs validation happens on your working branch
 * public publication to `https://wstein.github.io/antora-markdown-exporter` happens from `.github/workflows/pages.yml`
@@ -176,7 +176,7 @@ The release workflow in `.github/workflows/release.yml` then:
 * attaches release assets on GitHub
 * fast-forwards `main` to the released commit
 
-After `.github/workflows/release.yml` completes successfully, `.github/workflows/pages.yml` runs from `workflow_run`, rebuilds the Antora site from `antora-playbook.yml` on `main`, and publishes `build/site` to GitHub Pages at `https://wstein.github.io/antora-markdown-exporter`.
+After `.github/workflows/release.yml` completes successfully for a tag-triggered release, `.github/workflows/pages.yml` runs from `workflow_run`, rebuilds the Antora site from `antora-playbook.yml` on `main`, and publishes `build/site` to GitHub Pages at `https://wstein.github.io/antora-markdown-exporter`.
 
 What `scripts/release-check.mjs` verifies during that process:
 
@@ -238,7 +238,7 @@ Provenance:
 |Runs the release wizard on `develop`. A new version starts a release candidate; the current untagged version finalizes by creating and pushing the release tag.
 
 |`make docs`
-|Builds the Antora docs site locally into `build/site`. Public publication is handled separately by the GitHub Pages workflow after successful release completion.
+|Builds the Antora docs site locally into `build/site`. Public publication is handled separately by the GitHub Pages workflow after successful tag-triggered release completion.
 |===
 
 Provenance:

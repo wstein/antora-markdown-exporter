@@ -5,7 +5,6 @@ on:
     workflows: ["Release"]
     types:
       - completed
-  workflow_dispatch:
 
 concurrency:
   group: github-pages
@@ -18,7 +17,7 @@ permissions:
 
 jobs:
   build:
-    if: github.event_name == 'workflow_dispatch' || github.event.workflow_run.conclusion == 'success'
+    if: github.event.workflow_run.conclusion == 'success' && github.event.workflow_run.event == 'push'
     runs-on: ubuntu-latest
     steps:
       - name: Checkout published docs branch
@@ -46,7 +45,7 @@ jobs:
           path: build/site
 
   deploy:
-    if: github.event_name == 'workflow_dispatch' || github.event.workflow_run.conclusion == 'success'
+    if: github.event.workflow_run.conclusion == 'success' && github.event.workflow_run.event == 'push'
     needs: build
     runs-on: ubuntu-latest
     environment:
