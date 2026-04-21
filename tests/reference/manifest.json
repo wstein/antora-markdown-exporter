@@ -132,6 +132,33 @@
 		}
 	},
 	{
+		"id": "antora-mermaid",
+		"sourceProject": "@wsmy/antora-markdown-exporter",
+		"sourceUrl": "https://github.com/wsmy/antora-markdown-exporter",
+		"sourcePath": "tests/fixtures/mermaid/input.adoc",
+		"sourceCapturedAt": "2026-04-21",
+		"localPath": "tests/reference/fixtures/antora-mermaid/input.adoc",
+		"sha256": "2cda4d49a65320b71eaa135d5b4b4ee936ff01c69e9ce4a43cfec04b5f606462",
+		"coverage": ["transparent-extensions", "code-blocks", "mermaid"],
+		"rationale": "Locks one transparent fenced extension case into the reference suite so compatibility checks prove authored Mermaid fences stay semantic code blocks rather than falling through fallback policy.",
+		"expectations": {
+			"nodeTypes": ["heading", "codeBlock"],
+			"renderedContains": ["```mermaid", "graph TD", "  A --> B", "```"],
+			"renderedExcludes": ["Unsupported:"],
+			"renderedByFlavor": {
+				"commonmark": {
+					"contains": ["```mermaid"]
+				},
+				"gitlab": {
+					"contains": ["```mermaid"]
+				},
+				"strict": {
+					"contains": ["```mermaid"]
+				}
+			}
+		}
+	},
+	{
 		"id": "antora-images-tables",
 		"sourceProject": "antora/docs.antora.org",
 		"sourceUrl": "https://gitlab.com/antora/docs.antora.org",

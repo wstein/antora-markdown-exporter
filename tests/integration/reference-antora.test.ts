@@ -52,8 +52,8 @@ describe("reference Antora compatibility tests", () => {
 			const rendered = renderGfm(normalized);
 
 			expect(digest).toBe(entry.sha256);
-			expect(entry.sourceProject).toBe("antora/docs.antora.org");
-			expect(entry.sourceUrl).toContain("gitlab.com/antora/docs.antora.org");
+			expect(entry.sourceProject.length).toBeGreaterThan(0);
+			expect(entry.sourceUrl).toMatch(/^https?:\/\//);
 			expect(entry.sourcePath).toContain(".adoc");
 			expect(entry.sourceCapturedAt).toMatch(/^\d{4}-\d{2}-\d{2}$/);
 			expect(entry.coverage.length).toBeGreaterThan(0);
