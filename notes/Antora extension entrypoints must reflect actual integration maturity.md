@@ -12,7 +12,7 @@ A placeholder extension helper is acceptable in an early scaffold, but it should
 - be named as a scaffold helper, or
 - implement the actual Antora extension registration contract
 
-Public names such as `registerAntoraExtension` imply stronger semantics than a plain metadata-returning helper.
+Public names such as `registerAntoraExtension` imply stronger semantics than a plain metadata-returning helper. The current `createAntoraExtensionScaffold` name is intentionally explicit about that boundary.
 
 ## Why
 

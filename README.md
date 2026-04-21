@@ -1,6 +1,6 @@
 # @wsmy/antora-markdown-exporter
 
-Antora Assembler based Markdown exporter scaffold with semantic IR, explicit flavor capabilities, and renderer profiles for GitHub Flavored Markdown, CommonMark, GitLab Flavored Markdown, and a strict canonical mode.
+Antora Assembler based Markdown exporter scaffold with semantic IR, explicit flavor capabilities, centralized fallback policy, and renderer profiles for GitHub Flavored Markdown, CommonMark, GitLab Flavored Markdown, and a strict canonical mode.
 
 ## Install
 
@@ -179,7 +179,7 @@ The emitted JSON contains the normalized inspection report plus the resolved inp
 }
 ```
 
-Current scaffold coverage includes headings, paragraphs, inline links, dedicated xref nodes with inspectable Antora target metadata and first-class family kinds, dedicated anchor and page-alias nodes, images, ordered and unordered lists, nested lists, thematic breaks, aligned tables, raw HTML nodes, footnote placeholders, fenced code blocks with dedicated callout-list nodes, block quotes, dedicated admonition nodes, and recursive include inlining with dedicated include-directive metadata, for both `partial$` and relative include paths, including tagged-region selection, multi-tag extraction, overlapping-tag precedence, open-ended and stepped line-range unions, invalid-selector diagnostics, indentation, and `leveloffset`, when source-path context is available. Flavor policies can now render page-family xrefs either as source-shaped `.adoc` destinations or as site-shaped Antora-style routes, including `_images`, `_attachments`, and `_examples` asset families where configured.
+Current scaffold coverage includes headings, paragraphs, inline links, dedicated xref nodes with inspectable Antora target metadata and first-class family kinds, dedicated anchor and page-alias nodes, images, ordered and unordered lists, nested lists, thematic breaks, aligned tables, policy-gated raw HTML fallback nodes, footnote placeholders, fenced code blocks with dedicated callout-list nodes, block quotes, dedicated admonition nodes, and recursive include inlining with dedicated include-directive metadata, for both `partial$` and relative include paths, including tagged-region selection, multi-tag extraction, overlapping-tag precedence, open-ended and stepped line-range unions, invalid-selector diagnostics, indentation, and `leveloffset`, when source-path context is available. Flavor policies can now render page-family xrefs either as source-shaped `.adoc` destinations or as site-shaped Antora-style routes, including `_images`, `_attachments`, and `_examples` asset families where configured.
 
 ### Extension scaffold
 
@@ -189,6 +189,8 @@ import { createAntoraExtensionScaffold } from "@wsmy/antora-markdown-exporter";
 const extension = createAntoraExtensionScaffold();
 console.log(extension.kind);
 ```
+
+`createAntoraExtensionScaffold()` is intentionally scaffolded metadata, not a full Antora extension registration contract yet.
 
 ### CLI
 

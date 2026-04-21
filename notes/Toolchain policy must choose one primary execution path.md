@@ -34,6 +34,8 @@ Choose one primary path for the current milestone and align:
 
 Describe npm as the release transport and an explicit alternate install path rather than the primary day-to-day workflow.
 
+Keep Bun as the runtime for local validation helpers such as `scripts/inspection-report.ts`, and do not split validation behavior across separate Bun-only and npm-only implementations.
+
 Do not keep Bun-specific ambient types enabled unless the codebase actively depends on them.
 
 ## Links

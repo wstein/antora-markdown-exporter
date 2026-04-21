@@ -72,6 +72,7 @@ Do not use raw HTML for core constructs such as headings, lists, links, or parag
 ## Links
 
 - [[Markdown IR is the canonical render boundary]] - Raw HTML must not bypass semantic representation.
+- [[Fallback selection is centralized across markdown flavors]] - HTML allowance and visible degradation should flow through one fallback layer.
 - [[Flavor renderers are syntax adapters over one semantic layer]] - HTML usage depends on flavor policy.
 - [[Reference tests check semantic invariants not exact bytes]] - HTML fallback must remain visible and testable.
 - src/markdown/fallback.ts - Fallback selection logic.

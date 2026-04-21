@@ -46,6 +46,7 @@ Do not allow renderer-local semantics that bypass the IR or normalization passes
 
 
 - [[Markdown IR is the canonical render boundary]] - Semantic meaning is defined upstream of flavor rendering.
+- [[Fallback selection is centralized across markdown flavors]] - Renderer-specific fallback drift should be avoided.
 - [[Raw HTML is a controlled fallback not a default rendering path]] - HTML passthrough must be an explicit flavor policy, not renderer default behavior.
 - [[Markdown Guide Extended Syntax is a capability reference not a specification]] - Feature discovery must not override explicit flavor capabilities.
 - [[Testing relies on golden fixtures and deterministic snapshots]] - Per-flavor golden outputs verify this boundary.

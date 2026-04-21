@@ -33,7 +33,9 @@ Set the package name, exports map, files list, build scripts, and release valida
 
 Keep publishable assets in `dist/**`, validate package contents in CI, and separate build-time and test-time TypeScript configuration.
 
-When release or publish validation needs semantic checks, prefer library-provided inspection helpers over ad-hoc repository scripts so diagnostics and xref-target analysis stay aligned with the canonical IR.
+When release or publish validation needs semantic checks, prefer library-provided inspection helpers and the maintained `scripts/inspection-report.ts` example over ad-hoc repository scripts so diagnostics and xref-target analysis stay aligned with the canonical IR.
+
+Treat Bun as the primary development and validation runtime while keeping npm as the actual publish transport.
 
 
 ## Links
