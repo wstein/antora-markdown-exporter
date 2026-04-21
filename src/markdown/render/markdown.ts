@@ -35,15 +35,33 @@ function renderXrefDestination(
 	if (target.path.length === 0) {
 		return target.fragment === undefined ? node.url : `#${target.fragment}`;
 	}
-
-	if (target.family !== undefined && target.family !== "page") {
-		return node.url;
-	}
-
-	const segments = [target.component, target.version, target.module].filter(
+	const segments = [target.component, target.version].filter(
 		(segment): segment is string => segment !== undefined && segment.length > 0,
 	);
-	segments.push(stripAsciiDocExtension(target.path));
+	const moduleSegment =
+		target.module !== undefined &&
+		target.module.length > 0 &&
+		!(flavor.xrefSiteOmitRootModule && target.module === "ROOT")
+			? target.module
+			: undefined;
+	if (moduleSegment !== undefined) {
+		segments.push(moduleSegment);
+	}
+
+	const family = target.family ?? "page";
+	if (family === "page") {
+		segments.push(stripAsciiDocExtension(target.path));
+	} else {
+		const assetDirectory =
+			flavor.xrefSiteAssetFamilies[
+				family as keyof typeof flavor.xrefSiteAssetFamilies
+			];
+		if (assetDirectory === undefined) {
+			return node.url;
+		}
+
+		segments.push(assetDirectory, target.path);
+	}
 	const path = segments.join("/");
 
 	return target.fragment === undefined ? path : `${path}#${target.fragment}`;

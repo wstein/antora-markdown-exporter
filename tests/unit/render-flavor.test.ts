@@ -162,10 +162,72 @@ describe("flavor-aware markdown rendering", () => {
 			"[install](docs/ROOT/install.adoc) [cli](docs/2.0/ROOT/install.adoc#cli) [nav](docs/ROOT/partial/nav.adoc)",
 		);
 		expect(renderGitLab(documentWithXrefs)).toContain(
-			"[install](docs/ROOT/install.html) [cli](docs/2.0/ROOT/install.html#cli) [nav](docs/ROOT/partial/nav.adoc)",
+			"[install](docs/install.html) [cli](docs/2.0/install.html#cli) [nav](docs/ROOT/partial/nav.adoc)",
 		);
 		expect(renderStrict(documentWithXrefs)).toContain(
-			"[install](docs/ROOT/install.html) [cli](docs/2.0/ROOT/install.html#cli) [nav](docs/ROOT/partial/nav.adoc)",
+			"[install](docs/install.html) [cli](docs/2.0/install.html#cli) [nav](docs/ROOT/partial/nav.adoc)",
+		);
+	});
+
+	it("routes asset-family and non-root-module xrefs through site-style flavors", () => {
+		const documentWithFamilyTargets = {
+			type: "document" as const,
+			children: [
+				{
+					type: "paragraph" as const,
+					children: [
+						{
+							type: "xref" as const,
+							url: "docs/2.0/ROOT/image/diagram.png",
+							target: {
+								raw: "2.0@docs:ROOT:image$diagram.png",
+								component: "docs",
+								version: "2.0",
+								module: "ROOT",
+								family: "image",
+								path: "diagram.png",
+							},
+							children: [{ type: "text" as const, value: "diagram" }],
+						},
+						{ type: "text" as const, value: " " },
+						{
+							type: "xref" as const,
+							url: "docs/2.0/ROOT/attachment/guide.pdf",
+							target: {
+								raw: "2.0@docs:ROOT:attachment$guide.pdf",
+								component: "docs",
+								version: "2.0",
+								module: "ROOT",
+								family: "attachment",
+								path: "guide.pdf",
+							},
+							children: [{ type: "text" as const, value: "guide" }],
+						},
+						{ type: "text" as const, value: " " },
+						{
+							type: "xref" as const,
+							url: "docs/2.0/api/page/index.adoc#overview",
+							target: {
+								raw: "2.0@docs:api:page$index.adoc#overview",
+								component: "docs",
+								version: "2.0",
+								module: "api",
+								family: "page",
+								path: "index.adoc",
+								fragment: "overview",
+							},
+							children: [{ type: "text" as const, value: "overview" }],
+						},
+					],
+				},
+			],
+		};
+
+		expect(renderCommonMark(documentWithFamilyTargets)).toContain(
+			"[diagram](docs/2.0/ROOT/image/diagram.png) [guide](docs/2.0/ROOT/attachment/guide.pdf) [overview](docs/2.0/api/page/index.adoc#overview)",
+		);
+		expect(renderGitLab(documentWithFamilyTargets)).toContain(
+			"[diagram](docs/2.0/_images/diagram.png) [guide](docs/2.0/_attachments/guide.pdf) [overview](docs/2.0/api/index.html#overview)",
 		);
 	});
 });

@@ -1,4 +1,5 @@
 export type MarkdownFlavorName = "gfm" | "commonmark" | "gitlab" | "strict";
+export type MarkdownXrefSiteAssetFamily = "attachment" | "example" | "image";
 
 export type MarkdownFlavorSpec = {
 	blockFallbackLabel: string;
@@ -13,6 +14,8 @@ export type MarkdownFlavorSpec = {
 	supportsRawHtml: boolean;
 	supportsTables: boolean;
 	xrefStyle: "site" | "source";
+	xrefSiteAssetFamilies: Partial<Record<MarkdownXrefSiteAssetFamily, string>>;
+	xrefSiteOmitRootModule: boolean;
 };
 
 export const markdownFlavorSpecs: Record<
@@ -32,6 +35,8 @@ export const markdownFlavorSpecs: Record<
 		citationStyle: "plain",
 		blockFallbackLabel: "Unsupported",
 		xrefStyle: "source",
+		xrefSiteAssetFamilies: {},
+		xrefSiteOmitRootModule: false,
 	},
 	commonmark: {
 		name: "commonmark",
@@ -46,6 +51,8 @@ export const markdownFlavorSpecs: Record<
 		citationStyle: "plain",
 		blockFallbackLabel: "Unsupported",
 		xrefStyle: "source",
+		xrefSiteAssetFamilies: {},
+		xrefSiteOmitRootModule: false,
 	},
 	gitlab: {
 		name: "gitlab",
@@ -60,6 +67,12 @@ export const markdownFlavorSpecs: Record<
 		citationStyle: "at",
 		blockFallbackLabel: "Unsupported",
 		xrefStyle: "site",
+		xrefSiteAssetFamilies: {
+			attachment: "_attachments",
+			example: "_examples",
+			image: "_images",
+		},
+		xrefSiteOmitRootModule: true,
 	},
 	strict: {
 		name: "strict",
@@ -74,6 +87,12 @@ export const markdownFlavorSpecs: Record<
 		citationStyle: "plain",
 		blockFallbackLabel: "Unsupported",
 		xrefStyle: "site",
+		xrefSiteAssetFamilies: {
+			attachment: "_attachments",
+			example: "_examples",
+			image: "_images",
+		},
+		xrefSiteOmitRootModule: true,
 	},
 };
 

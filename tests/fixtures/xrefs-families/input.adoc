@@ -1,0 +1,3 @@
+== Family-aware xrefs
+
+See xref:2.0@docs:ROOT:image$diagram.png[diagram], xref:2.0@docs:ROOT:attachment$guide.pdf[guide], and xref:2.0@docs:api:page$index.adoc#overview[].
