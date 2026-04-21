@@ -10,6 +10,14 @@ const packageJson = JSON.parse(
 	files: string[];
 	scripts: Record<string, string>;
 };
+const ciWorkflow = readFileSync(
+	resolve(root, ".github/workflows/ci.yml"),
+	"utf8",
+);
+const releaseWorkflow = readFileSync(
+	resolve(root, ".github/workflows/release.yml"),
+	"utf8",
+);
 
 describe("repository contract", () => {
 	it("keeps referenced package files in the tree", () => {
@@ -53,5 +61,14 @@ describe("repository contract", () => {
 		expect(packageJson.scripts["inspect:report"]).toBe(
 			"bun scripts/inspection-report.ts",
 		);
+	});
+
+	it("keeps CI and release workflows aligned with the develop/tag operating model", () => {
+		expect(ciWorkflow).toContain("branches: [develop]");
+		expect(releaseWorkflow).toContain("tags:");
+		expect(releaseWorkflow).toContain('- "v*"');
+		expect(releaseWorkflow).toContain("origin/develop$");
+		expect(releaseWorkflow).toContain('head_branch=="develop"');
+		expect(releaseWorkflow).toContain("git push origin main");
 	});
 });

@@ -133,29 +133,44 @@ Provenance:
 * Note: `Inspection helpers expose normalized validation surfaces`
 * Code: `scripts/inspection-report.ts`, `src/markdown/include-diagnostics.ts`, `tests/unit/inspection-report-script.test.ts`, `tests/integration/inspection-report-script.test.ts`
 
-=== Run Release Validation
+=== Start And Finalize A Release
 
-Before publish, validate the package as built and packed, not just as source code.
+The release operating model uses `develop` as the integration branch, `main` as published history, and semver tags as the publish trigger.
 
-Recommended sequence:
+Start a release candidate from a clean `develop` worktree:
 
 [source,bash]
 ----
-make build
-bun run check
-bun run release:check
+make release VERSION=v0.1.0
 ----
 
-The release workflow in `.github/workflows/release.yml` follows the same shape:
+That command:
 
-* install with Bun
-* build
-* generate an inspection artifact
-* emit inspection annotations
-* run `bun run check`
-* run `bun run release:check`
+* updates `package.json` and `package-lock.json` when present
+* commits `chore(release): start v0.1.0`
+* pushes `develop`
 
-What `scripts/release-check.mjs` verifies today:
+After the candidate commit has passed CI on `develop`, finalize from the same clean certified commit:
+
+[source,bash]
+----
+make release VERSION=v0.1.0 YES=1
+----
+
+With the same version as `package.json`, the wizard switches to finalize mode, creates the annotated tag, and pushes only the tag.
+
+The release workflow in `.github/workflows/release.yml` then:
+
+* verifies the tag is semantic and points at the checked-out commit
+* verifies the tagged commit is contained in `develop`
+* verifies that commit already passed the `CI` workflow on `develop`
+* rebuilds and revalidates the package
+* packs one tarball artifact
+* publishes `@wsmy/antora-markdown-exporter` from that tarball
+* attaches release assets on GitHub
+* fast-forwards `main` to the released commit
+
+What `scripts/release-check.mjs` verifies during that process:
 
 * required `dist/**` artifacts exist
 * ESM and CJS root exports load
@@ -167,13 +182,14 @@ What `scripts/release-check.mjs` verifies today:
 
 Important conflict to preserve:
 
-* the note `Release and package identity use scoped npm publishing` describes a publishable package identity
-* the extension package is publishable, but still exports a scaffold helper rather than a full extension registration implementation
+* the package identity and publish workflow are real
+* the extension export is also real and packaged
+* the extension export still signals scaffold maturity rather than a full Antora runtime registration contract
 
 Provenance:
 
-* Note: `Release and package identity use scoped npm publishing`
-* Code: `scripts/release-check.mjs`, `.github/workflows/release.yml`, `package.json`
+* Notes: `Develop should be the integration branch while main tracks published history`; `Tag pushes should publish only certified develop commits`; `Release and package identity use scoped npm publishing`
+* Code: `scripts/release.js`, `scripts/release-check.mjs`, `.github/workflows/release.yml`, `package.json`
 
 == Commands And Behavior
 
@@ -210,6 +226,9 @@ Provenance:
 |`bun run release:check`
 |Runs pre-publish package integrity checks against built artifacts and `npm pack --dry-run`.
 
+|`make release VERSION=vX.Y.Z`
+|Runs the release wizard on `develop`. A new version starts a release candidate; the current untagged version finalizes by creating and pushing the release tag.
+
 |`make docs`
 |Builds the Antora docs site.
 |===
@@ -217,7 +236,7 @@ Provenance:
 Provenance:
 
 * Notes: `Inspection helpers expose normalized validation surfaces`; `Release and package identity use scoped npm publishing`; `Repository scripts and referenced files must stay in lockstep`
-* Code: `Makefile`, `package.json`
+* Code: `Makefile`, `package.json`, `scripts/release.js`
 
 === Inspection Script Behavior
 

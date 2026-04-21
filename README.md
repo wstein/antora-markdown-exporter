@@ -252,7 +252,7 @@ make format
 make fix
 ```
 
-The primary development path uses Bun through the Makefile delegate targets. npm remains available as an explicit alternate path when needed and remains the publish channel used by `make release`:
+The primary development path uses Bun through the Makefile delegate targets. npm remains available as an explicit alternate path when needed, while package publication happens from the tag-triggered release workflow rather than from an ad-hoc local `npm publish`:
 
 ```bash
 make install
@@ -267,10 +267,24 @@ Each target is a thin delegate to the matching package-manager script.
 ## Release
 
 ```bash
-make release
+make release VERSION=v0.1.0
 ```
 
-`make release` delegates to `npm publish`, so it should only be run when the package is ready to publish.
+The repository now uses a `develop` / `main` / semver-tag release model:
+
+- `develop` is the integration branch for normal change flow
+- `main` tracks published history
+- semver tags such as `v0.1.0` are the publish trigger
+
+From a clean `develop` worktree, `make release VERSION=v0.1.0` starts the release candidate by updating version files, committing `chore(release): start v0.1.0`, and pushing `develop`.
+
+After the candidate commit has passed CI on `develop`, rerun:
+
+```bash
+make release VERSION=v0.1.0 YES=1
+```
+
+With the same version, the release wizard switches to finalize mode, creates the tag, and pushes only the tag. The tag-triggered GitHub Actions workflow validates the tagged commit, publishes `@wsmy/antora-markdown-exporter`, attaches release assets, and fast-forwards `main` to the released commit.
 
 ## Package
 

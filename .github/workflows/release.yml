@@ -1,28 +1,262 @@
 name: Release
 
 on:
+  push:
+    tags:
+      - "v*"
   workflow_dispatch:
+    inputs:
+      tag:
+        description: "Existing release tag (vX.Y.Z) to publish from."
+        required: true
+        type: string
+
+concurrency:
+  group: publish-release
+  cancel-in-progress: false
+
+env:
+  BUN_VERSION: 1.3.13
+
+permissions:
+  contents: read
+  actions: read
 
 jobs:
-  validate:
+  gate:
     runs-on: ubuntu-latest
+    outputs:
+      release_version: ${{ steps.release-version.outputs.version }}
+      release_tag: ${{ steps.release-version.outputs.tag }}
+      release_sha: ${{ steps.release-version.outputs.sha }}
     steps:
-      - uses: actions/checkout@v4
+      - name: Checkout tagged release candidate
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+          ref: ${{ github.event_name == 'workflow_dispatch' && github.event.inputs.tag || github.ref }}
+
+      - name: Setup Bun
+        uses: oven-sh/setup-bun@v2
+        with:
+          bun-version: ${{ env.BUN_VERSION }}
+
+      - name: Determine release version
+        id: release-version
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          set -euo pipefail
+          git fetch origin develop:refs/remotes/origin/develop --force
+
+          if [ "${GITHUB_EVENT_NAME}" = "workflow_dispatch" ]; then
+            tag_name="${{ github.event.inputs.tag }}"
+          else
+            tag_name="${GITHUB_REF_NAME}"
+          fi
+
+          if ! printf '%s' "$tag_name" | grep -Eq '^v[0-9]+\.[0-9]+\.[0-9]+([-.][0-9A-Za-z.-]+)?$'; then
+            echo "Release publication requires a semantic version tag like v0.4.0."
+            exit 1
+          fi
+
+          if ! git rev-parse --verify "refs/tags/$tag_name" >/dev/null 2>&1; then
+            echo "Tag $tag_name does not exist in this checkout."
+            exit 1
+          fi
+
+          tag_sha=$(git rev-list -n 1 "refs/tags/$tag_name")
+          head_sha=$(git rev-parse HEAD)
+          if [ "$tag_sha" != "$head_sha" ]; then
+            echo "Checked-out commit $head_sha does not match tag $tag_name ($tag_sha)."
+            exit 1
+          fi
+
+          if ! git branch -r --contains "$tag_sha" | grep -Eq 'origin/develop$'; then
+            echo "Release tag $tag_name must point at a certified commit from develop."
+            exit 1
+          fi
+
+          ci_runs=$(gh api \
+            -H "Accept: application/vnd.github+json" \
+            "/repos/${{ github.repository }}/actions/runs?head_sha=$tag_sha&event=push&status=completed&per_page=100")
+
+          if ! printf '%s' "$ci_runs" | jq -e '.workflow_runs[] | select(.name=="CI" and .head_branch=="develop" and .conclusion=="success")' >/dev/null; then
+            echo "Tagged commit $tag_sha has not passed the required develop CI workflow."
+            exit 1
+          fi
+
+          echo "tag=$tag_name" >> "$GITHUB_OUTPUT"
+          echo "version=${tag_name#v}" >> "$GITHUB_OUTPUT"
+          echo "sha=$tag_sha" >> "$GITHUB_OUTPUT"
+
+  tarball:
+    needs: gate
+    runs-on: ubuntu-latest
+    outputs:
+      npm_tarball_name: ${{ steps.pack.outputs.npm_tarball_name }}
+      release_version: ${{ needs.gate.outputs.release_version }}
+    steps:
+      - name: Checkout release candidate commit
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+          ref: ${{ needs.gate.outputs.release_sha }}
+
       - uses: oven-sh/setup-bun@v2
         with:
-          bun-version: "1.3.13"
-      - run: bun install --frozen-lockfile
-      - run: bun run build
+          bun-version: ${{ env.BUN_VERSION }}
+
+      - name: Install dependencies
+        run: bun install --frozen-lockfile
+
+      - name: Validate package version matches tag
+        run: |
+          set -euo pipefail
+          pkg_version=$(node -p "JSON.parse(require('fs').readFileSync('package.json', 'utf8')).version")
+          release_version="${{ needs.gate.outputs.release_version }}"
+          if [ "$pkg_version" != "$release_version" ]; then
+            echo "Package version ($pkg_version) does not match release tag version ($release_version)."
+            exit 1
+          fi
+
+      - name: Build package
+        run: bun run build
+
+      - name: Run full validation suite
+        run: bun run check
+
+      - name: Run release package checks
+        run: bun run release:check
+
       - name: Generate inspection report
-        run: make inspect-report INPUT=tests/fixtures/includes-invalid-steps/input.adoc > inspection-report.json
-      - name: Upload inspection report
+        run: |
+          mkdir -p release-artifacts
+          make inspect-report INPUT=tests/fixtures/includes-invalid-steps/input.adoc \
+            > release-artifacts/inspection-report.json
+
+      - name: Pack release tarball
+        id: pack
+        run: |
+          set -euo pipefail
+          npm pack --json --pack-destination release-artifacts > release-artifacts/pack.json
+          npm_tarball_name=$(node -p "JSON.parse(require('fs').readFileSync('release-artifacts/pack.json', 'utf8'))[0].filename")
+          rm release-artifacts/pack.json
+          echo "npm_tarball_name=$npm_tarball_name" >> "$GITHUB_OUTPUT"
+
+      - name: Upload release artifacts
         uses: actions/upload-artifact@v4
         with:
-          name: inspection-report-release
-          path: inspection-report.json
-      - name: Assert inspection artifact exists
-        run: test -s inspection-report.json
-      - name: Emit inspection annotations
-        run: bun run inspect:report -- tests/fixtures/includes-invalid-steps/input.adoc --format github-actions || true
-      - run: bun run check
-      - run: bun run release:check
+          name: release-artifacts
+          path: release-artifacts
+          if-no-files-found: error
+          retention-days: 1
+
+  npm:
+    needs:
+      - gate
+      - tarball
+    runs-on: ubuntu-latest
+    environment: node
+    outputs:
+      already_published: ${{ steps.npm-version.outputs.already_published }}
+    steps:
+      - name: Download release artifacts
+        uses: actions/download-artifact@v4
+        with:
+          name: release-artifacts
+          path: release-artifacts
+
+      - name: Preflight npm secret
+        env:
+          NPM_TOKEN: ${{ secrets.NPM_TOKEN }}
+        run: |
+          set -euo pipefail
+          if [ -z "${NPM_TOKEN:-}" ]; then
+            echo "NPM_TOKEN secret is required for npm publish."
+            exit 1
+          fi
+
+      - name: Setup npm auth
+        uses: actions/setup-node@v4
+        with:
+          node-version: 20
+          registry-url: https://registry.npmjs.org
+          always-auth: true
+
+      - name: Check whether version is already published
+        id: npm-version
+        run: |
+          set -euo pipefail
+          if npm view "@wsmy/antora-markdown-exporter@${{ needs.gate.outputs.release_version }}" version >/dev/null 2>&1; then
+            echo "already_published=true" >> "$GITHUB_OUTPUT"
+          else
+            echo "already_published=false" >> "$GITHUB_OUTPUT"
+          fi
+
+      - name: Publish to npm
+        if: steps.npm-version.outputs.already_published != 'true'
+        run: npm publish --access public "./release-artifacts/${{ needs.tarball.outputs.npm_tarball_name }}"
+        env:
+          NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }}
+
+  release-assets:
+    needs:
+      - gate
+      - tarball
+      - npm
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+    steps:
+      - name: Download release artifacts
+        uses: actions/download-artifact@v4
+        with:
+          name: release-artifacts
+          path: release-artifacts
+
+      - name: Render GitHub release body
+        env:
+          RELEASE_TAG: ${{ needs.gate.outputs.release_tag }}
+          RELEASE_VERSION: ${{ needs.gate.outputs.release_version }}
+          ALREADY_PUBLISHED: ${{ needs.npm.outputs.already_published }}
+        run: |
+          set -euo pipefail
+          cat > release-artifacts/release-body.md <<EOF
+          Release \`${RELEASE_TAG}\` publishes \`@wsmy/antora-markdown-exporter@${RELEASE_VERSION}\`.
+
+          - Source commit: \`${{ needs.gate.outputs.release_sha }}\`
+          - npm publish: $( [ "${ALREADY_PUBLISHED}" = "true" ] && printf 'already present on npm, publish step skipped' || printf 'published from the certified tarball artifact' )
+          - Inspection report: attached as a release asset
+          EOF
+
+      - name: Publish GitHub release assets
+        uses: softprops/action-gh-release@v2
+        with:
+          tag_name: ${{ needs.gate.outputs.release_tag }}
+          body_path: release-artifacts/release-body.md
+          files: |
+            release-artifacts/*.tgz
+            release-artifacts/inspection-report.json
+
+  promote-main:
+    needs:
+      - gate
+      - release-assets
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+    steps:
+      - name: Checkout current repo
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+          ref: ${{ needs.gate.outputs.release_sha }}
+
+      - name: Fast-forward main to released commit
+        run: |
+          set -euo pipefail
+          git fetch origin main
+          git checkout -B main origin/main
+          git merge --ff-only "${{ needs.gate.outputs.release_sha }}"
+          git push origin main

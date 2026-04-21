@@ -211,6 +211,34 @@ Provenance:
 * Notes: `Build tooling uses bun-first package manager fallback`; `Toolchain policy must choose one primary execution path`
 * Code: `Makefile`, `package.json`, `README.md`
 
+=== Release Flow Uses `develop`, `main`, And Semver Tags
+
+Three notes define the release operating model:
+
+* `Develop should be the integration branch while main tracks published history`
+* `Tag pushes should publish only certified develop commits`
+* `Develop-main-tag release migration must be coordinated across code docs and automation`
+
+In practical terms:
+
+* normal change flow targets `develop`
+* release candidates are prepared on `develop`
+* finalization is done by pushing a semver tag from a certified `develop` commit
+* `main` is advanced only after the tagged release workflow succeeds
+
+For local operators and maintainers, `make release VERSION=vX.Y.Z` starts or finalizes the release depending on whether the requested version matches the current package version.
+
+Why this matters for contributors:
+
+* it separates “integrated” from “published”
+* it keeps release publication tied to one immutable tag input
+* it means `main` is not the branch for normal feature integration anymore
+
+Provenance:
+
+* Notes: `Develop should be the integration branch while main tracks published history`; `Tag pushes should publish only certified develop commits`; `Develop-main-tag release migration must be coordinated across code docs and automation`
+* Code: `scripts/release.js`, `.github/workflows/ci.yml`, `.github/workflows/release.yml`
+
 === Where To Start When You Change Behavior
 
 Use this heuristic:
