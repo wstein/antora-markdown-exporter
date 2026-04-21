@@ -1,34 +1,33 @@
 [[section-design-decisions]]
 == Architecture Decisions
 
-ifdef::arc42help[]
-[role="arc42help"]
-****
-.Contents
-Important, expensive, large scale or risky architecture decisions including rationales.
-With "decisions" we mean selecting one alternative based on given criteria.
+[options="header",cols="1,2,3"]
+|===
+|Decision |Rationale |Current consequence
 
-Please use your judgement to decide whether an architectural decision should be documented
-here in this central section or whether you better document it locally
-(e.g. within the white box template of one building block).
+|Use Antora Assembler as the export boundary
+|The notes `Exporter pipeline uses Assembler and a direct TypeScript converter` and `Antora extension entrypoints must reflect actual integration maturity` define the outer integration contract. The repository should expose a real Antora exporter extension, not a metadata-only scaffold.
+|`src/extension/index.ts` registers through `@antora/assembler.configure()` and keeps assembly outside renderer-local logic.
 
-Avoid redundancy. 
-Refer to section 4, where you already captured the most important decisions of your architecture.
+|Keep the Markdown IR as the canonical semantic boundary
+|The notes `Markdown IR is the canonical render boundary` and `Flavor renderers are syntax adapters over one semantic layer` require semantic decisions to stay centralized and testable.
+|Conversion changes must land in the exporter, IR, normalization, lowering, or renderer layers rather than as ad-hoc string rewrites.
 
-.Motivation
-Stakeholders of your system should be able to comprehend and retrace your decisions.
+|Centralize fallback policy instead of flavor-local degradation
+|The notes `Fallback selection is centralized across markdown flavors` and `Transparent extensions are not fallback mechanisms` distinguish valid semantic preservation from controlled degradation.
+|Unsupported constructs and raw HTML policy are owned by `src/markdown/fallback.ts`, while valid semantic constructs remain ordinary IR nodes.
 
-.Form
-Various options:
+|Use one semantic export path for package APIs, module Markdown export, and inspection tooling
+|The note `Antora module markdown export should use the canonical repository pipeline` requires repository exports to stay on the same converter path as the package API.
+|`make markdown`, inspection scripts, and library consumers all depend on the same `convertAssemblyToMarkdownIR -> normalizeMarkdownIR -> renderMarkdown` contract.
 
-* ADR (https://cognitect.com/blog/2011/11/15/documenting-architecture-decisions[Documenting Architecture Decisions]) for every important decision
-* List or table, ordered by importance and consequences or:
-* more detailed in form of separate sections per decision
+|Use shared assembled module sources for module PDF and module Markdown outputs
+|Documentation artifacts should differ by renderer, not by upstream assembly logic.
+|`scripts/docs-module-sources.mjs` is now the maintained source builder for both per-module PDF output and flat module Markdown output.
 
-.Further Information
+|Use `develop` for integration and `main` for published history
+|The notes `Develop should be the integration branch while main tracks published history` and `Tag pushes should publish only certified develop commits` define the release operating model.
+|Release automation can verify one certified input state, then promote `main` and Pages publication only after successful publication steps.
+|===
 
-See https://docs.arc42.org/section-9/[Architecture Decisions] in the arc42 documentation.
-There you will find links and examples about ADR.
-
-****
-endif::arc42help[]
+These decisions are intentionally implementation-facing. They explain why the repository keeps resisting shortcut conversions, flavor-local semantics, and duplicated export paths even when those shortcuts might appear simpler in the short term.
