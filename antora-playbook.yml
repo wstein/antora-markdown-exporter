@@ -1,0 +1,17 @@
+site:
+  title: Antora Markdown Exporter
+  start_page: antora-markdown-exporter::index.adoc
+
+content:
+  sources:
+    - url: .
+      branches: HEAD
+      start_path: docs
+
+ui:
+  bundle:
+    url: https://gitlab.com/antora/default-ui/-/archive/master/default-ui-master.zip
+    snapshot: true
+
+output:
+  dir: build/site

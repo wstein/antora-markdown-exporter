@@ -1,0 +1,3 @@
+= Manual
+
+This section is reserved for manual documentation.

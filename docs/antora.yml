@@ -1,0 +1,5 @@
+name: antora-markdown-exporter
+title: Antora Markdown Exporter
+version: ~
+nav:
+  - modules/ROOT/nav.adoc

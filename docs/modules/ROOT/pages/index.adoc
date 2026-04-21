@@ -1,0 +1,4 @@
+= Documentation
+:page-role: hub
+
+This section is the landing page for the Antora documentation set.
