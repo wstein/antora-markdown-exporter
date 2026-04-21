@@ -12,6 +12,7 @@ import {
 
 export type ExportAntoraModulesOptions = {
 	flavor: MarkdownFlavorName;
+	format: "human" | "json";
 	outputRoot: string;
 	playbookPath: string;
 };
@@ -31,7 +32,7 @@ const markdownFlavors = new Set<MarkdownFlavorName>([
 
 function usage(): string {
 	return [
-		"Usage: bun scripts/export-antora-modules.ts [--playbook <file>] [--output-root <dir>] [--flavor <gfm|commonmark|gitlab|strict>]",
+		"Usage: bun scripts/export-antora-modules.ts [--playbook <file>] [--output-root <dir>] [--flavor <gfm|commonmark|gitlab|strict>] [--json]",
 		"",
 		"Export assembled documentation modules to Markdown using the repository's Antora Markdown converter.",
 	].join("\n");
@@ -39,6 +40,7 @@ function usage(): string {
 
 export function parseArguments(argv: string[]): ExportAntoraModulesOptions {
 	let flavor: MarkdownFlavorName = "gfm";
+	let format: "human" | "json" = "human";
 	let outputRoot = resolve("build/markdown");
 	let playbookPath = resolve("antora-playbook.yml");
 
@@ -82,10 +84,15 @@ export function parseArguments(argv: string[]): ExportAntoraModulesOptions {
 			continue;
 		}
 
+		if (argument === "--json") {
+			format = "json";
+			continue;
+		}
+
 		throw new Error(`Unknown option: ${argument}`);
 	}
 
-	return { flavor, outputRoot, playbookPath };
+	return { flavor, format, outputRoot, playbookPath };
 }
 
 export async function exportAntoraModulesToMarkdown(
@@ -147,21 +154,34 @@ async function main(): Promise<void> {
 	const options = parseArguments(process.argv.slice(2));
 	const exportedFiles = await exportAntoraModulesToMarkdown(options);
 
+	if (options.format === "json") {
+		console.log(
+			JSON.stringify(
+				{
+					count: exportedFiles.length,
+					flavor: options.flavor,
+					outputRoot: options.outputRoot,
+					playbookPath: options.playbookPath,
+					files: exportedFiles.map((entry) => ({
+						moduleName: entry.moduleName,
+						outputPath: entry.relativeOutputPath,
+					})),
+				},
+				null,
+				2,
+			),
+		);
+		return;
+	}
+
 	console.log(
-		JSON.stringify(
-			{
-				count: exportedFiles.length,
-				flavor: options.flavor,
-				outputRoot: options.outputRoot,
-				playbookPath: options.playbookPath,
-				files: exportedFiles.map((entry) => ({
-					moduleName: entry.moduleName,
-					outputPath: entry.relativeOutputPath,
-				})),
-			},
-			null,
-			2,
-		),
+		[
+			`Exported ${exportedFiles.length} documentation modules as ${options.flavor} Markdown.`,
+			`Output root: ${options.outputRoot}`,
+			...exportedFiles.map(
+				(entry) => `- ${entry.moduleName}: ${entry.relativeOutputPath}`,
+			),
+		].join("\n"),
 	);
 }
 

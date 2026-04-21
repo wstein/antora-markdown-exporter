@@ -1,3 +1,4 @@
+import { execFileSync } from "node:child_process";
 import { mkdtemp, readFile } from "node:fs/promises";
 import { tmpdir } from "node:os";
 import { resolve } from "node:path";
@@ -12,6 +13,7 @@ describe("export antora modules script", () => {
 		const options = parseArguments([]);
 
 		expect(options.flavor).toBe("gfm");
+		expect(options.format).toBe("human");
 		expect(options.outputRoot).toBe(resolve("build/markdown"));
 		expect(options.playbookPath).toBe(resolve("antora-playbook.yml"));
 	});
@@ -24,11 +26,13 @@ describe("export antora modules script", () => {
 			"tmp/out",
 			"--flavor",
 			"gitlab",
+			"--json",
 		]);
 
 		expect(options.playbookPath).toBe(resolve("tmp/playbook.yml"));
 		expect(options.outputRoot).toBe(resolve("tmp/out"));
 		expect(options.flavor).toBe("gitlab");
+		expect(options.format).toBe("json");
 	});
 
 	it("exports one assembled markdown document per documentation module", async () => {
@@ -58,9 +62,7 @@ describe("export antora modules script", () => {
 		expect(architectureMarkdown).toContain(
 			"# Chapter 2. Architecture Constraints",
 		);
-		expect(architectureMarkdown).toContain(
-			"**Motivation:** The decomposition follows",
-		);
+		expect(architectureMarkdown).toContain("The main building blocks are:");
 		expect(architectureMarkdown).not.toContain(
 			'<a id="architecture:index"></a>',
 		);
@@ -86,5 +88,53 @@ describe("export antora modules script", () => {
 			"- [Chapter 1. Mental Models](#chapter-1-mental-models)",
 		);
 		expect(onboardingMarkdown).toContain("# Chapter 2. Core Workflows");
+	});
+
+	it("prints a human-readable summary by default", () => {
+		const output = execFileSync(
+			"bun",
+			["scripts/export-antora-modules.ts", "--output-root", "build/markdown"],
+			{
+				cwd: resolve(__dirname, "../.."),
+				encoding: "utf8",
+			},
+		);
+
+		expect(output).toContain(
+			"Exported 3 documentation modules as gfm Markdown.",
+		);
+		expect(output).toContain("- architecture: architecture.md");
+		expect(output).toContain("- manual: manual.md");
+		expect(output).toContain("- onboarding: onboarding.md");
+		expect(output.trim().startsWith("{")).toBe(false);
+	});
+
+	it("emits JSON only when requested explicitly", () => {
+		const output = execFileSync(
+			"bun",
+			[
+				"scripts/export-antora-modules.ts",
+				"--output-root",
+				"build/markdown",
+				"--json",
+			],
+			{
+				cwd: resolve(__dirname, "../.."),
+				encoding: "utf8",
+			},
+		);
+		const result = JSON.parse(output) as {
+			count: number;
+			flavor: string;
+			files: { moduleName: string; outputPath: string }[];
+		};
+
+		expect(result.count).toBe(3);
+		expect(result.flavor).toBe("gfm");
+		expect(result.files).toEqual([
+			{ moduleName: "architecture", outputPath: "architecture.md" },
+			{ moduleName: "manual", outputPath: "manual.md" },
+			{ moduleName: "onboarding", outputPath: "onboarding.md" },
+		]);
 	});
 });
