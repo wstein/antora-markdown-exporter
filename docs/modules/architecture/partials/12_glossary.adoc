@@ -1,13 +1,7 @@
 [[section-reference-notes]]
 == Reference Notes
 
-ifdef::arc42help[]
-[role="arc42help"]
-****
-.Contents
-Reference index for the canonical notes cited by this architecture document.
-****
-endif::arc42help[]
+This section is a reference index for the canonical notes cited by the architecture document.
 
 [cols="2,3" options="header"]
 |===
@@ -35,4 +29,4 @@ endif::arc42help[]
 |`Scaffold leftovers must be removed before contract expansion`
 |===
 
-This section is a provenance aid, not a second source of truth. The notes remain canonical inputs; the codebase remains the authoritative statement of what is implemented today when notes and implementation maturity differ.
+The notes remain canonical inputs. The codebase remains the authoritative statement of what is implemented today when note intent and implementation maturity differ.

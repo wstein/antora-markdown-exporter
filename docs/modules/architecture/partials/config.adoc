@@ -4,4 +4,3 @@
 
 // enable table-of-contents
 :toc:
-:arc42help:

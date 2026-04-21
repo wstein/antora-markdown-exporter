@@ -1,6 +1,8 @@
 [[section-concepts]]
 == Cross-cutting Concepts
 
+This section collects concepts that shape multiple architectural areas at once rather than belonging to a single converter or workflow component.
+
 === Deterministic Contract Testing
 
 The cross-cutting concept is the testing model described by the note `Testing relies on golden fixtures and deterministic snapshots`.

@@ -39,14 +39,6 @@
 
 # Chapter 1. Introduction and Goals
 
-Describes the relevant requirements and the driving forces that software architects and development team must consider. These include
-
-- underlying business goals,
-- essential features,
-- essential functional requirements,
-- quality goals for the architecture and
-- relevant stakeholders and their expectations
-
 ## 1.1. Requirements Overview
 
 `@wsmy/antora-markdown-exporter` is a library-first TypeScript package that converts assembled AsciiDoc into a normalized Markdown intermediate representation (IR), normalizes that IR, and renders it into explicit Markdown flavors. The current public API centers on `convertAssemblyToMarkdownIR`, `normalizeMarkdownIR`, `renderMarkdown` and flavor helpers, plus inspection helpers for include diagnostics and xref targets.
@@ -59,9 +51,9 @@ The main architectural goals are:
 - expose stable inspection APIs for CI, release validation, and downstream tooling
 - keep package naming and extension entrypoints honest about current implementation maturity
 
-The notes `Exporter pipeline uses Assembler and a direct TypeScript converter`, `Markdown IR is the canonical render boundary`, `Flavor renderers are syntax adapters over one semantic layer`, `Fallback selection is centralized across markdown flavors`, `Transparent extensions are not fallback mechanisms`, `The architecture favors explicit extension over implicit degradation`, `Strict architecture must be extended without weakening invariants`, `Include metadata transport is an internal implementation detail`, `Xref target resolution is a separate lowering phase`, and `Antora extension entrypoints must reflect actual integration maturity` describe the intended architecture. The codebase implements most of the markdown-kernel side of that story in `src/exporter/**`, `src/markdown/**`, `scripts/inspection-report.ts`, and the test suite.
+The notes `Exporter pipeline uses Assembler and a direct TypeScript converter`, `Markdown IR is the canonical render boundary`, `Flavor renderers are syntax adapters over one semantic layer`, `Fallback selection is centralized across markdown flavors`, `Transparent extensions are not fallback mechanisms`, `The architecture favors explicit extension over implicit degradation`, `Strict architecture must be extended without weakening invariants`, `Include metadata transport is an internal implementation detail`, `Xref target resolution is a separate lowering phase`, and `Antora extension entrypoints must reflect actual integration maturity` describe this architecture. The codebase now implements both the real Assembler-backed extension entrypoint in `src/extension/index.ts` and the repository-owned markdown kernel in `src/exporter/**`, `src/markdown/**`, `scripts/inspection-report.ts`, and the test suite.
 
-One important uncertainty must remain explicit: the notes and README describe an Antora Assembler based pipeline, and the code now implements a real Assembler-backed extension entrypoint in `src/extension/index.ts`, but coverage depth still depends on the repository-owned conversion pipeline in `src/exporter/**` and `src/markdown/**`. The architectural question is no longer whether a real Antora registration path exists; it does. The remaining concern is keeping that real registration path, its converter coverage, and the public docs aligned as the pipeline evolves.
+The main uncertainty is no longer whether a real Antora registration path exists. It does. The remaining architectural concern is keeping that outer registration path, its converter coverage, and the public documentation aligned as the pipeline evolves.
 
 ## 1.2. Quality Goals
 
@@ -129,9 +121,9 @@ That toolchain strategy supports the broader architectural strategy:
 
 ## 5.1. Whitebox Overall System
 
-**Motivation:** The decomposition follows the notes `Exporter pipeline uses Assembler and a direct TypeScript converter`, `Markdown IR is the canonical render boundary`, `Flavor renderers are syntax adapters over one semantic layer`, `Include metadata transport is an internal implementation detail`, `Xref target resolution is a separate lowering phase`, and `Inspection helpers expose normalized validation surfaces`. The code implements a library-first markdown kernel together with a real Assembler-backed Antora extension boundary.
+The decomposition follows the notes `Exporter pipeline uses Assembler and a direct TypeScript converter`, `Markdown IR is the canonical render boundary`, `Flavor renderers are syntax adapters over one semantic layer`, `Include metadata transport is an internal implementation detail`, `Xref target resolution is a separate lowering phase`, and `Inspection helpers expose normalized validation surfaces`. The repository therefore separates the outer Antora integration boundary from the inner markdown kernel instead of blending assembly, conversion, rendering, and validation into one opaque stage.
 
-**Contained Building Blocks:**
+The main building blocks are:
 
 | Building block | Responsibility |
 | --- | --- |
@@ -144,7 +136,7 @@ That toolchain strategy supports the broader architectural strategy:
 | Package, CLI, and release boundary | `src/index.ts`, `package.json`, `bin/antora-markdown-exporter.js`, and `scripts/release-check.mjs` package the library-first API, CLI entrypoint, and release validation. |
 | Test corpus | `tests/fixtures/**`, `tests/reference/**`, and `tests/**` encode golden-output, semantic-compatibility, provenance-locking, and repository-contract expectations. |
 
-**Important Interfaces:**
+The most important interfaces are:
 
 - `convertAssemblyToMarkdownIR(source, options)` is the main converter entrypoint.
 - `normalizeMarkdownIR(document)` freezes the semantic shape expected by renderers and inspection helpers.
@@ -153,27 +145,25 @@ That toolchain strategy supports the broader architectural strategy:
 
 ### 5.1.1. Markdown Kernel
 
-**Purpose/Responsibility:** The markdown kernel is the repository’s semantic center. It owns canonical node types, normalization, flavor capability lookup, fallback decisions, and xref lowering.
+The markdown kernel is the repository’s semantic center. It owns canonical node types, normalization, flavor capability lookup, fallback decisions, and xref lowering.
 
-**Directory/File Location:** `src/markdown/ir.ts`, `src/markdown/normalize.ts`, `src/markdown/flavor.ts`, `src/markdown/fallback.ts`, `src/markdown/xref-resolution.ts`, `src/markdown/render/**`
+Its implementation lives in `src/markdown/ir.ts`, `src/markdown/normalize.ts`, `src/markdown/flavor.ts`, `src/markdown/fallback.ts`, `src/markdown/xref-resolution.ts`, and `src/markdown/render/**`.
 
-**Open Issues/Problems/Risks:** The notes describe a stable architectural center and the code matches that direction. The remaining risk is not the absence of an outer Antora integration boundary, but drift between the real extension entrypoint and the repository-owned conversion semantics it is supposed to expose.
+The remaining risk is not the absence of an outer Antora integration boundary. It is drift between the real extension entrypoint and the repository-owned conversion semantics that entrypoint is supposed to expose.
 
 ### 5.1.2. Conversion And Include Handling
 
-**Purpose/Responsibility:** The exporter converts assembled content into IR and keeps include semantics, provenance, and diagnostics available without making the private marker format part of the public contract.
+The exporter converts assembled content into IR and keeps include semantics, provenance, and diagnostics available without making the private marker format part of the public contract.
 
-**Directory/File Location:** `src/exporter/convert-assembly.ts`, `src/exporter/include-metadata.ts`
+Its implementation lives in `src/exporter/convert-assembly.ts` and `src/exporter/include-metadata.ts`.
 
-**Open Issues/Problems/Risks:** The private marker transport is intentionally isolated, and the surrounding architecture now has a first-class runtime integration through the Assembler-backed extension entrypoint. The main ongoing risk is conversion coverage for richer assembled AsciiDoc constructs, not missing registration itself.
+The private marker transport is intentionally isolated. The main ongoing risk is conversion coverage for richer assembled AsciiDoc constructs, not missing registration itself.
 
 ### 5.1.3. Validation And Release Surfaces
 
-**Purpose/Responsibility:** Inspection helpers and scripts expose reusable validation outputs so downstream tooling does not walk the IR itself. Packaging and release scripts keep the repository aligned with its scoped npm package identity.
+Inspection helpers and scripts expose reusable validation outputs so downstream tooling does not walk the IR itself. Packaging and release scripts keep the repository aligned with its scoped npm package identity.
 
-**Directory/File Location:** `src/markdown/include-diagnostics.ts`, `scripts/inspection-report.ts`, `scripts/release-check.mjs`, `package.json`
-
-<a id="section-runtime-view"></a>
+These surfaces live in `src/markdown/include-diagnostics.ts`, `scripts/inspection-report.ts`, `scripts/release-check.mjs`, and `package.json`.
 
 # Chapter 6. Runtime View
 
@@ -183,7 +173,7 @@ This scenario is based on the notes `Exporter pipeline uses Assembler and a dire
 
 1. An upstream caller provides assembled AsciiDoc content to `convertAssemblyToMarkdownIR(source, { sourcePath })`. 2. The converter in `src/exporter/convert-assembly.ts` parses blocks and inline constructs into semantic IR nodes. 3. Include directives are inlined when source-path context is available; include metadata, diagnostics, and provenance are preserved as dedicated `includeDirective` nodes rather than being dropped. 4. The caller normalizes the document through `normalizeMarkdownIR`. 5. Xref targets remain structured until lowering in `src/markdown/xref-resolution.ts`. 6. A flavor renderer serializes the normalized document according to `src/markdown/flavor.ts` and `src/markdown/fallback.ts`.
 
-**Notable aspect:** The implemented runtime now spans both the Assembler-backed extension entrypoint and the repository-owned conversion boundary. The assembly stage is no longer purely external to the shipped runtime path; the remaining work is to keep converter behavior, registration behavior, and tests aligned as coverage expands.
+The notable aspect is that the shipped runtime now spans both the Assembler-backed extension entrypoint and the repository-owned conversion boundary. The remaining work is to keep converter behavior, registration behavior, and tests aligned as coverage expands.
 
 ## 6.2. Collect Inspection Data For CI Or Release Validation
 
@@ -191,9 +181,7 @@ This scenario is based on the notes `Inspection helpers expose normalized valida
 
 1. A caller converts source to IR, typically with a real file-backed `sourcePath`. 2. `collectMarkdownInspectionReport(document)` normalizes the document before traversal. 3. The inspection layer walks nested blocks, callout lists, footnote definitions, tables, and inline containers to gather include directives, include diagnostics, xrefs, and xref targets in normalized document order. 4. `scripts/inspection-report.ts` serializes that report either as JSON or GitHub Actions annotations. 5. CI or release checks fail when diagnostics are present and `--fail-on-diagnostics` is used.
 
-**Notable aspect:** Validation uses one maintained normalized inspection surface instead of separate ad-hoc traversals in CI scripts.
-
-<a id="section-deployment-view"></a>
+The notable aspect is that validation uses one maintained normalized inspection surface instead of separate ad-hoc traversals in CI scripts.
 
 # Chapter 7. Deployment View
 
@@ -201,16 +189,16 @@ The repository does not ship a distributed runtime service. Its deployment view 
 
 ## 7.1. Infrastructure Level 1
 
-**Motivation:** The most relevant deployment concern is not horizontal scaling. It is ensuring that local development, CI validation, npm publication, and GitHub Pages publication all execute the same package and documentation contracts.
+The most relevant deployment concern is not horizontal scaling. It is ensuring that local development, CI validation, npm publication, and GitHub Pages publication all execute the same package and documentation contracts.
 
-**Quality and/or Performance Features:**
+Key deployment qualities are:
 
 - deterministic builds from tracked repository inputs
 - one Bun-first operator path for local validation
 - one certified release path from `develop` through semver tags to `main`
 - reproducible documentation artifacts for both HTML and per-module PDF outputs
 
-**Mapping of Building Blocks to Infrastructure:**
+The infrastructure mapping is:
 
 | Environment | Mapped responsibilities |
 | --- | --- |
@@ -244,6 +232,8 @@ This level exists to make publication trustworthy:
 - documentation artifacts and package artifacts stay coupled to the same repository state
 
 # Chapter 8. Cross-cutting Concepts
+
+This section collects concepts that shape multiple architectural areas at once rather than belonging to a single converter or workflow component.
 
 ## 8.1. Deterministic Contract Testing
 
@@ -296,7 +286,7 @@ These decisions are intentionally implementation-facing. They explain why the re
 
 **Response Measure:** Any unexpected byte-level output drift fails the golden test.
 
-**Notes cited:** `Golden tests require rendered output comparison`; `Testing relies on golden fixtures and deterministic snapshots`
+Notes cited: `Golden tests require rendered output comparison`; `Testing relies on golden fixtures and deterministic snapshots`
 
 ### 10.2.2. QS-2 Reference Compatibility With Locked Provenance
 
@@ -310,7 +300,7 @@ These decisions are intentionally implementation-facing. They explain why the re
 
 **Response Measure:** A changed snapshot without manifest alignment, or a semantic regression in links, includes, admonitions, tables, images, or visible fallback markers, fails the reference test.
 
-**Notes cited:** `Reference testing uses official Antora documentation as a compatibility corpus`; `Reference tests check semantic invariants not exact bytes`; `Reference fixtures are curated and provenance locked`; `Reference corpus should cover navigation xrefs includes and admonitions`
+Notes cited: `Reference testing uses official Antora documentation as a compatibility corpus`; `Reference tests check semantic invariants not exact bytes`; `Reference fixtures are curated and provenance locked`; `Reference corpus should cover navigation xrefs includes and admonitions`
 
 ### 10.2.3. QS-3 Valid Extensions Stay Out Of Fallback
 
@@ -324,7 +314,7 @@ These decisions are intentionally implementation-facing. They explain why the re
 
 **Response Measure:** Rendered output retains the original fence language and contains no `Unsupported` fallback marker for that block.
 
-**Notes cited:** `Transparent extensions are not fallback mechanisms`; `The architecture favors explicit extension over implicit degradation`
+Notes cited: `Transparent extensions are not fallback mechanisms`; `The architecture favors explicit extension over implicit degradation`
 
 ### 10.2.4. QS-4 Repository Self-Consistency Before Release
 
@@ -338,28 +328,19 @@ These decisions are intentionally implementation-facing. They explain why the re
 
 **Response Measure:** Missing referenced files, stale scaffold paths, or misaligned package metadata fail the repository-contract suite or release checks.
 
-**Notes cited:** `Repository scripts and referenced files must stay in lockstep`; `Golden tests require rendered output comparison`
-
-<a id="section-technical-risks"></a>
+Notes cited: `Repository scripts and referenced files must stay in lockstep`; `Golden tests require rendered output comparison`
 
 # Chapter 11. Risks and Technical Debts
 
 The main currently documented risk is the one described by the note `Scaffold leftovers must be removed before contract expansion`.
 
-**Priority 1:** The repository’s markdown kernel and validation surfaces are much more mature than its Antora integration boundary. If documentation, package examples, or public entrypoints imply fully implemented Antora registration before it exists, maintainers will inherit false confidence, noisy reviews, and avoidable churn.
-
-**Mitigation:**
-
-- keep the real extension entrypoint, README examples, and release checks aligned
-- remove dead pre-extension scaffolding artifacts when they linger in docs or tests
-- treat repository self-consistency checks as release gates
-- extend converter coverage and tests together whenever richer assembled AsciiDoc constructs are supported
-
-<a id="section-reference-notes"></a>
+| Priority | Risk and mitigation |
+| --- | --- |
+| 1 | The repository now ships a real extension entrypoint as well as the markdown kernel. The risk is no longer a missing registration path. It is drift between the extension entrypoint, the converter’s real coverage, and the way docs or package examples describe that coverage. |
 
 # Chapter 12. Reference Notes
 
-**Contents:** Reference index for the canonical notes cited by this architecture document.
+This section is a reference index for the canonical notes cited by the architecture document.
 
 | Section | Referenced notes |
 | --- | --- |
@@ -371,5 +352,5 @@ The main currently documented risk is the one described by the note `Scaffold le
 | Quality Requirements | `Golden tests require rendered output comparison`; `Reference corpus should cover navigation xrefs includes and admonitions`; `Reference fixtures are curated and provenance locked`; `Reference testing uses official Antora documentation as a compatibility corpus`; `Reference tests check semantic invariants not exact bytes` |
 | Risks and Technical Debt | `Scaffold leftovers must be removed before contract expansion` |
 
-This section is a provenance aid, not a second source of truth. The notes remain canonical inputs; the codebase remains the authoritative statement of what is implemented today when notes and implementation maturity differ.
+The notes remain canonical inputs. The codebase remains the authoritative statement of what is implemented today when note intent and implementation maturity differ.
 

@@ -3,11 +3,9 @@
 == Building Block View
 
 === Whitebox Overall System
-Motivation::
+The decomposition follows the notes `Exporter pipeline uses Assembler and a direct TypeScript converter`, `Markdown IR is the canonical render boundary`, `Flavor renderers are syntax adapters over one semantic layer`, `Include metadata transport is an internal implementation detail`, `Xref target resolution is a separate lowering phase`, and `Inspection helpers expose normalized validation surfaces`. The repository therefore separates the outer Antora integration boundary from the inner markdown kernel instead of blending assembly, conversion, rendering, and validation into one opaque stage.
 
-The decomposition follows the notes `Exporter pipeline uses Assembler and a direct TypeScript converter`, `Markdown IR is the canonical render boundary`, `Flavor renderers are syntax adapters over one semantic layer`, `Include metadata transport is an internal implementation detail`, `Xref target resolution is a separate lowering phase`, and `Inspection helpers expose normalized validation surfaces`. The code implements a library-first markdown kernel together with a real Assembler-backed Antora extension boundary.
-
-Contained Building Blocks::
+The main building blocks are:
 
 [cols="1,3" options="header"]
 |===
@@ -38,47 +36,27 @@ Contained Building Blocks::
 |`tests/fixtures/**`, `tests/reference/**`, and `tests/**` encode golden-output, semantic-compatibility, provenance-locking, and repository-contract expectations.
 |===
 
-Important Interfaces::
-
+The most important interfaces are:
 * `convertAssemblyToMarkdownIR(source, options)` is the main converter entrypoint.
 * `normalizeMarkdownIR(document)` freezes the semantic shape expected by renderers and inspection helpers.
 * `renderMarkdown(document, flavor)` and flavor-specific helpers serialize the normalized IR.
 * `collectMarkdownInspectionReport(document)` provides normalized inspection data for includes and xrefs.
 
 ==== Markdown Kernel
-
-Purpose/Responsibility::
-
 The markdown kernel is the repository’s semantic center. It owns canonical node types, normalization, flavor capability lookup, fallback decisions, and xref lowering.
 
-Directory/File Location::
+Its implementation lives in `src/markdown/ir.ts`, `src/markdown/normalize.ts`, `src/markdown/flavor.ts`, `src/markdown/fallback.ts`, `src/markdown/xref-resolution.ts`, and `src/markdown/render/**`.
 
-`src/markdown/ir.ts`, `src/markdown/normalize.ts`, `src/markdown/flavor.ts`, `src/markdown/fallback.ts`, `src/markdown/xref-resolution.ts`, `src/markdown/render/**`
-
-Open Issues/Problems/Risks::
-
-The notes describe a stable architectural center and the code matches that direction. The remaining risk is not the absence of an outer Antora integration boundary, but drift between the real extension entrypoint and the repository-owned conversion semantics it is supposed to expose.
+The remaining risk is not the absence of an outer Antora integration boundary. It is drift between the real extension entrypoint and the repository-owned conversion semantics that entrypoint is supposed to expose.
 
 ==== Conversion And Include Handling
-
-Purpose/Responsibility::
-
 The exporter converts assembled content into IR and keeps include semantics, provenance, and diagnostics available without making the private marker format part of the public contract.
 
-Directory/File Location::
+Its implementation lives in `src/exporter/convert-assembly.ts` and `src/exporter/include-metadata.ts`.
 
-`src/exporter/convert-assembly.ts`, `src/exporter/include-metadata.ts`
-
-Open Issues/Problems/Risks::
-
-The private marker transport is intentionally isolated, and the surrounding architecture now has a first-class runtime integration through the Assembler-backed extension entrypoint. The main ongoing risk is conversion coverage for richer assembled AsciiDoc constructs, not missing registration itself.
+The private marker transport is intentionally isolated. The main ongoing risk is conversion coverage for richer assembled AsciiDoc constructs, not missing registration itself.
 
 ==== Validation And Release Surfaces
-
-Purpose/Responsibility::
-
 Inspection helpers and scripts expose reusable validation outputs so downstream tooling does not walk the IR itself. Packaging and release scripts keep the repository aligned with its scoped npm package identity.
 
-Directory/File Location::
-
-`src/markdown/include-diagnostics.ts`, `scripts/inspection-report.ts`, `scripts/release-check.mjs`, `package.json`
+These surfaces live in `src/markdown/include-diagnostics.ts`, `scripts/inspection-report.ts`, `scripts/release-check.mjs`, and `package.json`.

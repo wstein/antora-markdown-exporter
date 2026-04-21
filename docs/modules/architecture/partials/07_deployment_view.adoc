@@ -5,20 +5,16 @@
 The repository does not ship a distributed runtime service. Its deployment view is therefore about execution environments for development, validation, release publication, and static documentation publishing.
 
 === Infrastructure Level 1
-
-Motivation::
-
 The most relevant deployment concern is not horizontal scaling. It is ensuring that local development, CI validation, npm publication, and GitHub Pages publication all execute the same package and documentation contracts.
 
-Quality and/or Performance Features::
+Key deployment qualities are:
 
 * deterministic builds from tracked repository inputs
 * one Bun-first operator path for local validation
 * one certified release path from `develop` through semver tags to `main`
 * reproducible documentation artifacts for both HTML and per-module PDF outputs
 
-Mapping of Building Blocks to Infrastructure::
-
+The infrastructure mapping is:
 [options="header",cols="1,3"]
 |===
 |Environment |Mapped responsibilities

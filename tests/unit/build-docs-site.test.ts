@@ -20,7 +20,8 @@ describe("build docs site script", () => {
 		const source = createArchitecturePdfSource(root);
 
 		expect(source).toContain("= Architecture");
-		expect(source).toContain("01_introduction_and_goals.adoc");
+		expect(source).toContain("== Introduction and Goals");
+		expect(source).toContain("== Reference Notes");
 	});
 
 	it("assembles the manual PDF from the module page", () => {

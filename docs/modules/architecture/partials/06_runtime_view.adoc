@@ -12,9 +12,7 @@ This scenario is based on the notes `Exporter pipeline uses Assembler and a dire
 5. Xref targets remain structured until lowering in `src/markdown/xref-resolution.ts`.
 6. A flavor renderer serializes the normalized document according to `src/markdown/flavor.ts` and `src/markdown/fallback.ts`.
 
-Notable aspect::
-
-The implemented runtime now spans both the Assembler-backed extension entrypoint and the repository-owned conversion boundary. The assembly stage is no longer purely external to the shipped runtime path; the remaining work is to keep converter behavior, registration behavior, and tests aligned as coverage expands.
+The notable aspect is that the shipped runtime now spans both the Assembler-backed extension entrypoint and the repository-owned conversion boundary. The remaining work is to keep converter behavior, registration behavior, and tests aligned as coverage expands.
 
 === Collect Inspection Data For CI Or Release Validation
 
@@ -26,6 +24,4 @@ This scenario is based on the notes `Inspection helpers expose normalized valida
 4. `scripts/inspection-report.ts` serializes that report either as JSON or GitHub Actions annotations.
 5. CI or release checks fail when diagnostics are present and `--fail-on-diagnostics` is used.
 
-Notable aspect::
-
-Validation uses one maintained normalized inspection surface instead of separate ad-hoc traversals in CI scripts.
+The notable aspect is that validation uses one maintained normalized inspection surface instead of separate ad-hoc traversals in CI scripts.

@@ -3,13 +3,17 @@
 
 The main currently documented risk is the one described by the note `Scaffold leftovers must be removed before contract expansion`.
 
-Priority 1::
+[options="header",cols="1,3"]
+|===
+|Priority |Risk and mitigation
 
-The repository’s markdown kernel and validation surfaces are much more mature than its Antora integration boundary. If documentation, package examples, or public entrypoints imply fully implemented Antora registration before it exists, maintainers will inherit false confidence, noisy reviews, and avoidable churn.
+|1
+|The repository now ships a real extension entrypoint as well as the markdown kernel. The risk is no longer a missing registration path. It is drift between the extension entrypoint, the converter’s real coverage, and the way docs or package examples describe that coverage.
 
-Mitigation::
+Mitigation:
 
 * keep the real extension entrypoint, README examples, and release checks aligned
-* remove dead pre-extension scaffolding artifacts when they linger in docs or tests
+* remove dead scaffolding artifacts when they linger in docs or tests
 * treat repository self-consistency checks as release gates
 * extend converter coverage and tests together whenever richer assembled AsciiDoc constructs are supported
+|===
