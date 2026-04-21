@@ -510,6 +510,17 @@ function parseInline(value: string): MarkdownInline[] {
 	return nodes;
 }
 
+function stripGeneratedHeadingPrefix(content: string, depth: number): string {
+	if (depth !== 1) {
+		return content;
+	}
+
+	return content.replace(
+		/^(?:Chapter|Appendix)\s+[0-9A-Z]+(?:\.[0-9A-Z]+)*\.\s+/u,
+		"",
+	);
+}
+
 function parseHeading(line: string): MarkdownHeading | undefined {
 	const match = line.match(/^(=+)\s+(.*)$/);
 	if (match === null) {
@@ -521,10 +532,12 @@ function parseHeading(line: string): MarkdownHeading | undefined {
 		return undefined;
 	}
 
+	const depth = Math.max(1, markers.length - 1);
+
 	return {
 		type: "heading",
-		depth: Math.max(1, markers.length - 1),
-		children: parseInline(content.trim()),
+		depth,
+		children: parseInline(stripGeneratedHeadingPrefix(content.trim(), depth)),
 	};
 }
 

@@ -77,6 +77,25 @@ describe("convertAssemblyToMarkdownIR", () => {
 		]);
 	});
 
+	it("strips generated chapter prefixes from top-level headings", () => {
+		const document = convertAssemblyToMarkdownIR(
+			["= Title", "", "== Chapter 2. Architecture Constraints"].join("\n"),
+		);
+
+		expect(document.children).toEqual([
+			{
+				type: "heading",
+				depth: 1,
+				children: [{ type: "text", value: "Title" }],
+			},
+			{
+				type: "heading",
+				depth: 1,
+				children: [{ type: "text", value: "Architecture Constraints" }],
+			},
+		]);
+	});
+
 	it("keeps unresolved include directives visible when no source path is available", () => {
 		const document = convertAssemblyToMarkdownIR(
 			"Before\ninclude::partials/missing.adoc[]\nAfter",
