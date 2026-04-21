@@ -488,4 +488,62 @@ describe("include diagnostics helpers", () => {
 			},
 		]);
 	});
+
+	it("ignores non-inspection nodes while still traversing nested xrefs in quotes", () => {
+		const document = {
+			type: "document" as const,
+			children: [
+				{
+					type: "codeBlock" as const,
+					value: "const ignored = true;",
+				},
+				{
+					type: "unsupported" as const,
+					reason: "ignored branch",
+				},
+				{
+					type: "blockquote" as const,
+					children: [
+						{
+							type: "paragraph" as const,
+							children: [
+								{ type: "code" as const, value: "ignored" },
+								{ type: "text" as const, value: " " },
+								{
+									type: "xref" as const,
+									url: "docs/quoted.adoc",
+									target: {
+										raw: "docs:ROOT:quoted.adoc",
+										component: "docs",
+										module: "ROOT",
+										family: {
+											kind: "page" as const,
+											name: "page",
+										},
+										path: "quoted.adoc",
+									},
+									children: [{ type: "text" as const, value: "quoted" }],
+								},
+								{ type: "hardBreak" as const },
+								{
+									type: "htmlInline" as const,
+									value: "<kbd>x</kbd>",
+								},
+							],
+						},
+					],
+				},
+			],
+		};
+
+		expect(collectIncludeDirectives(document)).toEqual([]);
+		expect(collectIncludeDiagnostics(document)).toEqual([]);
+		expect(collectXrefs(document)).toEqual([
+			expect.objectContaining({
+				target: expect.objectContaining({
+					raw: "docs:ROOT:quoted.adoc",
+				}),
+			}),
+		]);
+	});
 });

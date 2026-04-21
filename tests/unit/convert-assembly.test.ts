@@ -226,4 +226,52 @@ describe("convertAssemblyToMarkdownIR", () => {
 			},
 		]);
 	});
+
+	it("keeps content unchanged for empty tags and invalid level offsets while surfacing diagnostics", () => {
+		const document = convertAssemblyToMarkdownIR(
+			"include::snippet.adoc[tags=,leveloffset=bogus]",
+			{
+				sourcePath: "/virtual/page.adoc",
+				includeResolver: (target) => {
+					if (target !== "snippet.adoc") {
+						return undefined;
+					}
+
+					return ["== Included", "Body line"].join("\n");
+				},
+			},
+		);
+
+		expect(document.children).toEqual([
+			expect.objectContaining({
+				type: "includeDirective",
+				target: "snippet.adoc",
+				attributes: {
+					tags: "",
+					leveloffset: "bogus",
+				},
+				diagnostics: [
+					{
+						code: "empty-tag-selection",
+						message: "include tag selection must contain at least one tag",
+						source: "",
+					},
+					{
+						code: "invalid-leveloffset",
+						message: "include leveloffset must be a signed integer",
+						source: "bogus",
+					},
+				],
+			}),
+			{
+				type: "heading",
+				depth: 1,
+				children: [{ type: "text", value: "Included" }],
+			},
+			{
+				type: "paragraph",
+				children: [{ type: "text", value: "Body line" }],
+			},
+		]);
+	});
 });

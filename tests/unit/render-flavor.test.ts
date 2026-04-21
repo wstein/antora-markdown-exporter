@@ -398,4 +398,48 @@ describe("flavor-aware markdown rendering", () => {
 			].join("\n"),
 		);
 	});
+
+	it("renders nested blockquotes and lists with stable indentation", () => {
+		const document = {
+			type: "document" as const,
+			children: [
+				{
+					type: "blockquote" as const,
+					children: [
+						{
+							type: "list" as const,
+							ordered: false,
+							items: [
+								{
+									children: [
+										{
+											type: "paragraph" as const,
+											children: [
+												{ type: "text" as const, value: "Parent item" },
+											],
+										},
+										{
+											type: "blockquote" as const,
+											children: [
+												{
+													type: "paragraph" as const,
+													children: [
+														{ type: "text" as const, value: "Nested quote" },
+													],
+												},
+											],
+										},
+									],
+								},
+							],
+						},
+					],
+				},
+			],
+		};
+
+		expect(renderMarkdown(document, "gfm")).toBe(
+			["> - Parent item", ">   > Nested quote", ""].join("\n"),
+		);
+	});
 });
