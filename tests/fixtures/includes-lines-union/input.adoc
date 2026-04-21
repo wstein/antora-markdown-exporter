@@ -1,0 +1,3 @@
+== Include line union
+
+include::partials/snippet.adoc[lines=..2;4..]

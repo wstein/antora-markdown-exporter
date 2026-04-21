@@ -1,0 +1,7 @@
+// tag::intro[]
+Selected introduction.
+// tag::details[]
+Shared detail.
+// end::details[]
+Closing intro.
+// end::intro[]

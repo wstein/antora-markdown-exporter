@@ -1,0 +1,3 @@
+== Reference xref site routing
+
+See xref:2.0@docs:ROOT:install.adoc#cli[install], xref:2.0@docs:api:page$index.adoc#overview[overview], xref:2.0@docs:ROOT:image$diagram.png[diagram], and xref:2.0@docs:ROOT:attachment$guide.pdf[guide].

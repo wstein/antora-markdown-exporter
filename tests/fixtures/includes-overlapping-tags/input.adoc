@@ -1,0 +1,3 @@
+== Include overlapping tags
+
+include::partials/snippet.adoc[tags=intro;details]

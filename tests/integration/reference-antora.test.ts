@@ -3,13 +3,23 @@ import { readFile } from "node:fs/promises";
 import { resolve } from "node:path";
 import { describe, expect, it } from "vitest";
 import { convertAssemblyToMarkdownIR } from "../../src/exporter/convert-assembly.js";
+import type { MarkdownFlavorName } from "../../src/markdown/flavor.js";
 import { normalizeMarkdownIR } from "../../src/markdown/normalize.js";
-import { renderGfm } from "../../src/markdown/render/index.js";
+import { renderGfm, renderMarkdown } from "../../src/markdown/render/index.js";
 
 interface ReferenceManifestEntry {
 	coverage: string[];
 	expectations: {
 		nodeTypes: string[];
+		renderedByFlavor?: Partial<
+			Record<
+				MarkdownFlavorName,
+				{
+					contains: string[];
+					excludes?: string[];
+				}
+			>
+		>;
 		renderedContains: string[];
 		renderedExcludes?: string[];
 	};
@@ -59,6 +69,27 @@ describe("reference Antora compatibility tests", () => {
 
 			for (const marker of entry.expectations.renderedExcludes ?? []) {
 				expect(rendered).not.toContain(marker);
+			}
+
+			for (const [flavor, expectations] of Object.entries(
+				entry.expectations.renderedByFlavor ?? {},
+			) as Array<
+				[
+					MarkdownFlavorName,
+					{
+						contains: string[];
+						excludes?: string[];
+					},
+				]
+			>) {
+				const flavoredRender = renderMarkdown(normalized, flavor);
+				for (const marker of expectations.contains) {
+					expect(flavoredRender).toContain(marker);
+				}
+
+				for (const marker of expectations.excludes ?? []) {
+					expect(flavoredRender).not.toContain(marker);
+				}
 			}
 		});
 	}

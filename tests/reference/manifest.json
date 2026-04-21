@@ -335,5 +335,89 @@
 			"renderedContains": ["Selected introduction.", "Selected details."],
 			"renderedExcludes": ["Unsupported:"]
 		}
+	},
+	{
+		"id": "antora-include-lines-union",
+		"sourceProject": "antora/docs.antora.org",
+		"sourceUrl": "https://gitlab.com/antora/docs.antora.org",
+		"sourcePath": "modules/ROOT/pages/page-partials.adoc",
+		"sourceCapturedAt": "2026-04-21",
+		"localPath": "tests/reference/fixtures/antora-include-lines-union/input.adoc",
+		"sha256": "c9c770a0c4ecbc49f0aee55d1f5732010d72c9b66f030b7b52ed13e87681ec9e",
+		"coverage": [
+			"includes",
+			"line-selection",
+			"line-range-union",
+			"open-ended-ranges"
+		],
+		"rationale": "Exercises open-ended line-range unions so compatibility checks prove the converter can merge multiple include slices deterministically without duplicate lines.",
+		"expectations": {
+			"nodeTypes": ["heading", "paragraph"],
+			"renderedContains": ["First line. Second line. Fourth line."],
+			"renderedExcludes": ["Third line.", "Unsupported:"]
+		}
+	},
+	{
+		"id": "antora-include-overlapping-tags",
+		"sourceProject": "antora/docs.antora.org",
+		"sourceUrl": "https://gitlab.com/antora/docs.antora.org",
+		"sourcePath": "modules/ROOT/pages/page-partials.adoc",
+		"sourceCapturedAt": "2026-04-21",
+		"localPath": "tests/reference/fixtures/antora-include-overlapping-tags/input.adoc",
+		"sha256": "a0a90c838885be8a7dc379cf74bbcae72e23a7529588a2f84984143396490e75",
+		"coverage": ["includes", "multi-tag-selection", "overlapping-tags"],
+		"rationale": "Exercises overlapping tagged regions so compatibility checks prove multi-tag selection preserves document order without duplicating shared lines.",
+		"expectations": {
+			"nodeTypes": ["heading", "paragraph"],
+			"renderedContains": [
+				"Selected introduction. Shared detail. Closing intro."
+			],
+			"renderedExcludes": ["Unsupported:"]
+		}
+	},
+	{
+		"id": "antora-xrefs-site-routing",
+		"sourceProject": "antora/docs.antora.org",
+		"sourceUrl": "https://gitlab.com/antora/docs.antora.org",
+		"sourcePath": "modules/ROOT/pages/xref.adoc",
+		"sourceCapturedAt": "2026-04-21",
+		"localPath": "tests/reference/fixtures/antora-xrefs-site-routing/input.adoc",
+		"sha256": "17fd5de4b03d7fb42ec9b66963109fc36e373914eebfa55005bbdefe4c2ceaf4",
+		"coverage": [
+			"xrefs",
+			"site-routing",
+			"asset-families",
+			"module-routing",
+			"multi-flavor"
+		],
+		"rationale": "Exercises page and asset-family xrefs across ROOT and non-ROOT modules so compatibility checks can distinguish source-shaped destinations from site-shaped flavor output.",
+		"expectations": {
+			"nodeTypes": ["heading", "paragraph"],
+			"renderedContains": [
+				"[install](docs/2.0/ROOT/install.adoc#cli)",
+				"[overview](docs/2.0/api/page/index.adoc#overview)",
+				"[diagram](docs/2.0/ROOT/image/diagram.png)",
+				"[guide](docs/2.0/ROOT/attachment/guide.pdf)"
+			],
+			"renderedExcludes": ["Unsupported:"],
+			"renderedByFlavor": {
+				"gitlab": {
+					"contains": [
+						"[install](docs/2.0/install.html#cli)",
+						"[overview](docs/2.0/api/index.html#overview)",
+						"[diagram](docs/2.0/_images/diagram.png)",
+						"[guide](docs/2.0/_attachments/guide.pdf)"
+					]
+				},
+				"strict": {
+					"contains": [
+						"[install](docs/2.0/install.html#cli)",
+						"[overview](docs/2.0/api/index.html#overview)",
+						"[diagram](docs/2.0/_images/diagram.png)",
+						"[guide](docs/2.0/_attachments/guide.pdf)"
+					]
+				}
+			}
+		}
 	}
 ]
