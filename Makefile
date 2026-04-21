@@ -5,7 +5,7 @@
 PM ?= bun
 CLEAN_DIR ?= dist
 
-.PHONY: all install build test unit integration reference inspect-report check lint format fix release clean notes help
+.PHONY: all install build test unit integration reference inspect-report docs-generate docs-check check lint format fix release clean notes help
 all: build
 
 install: ## Install dependencies with the configured package manager.
@@ -29,6 +29,12 @@ reference: ## Run reference compatibility tests with the configured package mana
 inspect-report: ## Emit a machine-readable inspection report for INPUT with the configured package manager.
 	$(PM) run inspect:report -- $(INPUT)
 
+docs-generate: ## Regenerate derived architecture docs from notes/** with the configured package manager.
+	$(PM) run docs:generate
+
+docs-check: ## Verify that docs/architecture.md matches the current note corpus.
+	$(PM) run docs:check
+
 check: ## Run the check script with the configured package manager.
 	$(PM) run check
 
@@ -48,4 +54,4 @@ clean: ## Remove generated output.
 	rm -rf node_modules dist "$(CLEAN_DIR)"
 
 help: ## Show available targets.
-	@printf "Available targets:\n  install build test unit integration reference inspect-report check lint format fix release clean notes\n"
+	@printf "Available targets:\n  install build test unit integration reference inspect-report docs-generate docs-check check lint format fix release clean notes\n"
