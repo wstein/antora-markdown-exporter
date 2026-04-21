@@ -32,6 +32,29 @@ const exportScript = readFileSync(
 	resolve(root, "scripts/export-antora-modules.ts"),
 	"utf8",
 );
+const readme = readFileSync(resolve(root, "README.md"), "utf8");
+const manualDoc = readFileSync(
+	resolve(root, "docs/modules/manual/pages/index.adoc"),
+	"utf8",
+);
+const onboardingDoc = readFileSync(
+	resolve(root, "docs/modules/onboarding/pages/index.adoc"),
+	"utf8",
+);
+const introGoalsDoc = readFileSync(
+	resolve(
+		root,
+		"docs/modules/architecture/partials/01_introduction_and_goals.adoc",
+	),
+	"utf8",
+);
+const qualityDoc = readFileSync(
+	resolve(
+		root,
+		"docs/modules/architecture/partials/10_quality_requirements.adoc",
+	),
+	"utf8",
+);
 
 describe("repository contract", () => {
 	it("keeps referenced package files in the tree", () => {
@@ -108,6 +131,41 @@ describe("repository contract", () => {
 		expect(packageJson.description.toLowerCase()).not.toContain("placeholder");
 		expect(releaseWorkflow).toContain("PACKAGE_DESCRIPTION=$(node -p");
 		expect(releaseWorkflow).toContain("$" + "{PACKAGE_DESCRIPTION}.");
+	});
+
+	it("documents claim status, evidence, and support boundaries explicitly", () => {
+		expect(readme).toContain("## Status Markers");
+		expect(readme).toContain("`Implemented`");
+		expect(readme).toContain("`Test-enforced`");
+		expect(readme).toContain("`CI-enforced`");
+		expect(readme).toContain("`Intended`");
+
+		expect(onboardingDoc).toContain("== Reading Status Markers");
+		expect(onboardingDoc).toContain("`Implemented`::");
+		expect(onboardingDoc).toContain("`Test-enforced`::");
+		expect(onboardingDoc).toContain("`CI-enforced`::");
+		expect(onboardingDoc).toContain("`Intended`::");
+		expect(onboardingDoc).toContain("one contract family");
+		expect(onboardingDoc).toContain(".github/workflows/release.yml");
+		expect(onboardingDoc).toContain(".github/workflows/pages.yml");
+
+		expect(manualDoc).toContain("=== Read Status Markers First");
+		expect(manualDoc).toContain("=== Operator Prerequisites Matrix");
+		expect(manualDoc).toContain("=== Canonical Contract Family");
+		expect(manualDoc).toContain("=== Converter Support Matrix");
+		expect(manualDoc).toContain("=== Proof Matrix");
+		expect(manualDoc).toContain(".github/workflows/release.yml");
+		expect(manualDoc).toContain(".github/workflows/pages.yml");
+		expect(manualDoc).toContain("`Implemented`");
+		expect(manualDoc).toContain("`Test-enforced`");
+		expect(manualDoc).toContain("`CI-enforced`");
+		expect(manualDoc).toContain("`Intended`");
+
+		expect(introGoalsDoc).toContain("=== Claim Status Grammar");
+		expect(qualityDoc).toContain("=== Proof Matrix");
+		expect(qualityDoc).toContain(
+			"Broader converter coverage beyond the published matrix",
+		);
 	});
 
 	it("keeps CI and release workflows aligned with the develop/tag operating model", () => {
