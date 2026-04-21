@@ -1,6 +1,6 @@
 ---
 id: 20260420194000
-aliases: ["Script-file consistency", "Repository self-consistency", "Referenced file lockstep"]
+aliases: ["Script-file consistency", "Repository self-consistency", "Referenced file lockstep", "Friday To Monday Workflow Contract"]
 tags: ["repository", "tooling", "consistency", "governance"]
 target: current
 ---

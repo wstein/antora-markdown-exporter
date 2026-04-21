@@ -1,6 +1,6 @@
 ---
 id: 20260420194100
-aliases: ["Primary toolchain policy", "Bun Node policy", "Execution path policy"]
+aliases: ["Primary toolchain policy", "Bun Node policy", "Execution path policy", "Agent Operating Model"]
 tags: ["tooling", "repository", "policy", "build"]
 target: current
 ---

@@ -1,6 +1,6 @@
 ---
 id: 20260420193100
-aliases: ["Markdown semantic layer", "Markdown IR boundary", "Canonical render boundary"]
+aliases: ["Markdown semantic layer", "Markdown IR boundary", "Canonical render boundary", "Render Kernel Constitution"]
 tags: ["architecture", "ir", "markdown", "renderer"]
 target: current
 ---
