@@ -16,6 +16,13 @@ function renderLinkDestination(url: string, title?: string): string {
 	return title === undefined ? url : `${url} "${escapeMarkdownTitle(title)}"`;
 }
 
+function renderCodeBlock(
+	block: Extract<MarkdownBlock, { type: "codeBlock" }>,
+): string {
+	const language = block.language ?? "";
+	return `\`\`\`${language}\n${block.value}\n\`\`\``;
+}
+
 function renderInline(
 	node: MarkdownInline,
 	flavor: MarkdownFlavorSpec,
@@ -124,7 +131,7 @@ function renderBlock(block: MarkdownBlock, flavor: MarkdownFlavorSpec): string {
 		case "thematicBreak":
 			return "---";
 		case "codeBlock":
-			return `\`\`\`${block.language ?? ""}\n${block.value}\n\`\`\``;
+			return renderCodeBlock(block);
 		case "blockquote":
 			return block.children
 				.map((child) => renderBlock(child, flavor))
