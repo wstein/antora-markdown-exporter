@@ -51,10 +51,10 @@ make reference
 make docs
 ----
 
-. Let the Pages workflow publish the static site from `main` after a successful release promotion:
+. Let the release workflow publish the static site after it promotes the certified commit:
 +
 * local docs validation happens on your working branch
-* public publication to `https://wstein.github.io/antora-markdown-exporter` happens from `.github/workflows/pages.yml`
+* public publication to `https://wstein.github.io/antora-markdown-exporter` happens from `.github/workflows/release.yml`
 
 Why this workflow exists:
 
@@ -174,8 +174,8 @@ The release workflow in `.github/workflows/release.yml` then:
 * publishes `@wsmy/antora-markdown-exporter` from that tarball
 * attaches release assets on GitHub
 * fast-forwards `main` to the released commit
-
-Once `main` advances, `.github/workflows/pages.yml` rebuilds the Antora site from `antora-playbook.yml` and publishes `build/site` to GitHub Pages at `https://wstein.github.io/antora-markdown-exporter`.
+* rebuilds the Antora site from `antora-playbook.yml`
+* publishes `build/site` to GitHub Pages at `https://wstein.github.io/antora-markdown-exporter`
 
 What `scripts/release-check.mjs` verifies during that process:
 
@@ -196,7 +196,7 @@ Important conflict to preserve:
 Provenance:
 
 * Notes: `Develop should be the integration branch while main tracks published history`; `Tag pushes should publish only certified develop commits`; `Release and package identity use scoped npm publishing`
-* Code: `scripts/release.js`, `scripts/release-check.mjs`, `.github/workflows/release.yml`, `.github/workflows/pages.yml`, `antora-playbook.yml`, `package.json`
+* Code: `scripts/release.js`, `scripts/release-check.mjs`, `.github/workflows/release.yml`, `antora-playbook.yml`, `package.json`
 
 == Commands And Behavior
 
@@ -237,7 +237,7 @@ Provenance:
 |Runs the release wizard on `develop`. A new version starts a release candidate; the current untagged version finalizes by creating and pushing the release tag.
 
 |`make docs`
-|Builds the Antora docs site locally into `build/site`. Public publication is handled separately by the GitHub Pages workflow on `main`.
+|Builds the Antora docs site locally into `build/site`. Public publication is handled by the release workflow after a certified release promotion.
 |===
 
 Provenance:
