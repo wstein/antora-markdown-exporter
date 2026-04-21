@@ -1,8 +1,8 @@
 import { describe, expect, it } from "vitest";
 import {
-	PACKAGE_NAME,
 	createAntoraExtensionScaffold,
 	describePackage,
+	PACKAGE_NAME,
 } from "../../src/index.js";
 
 describe("public scaffold API", () => {

@@ -91,6 +91,53 @@ for (const target of report.xrefTargets) {
 }
 ```
 
+For machine-readable CI output, the repository also ships a Bun-native example script:
+
+```bash
+bun run inspect:report -- tests/fixtures/includes-invalid-steps/input.adoc \
+  --fail-on-diagnostics > inspection-report.json
+```
+
+The emitted JSON contains the normalized inspection report plus the resolved input and source paths:
+
+```json
+{
+  "inputPath": "/abs/path/tests/fixtures/includes-invalid-steps/input.adoc",
+  "sourcePath": "/abs/path/tests/fixtures/includes-invalid-steps/input.adoc",
+  "report": {
+    "includeDirectives": [
+      {
+        "type": "includeDirective",
+        "target": "partials/snippet.adoc",
+        "attributes": {
+          "lines": "1..5..0;1..5..bad"
+        }
+      }
+    ],
+    "includeDiagnostics": [
+      {
+        "target": "partials/snippet.adoc",
+        "diagnostic": {
+          "code": "invalid-line-step",
+          "message": "include line steps must be positive integers",
+          "source": "1..5..0"
+        }
+      },
+      {
+        "target": "partials/snippet.adoc",
+        "diagnostic": {
+          "code": "invalid-line-range",
+          "message": "include line selectors must be positive integers or ranges",
+          "source": "1..5..bad"
+        }
+      }
+    ],
+    "xrefTargets": [],
+    "xrefs": []
+  }
+}
+```
+
 Current scaffold coverage includes headings, paragraphs, inline links, dedicated xref nodes with inspectable Antora target metadata and first-class family kinds, dedicated anchor and page-alias nodes, images, ordered and unordered lists, nested lists, thematic breaks, aligned tables, raw HTML nodes, footnote placeholders, fenced code blocks with dedicated callout-list nodes, block quotes, dedicated admonition nodes, and recursive include inlining with dedicated include-directive metadata, for both `partial$` and relative include paths, including tagged-region selection, multi-tag extraction, overlapping-tag precedence, open-ended and stepped line-range unions, invalid-selector diagnostics, indentation, and `leveloffset`, when source-path context is available. Flavor policies can now render page-family xrefs either as source-shaped `.adoc` destinations or as site-shaped Antora-style routes, including `_images`, `_attachments`, and `_examples` asset families where configured.
 
 ### Extension scaffold
@@ -117,6 +164,7 @@ make test
 make unit
 make integration
 make reference
+bun run inspect:report -- tests/fixtures/sample/input.adoc
 make format
 make fix
 ```

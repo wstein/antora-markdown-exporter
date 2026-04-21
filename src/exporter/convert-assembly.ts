@@ -26,7 +26,7 @@ import type {
 const listMarkerPattern = /^\s*([*.]+)\s+(.*)$/;
 const admonitionPattern = /^(NOTE|TIP|IMPORTANT|CAUTION|WARNING):\s+(.*)$/;
 const calloutPattern = /^<(\d+)>\s+(.*)$/;
-const includePattern = /^include::([^\[]+)\[([^\]]*)\]$/;
+const includePattern = /^include::([^[]+)\[([^\]]*)\]$/;
 const pageAliasesPattern = /^:page-aliases:\s+(.+)$/;
 const tagStartPattern = /^\s*\/\/\s*tag::([A-Za-z0-9:_-]+)\[\]\s*$/;
 const tagEndPattern = /^\s*\/\/\s*end::([A-Za-z0-9:_-]+)\[\]\s*$/;
@@ -228,7 +228,7 @@ function matchLink(value: string): LinkToken | XrefToken | undefined {
 		}
 	}
 
-	const xrefMatch = value.match(/^xref:([^\[]+)\[([^\]]*)\]/);
+	const xrefMatch = value.match(/^xref:([^[]+)\[([^\]]*)\]/);
 	if (xrefMatch === null) {
 		return undefined;
 	}

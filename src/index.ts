@@ -1,13 +1,5 @@
-export { createAntoraExtensionScaffold } from "./extension/index.js";
 export { convertAssemblyToMarkdownIR } from "./exporter/convert-assembly.js";
-export {
-	collectMarkdownInspectionReport,
-	collectIncludeDiagnostics,
-	collectIncludeDirectives,
-	collectXrefs,
-	collectXrefTargets,
-} from "./markdown/include-diagnostics.js";
-export type { MarkdownDocument } from "./markdown/ir.js";
+export { createAntoraExtensionScaffold } from "./extension/index.js";
 export type {
 	MarkdownFlavorName,
 	MarkdownFlavorSpec,
@@ -16,6 +8,14 @@ export {
 	markdownFlavorSpecs,
 	resolveMarkdownFlavor,
 } from "./markdown/flavor.js";
+export {
+	collectIncludeDiagnostics,
+	collectIncludeDirectives,
+	collectMarkdownInspectionReport,
+	collectXrefs,
+	collectXrefTargets,
+} from "./markdown/include-diagnostics.js";
+export type { MarkdownDocument } from "./markdown/ir.js";
 export { normalizeMarkdownIR } from "./markdown/normalize.js";
 export {
 	renderCommonMark,

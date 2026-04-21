@@ -3,8 +3,8 @@ import {
 	collectIncludeDiagnostics,
 	collectIncludeDirectives,
 	collectMarkdownInspectionReport,
-	collectXrefTargets,
 	collectXrefs,
+	collectXrefTargets,
 } from "../../src/markdown/include-diagnostics.js";
 
 describe("include diagnostics helpers", () => {

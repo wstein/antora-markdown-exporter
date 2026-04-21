@@ -41,6 +41,8 @@ Helpers should:
 
 If multiple validation consumers need the same traversal, add one combined inspection report helper rather than making each consumer stitch together separate passes.
 
+When repository automation needs machine-readable output, provide one maintained script example that serializes the combined inspection report as JSON instead of leaving each CI pipeline to invent its own formatting layer.
+
 Do not mix inspection helpers into renderer policy or export conversion logic.
 
 ## Links
@@ -49,4 +51,5 @@ Do not mix inspection helpers into renderer policy or export conversion logic.
 - [[Testing relies on golden fixtures and deterministic snapshots]] - Fixtures and validation helpers should reinforce the same contract.
 - [[Release and package identity use scoped npm publishing]] - Release validation can use these helpers before publish.
 - src/markdown/include-diagnostics.ts - Inspection helper implementation.
+- scripts/inspection-report.ts - Machine-readable JSON reporting example for CI flows.
 - README.md - Public usage examples for validation and reporting.
