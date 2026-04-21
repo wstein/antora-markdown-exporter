@@ -1,0 +1,318 @@
+# Onboarding
+
+## Table of Contents
+
+- [Chapter 1. Mental Models](#chapter-1-mental-models)
+  - [1.1. Start With The Real Boundary, Not The Marketing Boundary](#11-start-with-the-real-boundary-not-the-marketing-boundary)
+  - [1.2. Think In Pipeline Stages](#12-think-in-pipeline-stages)
+  - [1.3. The Markdown IR Is The Contract](#13-the-markdown-ir-is-the-contract)
+  - [1.4. Renderers Adapt Syntax, They Do Not Redefine Meaning](#14-renderers-adapt-syntax-they-do-not-redefine-meaning)
+  - [1.5. Fallback Is A Policy Layer](#15-fallback-is-a-policy-layer)
+  - [1.6. Transparent Extensions Are Not Fallback](#16-transparent-extensions-are-not-fallback)
+  - [1.7. Include Metadata Is Private, Include Semantics Are Public](#17-include-metadata-is-private-include-semantics-are-public)
+  - [1.8. Xref Routing Is Lowering, Not Rendering](#18-xref-routing-is-lowering-not-rendering)
+  - [1.9. One Toolchain Path Is Primary](#19-one-toolchain-path-is-primary)
+- [Chapter 2. Core Workflows](#chapter-2-core-workflows)
+  - [2.1. First-Day Development Loop](#21-first-day-development-loop)
+  - [2.2. Release Flow Uses develop, main, And Semver Tags](#22-release-flow-uses-develop-main-and-semver-tags)
+  - [2.3. Where To Start When You Change Behavior](#23-where-to-start-when-you-change-behavior)
+  - [2.4. How To Reason About Documentation](#24-how-to-reason-about-documentation)
+- [Chapter 3. Core Architecture](#chapter-3-core-architecture)
+- [Chapter 4. Quality And Guardrails](#chapter-4-quality-and-guardrails)
+  - [4.1. Exact Output Matters](#41-exact-output-matters)
+  - [4.2. Reference Tests Serve A Different Purpose](#42-reference-tests-serve-a-different-purpose)
+  - [4.3. Keep Repository Contracts Honest](#43-keep-repository-contracts-honest)
+- [Chapter 5. Reference Notes](#chapter-5-reference-notes)
+
+This guide helps new contributors build the right mental model before making changes. It is intentionally oriented around the canonical notes and the current repository state, not around aspirational future architecture.
+
+When note intent and current implementation maturity differ, this guide says so explicitly. For precise architectural details, prefer the notes cited in each section and the implementation files they point to.
+
+# Chapter 1. Mental Models
+
+## 1.1. Start With The Real Boundary, Not The Marketing Boundary
+
+The most important onboarding concept comes from the note `Antora extension entrypoints must reflect actual integration maturity`.
+
+The repository is named and documented as an Antora Markdown exporter, and the public extension entrypoint in `src/extension/index.ts` now does the work that name implies: it exports `register()` and delegates to `@antora/assembler.configure()` with the repository’s Markdown converter.
+
+Why this matters:
+
+- public names must match real behavior
+- architecture docs are only useful if maturity is signaled honestly
+- review quality drops quickly when names and examples overstate or understate the real boundary
+
+Current conflict to keep in mind:
+
+- the note `Exporter pipeline uses Assembler and a direct TypeScript converter` describes a pipeline whose first stage is Antora Assembler
+- the code currently implements the conversion and rendering kernel in `src/exporter/**` and `src/markdown/**`
+- the shipped Antora integration boundary is now real and should be treated as part of the supported package surface
+
+As a contributor, assume both the markdown kernel and the outer Antora registration path are real, and make changes in ways that keep those two layers aligned.
+
+## 1.2. Think In Pipeline Stages
+
+The note `Exporter pipeline uses Assembler and a direct TypeScript converter` defines the core project shape:
+
+1. Antora Assembler produces assembled AsciiDoc.
+2. The TypeScript exporter maps that assembled content into a semantic Markdown IR.
+3. Flavor renderers serialize that IR into concrete Markdown.
+
+For day-to-day contribution work, the practical rule is simpler: once content reaches the repository’s markdown kernel, semantic decisions should stay inside repository code instead of being delegated to Pandoc-, DocBook-, or HTML-to-Markdown fallback chains.
+
+This is why the implementation is split across:
+
+- `src/exporter/convert-assembly.ts`
+- `src/markdown/ir.ts`
+- `src/markdown/normalize.ts`
+- `src/markdown/render/**`
+- `src/markdown/xref-resolution.ts`
+
+If you are touching behavior after conversion starts, your change should usually land in the exporter, IR, normalization, lowering, renderer, or tests, not in an external conversion shortcut.
+
+## 1.3. The Markdown IR Is The Contract
+
+The note `Markdown IR is the canonical render boundary` is the main architectural rule for contributors.
+
+The repository does not treat markdown as a string-formatting exercise. It converts content into a semantic intermediate representation first, then normalizes it, then renders it. That IR carries meaning such as headings, admonitions, xrefs, include directives, anchors, aliases, tables, and explicit unsupported nodes.
+
+Contributor rule of thumb:
+
+- if a change affects document meaning, it belongs before or inside the IR boundary
+- if a change affects how one flavor prints the same meaning, it belongs in renderer logic
+- if a feature cannot be represented semantically yet, do not hide that fact behind loose renderer behavior
+
+This separation is what keeps regressions explainable and testable.
+
+## 1.4. Renderers Adapt Syntax, They Do Not Redefine Meaning
+
+The note `Flavor renderers are syntax adapters over one semantic layer` explains how to think about flavors.
+
+The repository currently ships explicit `gfm`, `commonmark`, `gitlab`, and `strict` profiles. These flavors can differ in syntax and policy, but they must not reinterpret the document’s meaning independently.
+
+That means:
+
+- flavor capability differences live in `src/markdown/flavor.ts`
+- renderer output lives in `src/markdown/render/**`
+- semantic drift between flavors is a bug, not a feature
+
+When adding or changing a flavor, keep the semantic layer shared and the syntax surface explicit.
+
+## 1.5. Fallback Is A Policy Layer
+
+The note `Fallback selection is centralized across markdown flavors` defines a contributor boundary that prevents subtle regressions.
+
+Unsupported constructs, raw HTML handling, and visible degradation are routed through `src/markdown/fallback.ts`. Individual renderers should consume that policy instead of inventing their own ad-hoc fallback rules.
+
+This matters because fallback behavior is part of the contract:
+
+- unsupported output must stay deterministic
+- raw HTML allowance must be explicit
+- regressions should be testable in one policy surface
+
+If you are about to add a one-off renderer branch for unsupported behavior, stop and check whether the change belongs in the fallback layer instead.
+
+## 1.6. Transparent Extensions Are Not Fallback
+
+Several notes reinforce the same point:
+
+- `Transparent extensions are not fallback mechanisms`
+- `The architecture favors explicit extension over implicit degradation`
+- `Strict architecture must be extended without weakening invariants`
+
+The main example today is fenced code blocks with authored language tags like `mermaid`. If the construct is already representable semantically as a `codeBlock`, the system should preserve it instead of degrading it simply because not every downstream flavor interprets it specially.
+
+For contributors, this distinction is critical:
+
+- valid semantic constructs should stay valid semantic constructs
+- fallback is for controlled degradation, not for every unfamiliar feature
+- strictness should lead to explicit extension points, not silent lossy rewrites
+
+## 1.7. Include Metadata Is Private, Include Semantics Are Public
+
+The note `Include metadata transport is an internal implementation detail` tells contributors what to preserve during refactors.
+
+The converter currently moves include metadata through an HTML-comment transport until it is rehydrated as semantic IR nodes. The transport format itself is private. The public contract is the semantics: include directives remain inspectable, diagnostics survive, and provenance remains available.
+
+When touching includes:
+
+- preserve diagnostics
+- preserve provenance
+- preserve inspectability
+- do not leak the raw marker format into unrelated parser or renderer code
+
+## 1.8. Xref Routing Is Lowering, Not Rendering
+
+The note `Xref target resolution is a separate lowering phase` defines another important boundary.
+
+Structured xref metadata is preserved in the IR and lowered to concrete destinations in `src/markdown/xref-resolution.ts` before link serialization. Renderers should format already-resolved destinations rather than owning Antora-aware routing logic themselves.
+
+If you need to change xref behavior, start by deciding whether you are changing:
+
+- semantic target shape
+- lowering policy
+- final markdown string formatting
+
+Mixing those layers makes xref regressions much harder to reason about.
+
+## 1.9. One Toolchain Path Is Primary
+
+Two notes set the contributor workflow expectation:
+
+- `Build tooling uses bun-first package manager fallback`
+- `Toolchain policy must choose one primary execution path`
+
+For the current phase, Bun is the authoritative development path. The `Makefile` defaults to `PM ?= bun`, package scripts are designed around that path, and npm remains the explicit publish transport plus an alternate install path.
+
+Practical onboarding takeaway:
+
+- use `make` targets first
+- expect Bun to be the default runtime for day-to-day development
+- do not add new lockfile-detection or multi-package-manager branching
+
+# Chapter 2. Core Workflows
+
+## 2.1. First-Day Development Loop
+
+The shortest reliable contributor path today is:
+
+1. Install dependencies with `make install`
+2. Build with `make build`
+3. Run tests with `make test`, or use `make unit`, `make integration`, and `make reference` when you need narrower scope
+4. Use `make inspect-report INPUT=...` for machine-readable validation on one source file
+
+This flow is intentionally explicit. The repository prefers a small set of stable entrypoints over clever tool detection.
+
+For package-level details, `package.json` is the durable source of truth. For contributor-friendly entrypoints, prefer `Makefile`.
+
+## 2.2. Release Flow Uses develop, main, And Semver Tags
+
+Three notes define the release operating model:
+
+- `Develop should be the integration branch while main tracks published history`
+- `Tag pushes should publish only certified develop commits`
+- `Develop-main-tag release migration must be coordinated across code docs and automation`
+
+In practical terms:
+
+- normal change flow targets `develop`
+- release candidates are prepared on `develop`
+- finalization is done by pushing a semver tag from a certified `develop` commit
+- `main` is advanced only after the tagged release workflow succeeds
+- after a tag-triggered `Release` workflow succeeds and promotes `main`, the public Antora documentation site is rebuilt from `main` and published through GitHub Pages at `https://wstein.github.io/antora-markdown-exporter`
+
+For local operators and maintainers, `make release VERSION=vX.Y.Z` starts or finalizes the release depending on whether the requested version matches the current package version.
+
+Why this matters for contributors:
+
+- it separates “integrated” from “published”
+- it keeps release publication tied to one immutable tag input
+- it means `main` is not the branch for normal feature integration anymore
+
+## 2.3. Where To Start When You Change Behavior
+
+Use this heuristic:
+
+- source parsing or semantic extraction: start in `src/exporter/convert-assembly.ts`
+- include marker internals: start in `src/exporter/include-metadata.ts`
+- semantic model changes: start in `src/markdown/ir.ts`
+- cleanup or canonicalization: start in `src/markdown/normalize.ts`
+- xref routing: start in `src/markdown/xref-resolution.ts`
+- fallback behavior: start in `src/markdown/fallback.ts`
+- flavor-specific emission: start in `src/markdown/render/**`
+- validation APIs and machine-readable inspection: start in `src/markdown/include-diagnostics.ts` and `scripts/inspection-report.ts`
+
+Then find the corresponding tests before editing code.
+
+## 2.4. How To Reason About Documentation
+
+Onboarding, README, notes, and architecture docs are related but not interchangeable.
+
+Use them this way:
+
+- notes are canonical inputs
+- code is the authority on what is implemented today
+- onboarding explains the project shape to new contributors
+- README explains public package usage
+- architecture docs explain system boundaries and risks more formally
+
+If notes and implementation diverge, preserve the uncertainty and explain it instead of smoothing it away.
+
+# Chapter 3. Core Architecture
+
+At a high level, contributors can think about the repository in six layers:
+
+1. Public package and CLI surface in `src/index.ts`, `package.json`, and `bin/**`
+2. Scaffolded Antora extension boundary in `src/extension/**`
+3. Assembly-to-IR conversion in `src/exporter/**`
+4. Canonical markdown kernel in `src/markdown/ir.ts` and `src/markdown/normalize.ts`
+5. Policy and lowering layers in `src/markdown/fallback.ts` and `src/markdown/xref-resolution.ts`
+6. Flavor renderers and validation surfaces in `src/markdown/render/**` and `src/markdown/include-diagnostics.ts`
+
+The test suite mirrors those layers:
+
+- unit tests for IR, normalization, fallback, xref resolution, include metadata, and repository contracts
+- integration golden tests for exact rendered output
+- reference tests for semantic compatibility on curated external material
+- inspection-report tests for machine-readable validation flows
+
+Current uncertainty to preserve:
+
+- the notes describe an Antora Assembler based outer pipeline
+- the codebase clearly implements the markdown kernel and validation surfaces
+- the package now exports a real Assembler-backed extension entrypoint under `./extension`
+
+That is the current contributor reality.
+
+# Chapter 4. Quality And Guardrails
+
+## 4.1. Exact Output Matters
+
+The notes `Testing relies on golden fixtures and deterministic snapshots` and `Golden tests require rendered output comparison` define the core quality bar.
+
+A real golden test must:
+
+1. convert input into IR
+2. normalize the IR
+3. render a specific flavor
+4. compare full rendered output against `expected.<flavor>.md`
+
+This is why `tests/integration/fixture-golden.test.ts` is a key contributor touchpoint. If your change affects rendering, expect golden outputs to be the primary review surface.
+
+## 4.2. Reference Tests Serve A Different Purpose
+
+The notes `Reference testing uses official Antora documentation as a compatibility corpus`, `Reference fixtures are curated and provenance locked`, `Reference corpus should cover navigation xrefs includes and admonitions`, and `Reference tests check semantic invariants not exact bytes` describe the external compatibility suite.
+
+New contributors should remember:
+
+- local fixtures are the byte-exact authority
+- reference fixtures are curated snapshots, not live upstream pulls
+- reference tests protect semantic robustness, not exact byte identity
+- provenance and coverage tags are part of the contract
+
+When adding a new reference case, include a clear reason for why that case earns its place in the corpus.
+
+## 4.3. Keep Repository Contracts Honest
+
+The note `Repository scripts and referenced files must stay in lockstep` is both a quality rule and an onboarding rule.
+
+A change is not complete if:
+
+- `package.json` points at files that do not exist
+- README commands describe files or scripts that are gone
+- CI workflows reference stale commands
+- tests enforce contracts for artifacts the repository no longer ships
+
+Contributors should treat self-consistency as release readiness, not as optional cleanup work.
+
+# Chapter 5. Reference Notes
+
+The note `Toolchain policy must choose one primary execution path` is the best reference note to keep close while onboarding because it ties together contributor expectations across `README.md`, `Makefile`, `package.json`, CI, and validation scripts.
+
+Read it alongside:
+
+- `Build tooling uses bun-first package manager fallback`
+- `Repository scripts and referenced files must stay in lockstep`
+
+Those three notes explain why contributor workflows are explicit, why Bun is currently the primary development path, and why documentation drift is treated as a correctness issue.
+
