@@ -1,8 +1,10 @@
 name: Pages
 
 on:
-  push:
-    branches: [main]
+  workflow_run:
+    workflows: ["Release"]
+    types:
+      - completed
   workflow_dispatch:
 
 concurrency:
@@ -16,10 +18,13 @@ permissions:
 
 jobs:
   build:
+    if: github.event_name == 'workflow_dispatch' || github.event.workflow_run.conclusion == 'success'
     runs-on: ubuntu-latest
     steps:
       - name: Checkout published docs branch
         uses: actions/checkout@v4
+        with:
+          ref: main
 
       - name: Setup Bun
         uses: oven-sh/setup-bun@v2
@@ -41,6 +46,7 @@ jobs:
           path: build/site
 
   deploy:
+    if: github.event_name == 'workflow_dispatch' || github.event.workflow_run.conclusion == 'success'
     needs: build
     runs-on: ubuntu-latest
     environment:
