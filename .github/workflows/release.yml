@@ -20,6 +20,8 @@ jobs:
         with:
           name: inspection-report-release
           path: inspection-report.json
+      - name: Assert inspection artifact exists
+        run: test -s inspection-report.json
       - name: Emit inspection annotations
         run: bun run inspect:report -- tests/fixtures/includes-invalid-steps/input.adoc --format github-actions || true
       - run: bun run check
