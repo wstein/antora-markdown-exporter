@@ -245,6 +245,7 @@ make test
 make unit
 make integration
 make reference
+make markdown
 make inspect-report INPUT=tests/fixtures/sample/input.adoc
 bun run inspect:report -- tests/fixtures/sample/input.adoc
 bun run inspect:report -- --stdin --source-path /virtual/page.adoc < tests/fixtures/sample/input.adoc
@@ -265,6 +266,14 @@ Documentation publication follows the same operating model. `make docs` builds t
 Each target is a thin delegate to the matching package-manager script.
 
 `make integration` runs the broader integration suite. `make reference` runs only the provenance-locked compatibility cases, including recursive include inlining, stepped and open-ended include slicing, anchor and alias preservation, component/module/version-aware xrefs, family-aware site routing, aligned tables, admonitions, mixed block sequences, and visible unsupported fallbacks where support is still intentionally deferred.
+
+To export the Antora module pages in `docs/modules/**/pages/**/*.adoc` to Markdown using the repository pipeline, run:
+
+```bash
+make markdown
+```
+
+This emits Markdown files under `build/markdown/**` using the same conversion path as the library API: AsciiDoc assembly mapping, normalization, and flavor rendering. Use `ARGS="--flavor gitlab"` or alternate `--output-root` / `--modules-root` values when you need a different target.
 
 ## Release
 

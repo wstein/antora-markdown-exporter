@@ -70,8 +70,14 @@ describe("repository contract", () => {
 		expect(packageJson.scripts["docs:build"]).toBe(
 			"node scripts/build-docs-site.mjs",
 		);
+		expect(packageJson.scripts["export:modules"]).toBe(
+			"bun scripts/export-antora-modules.ts",
+		);
 		expect(packageJson.scripts["inspect:report"]).toBe(
 			"bun scripts/inspection-report.ts",
+		);
+		expect(existsSync(resolve(root, "scripts/export-antora-modules.ts"))).toBe(
+			true,
 		);
 	});
 
