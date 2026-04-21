@@ -1,3 +1,424 @@
-= Manual
+= Operator Manual
 
-This module is for task-oriented user documentation and operational procedures.
+This manual is for operators and maintainers who need to run, validate, and release `@wsmy/antora-markdown-exporter` using the repository’s supported workflows.
+
+The manual is task-oriented on purpose. For contributor-first explanations, see the onboarding guide. For the most precise architectural statements, prefer the cited notes and the implementation files they point to.
+
+When notes describe a broader intended system than the code currently ships, this manual preserves that uncertainty explicitly. In particular, the repository exposes a real markdown conversion and validation kernel, but the outer Antora integration boundary still signals scaffold maturity rather than a full runtime registration contract.
+
+== Core Workflows
+
+=== Run The Standard Repository Loop
+
+The repository’s primary execution path is Bun-first through `make` and `package.json` scripts.
+
+Recommended operator loop:
+
+. Install dependencies:
++
+[source,bash]
+----
+make install
+----
+
+. Build distributable artifacts:
++
+[source,bash]
+----
+make build
+----
+
+. Run the full test and validation suite:
++
+[source,bash]
+----
+make test
+----
+
+. Run narrower scopes when you need faster feedback:
++
+[source,bash]
+----
+make unit
+make integration
+make reference
+----
+
+. Build the docs site when validating documentation changes:
++
+[source,bash]
+----
+make docs
+----
+
+Why this workflow exists:
+
+* the note `Release and package identity use scoped npm publishing` expects the repository to behave like a publishable TypeScript package
+* the notes `Repository scripts and referenced files must stay in lockstep` and `Testing relies on golden fixtures and deterministic snapshots` require stable, explicit validation entrypoints
+* Bun is the primary development runtime, while npm remains the publish transport
+
+Current uncertainty to preserve:
+
+* the package and docs describe an Antora exporter pipeline
+* the repository clearly implements conversion, rendering, inspection, testing, and release checks
+* the extension boundary remains scaffolded in `src/extension/index.ts`
+
+Provenance:
+
+* Notes: `Release and package identity use scoped npm publishing`; `Repository scripts and referenced files must stay in lockstep`; `Testing relies on golden fixtures and deterministic snapshots`
+* Code: `Makefile`, `package.json`, `src/extension/index.ts`
+
+=== Generate An Inspection Report
+
+Use the inspection script when you need machine-readable validation for include diagnostics and xref metadata.
+
+File-backed input:
+
+[source,bash]
+----
+make inspect-report INPUT=tests/fixtures/includes-invalid-steps/input.adoc
+----
+
+Equivalent direct script invocation:
+
+[source,bash]
+----
+bun run inspect:report -- tests/fixtures/includes-invalid-steps/input.adoc
+----
+
+Read from standard input:
+
+[source,bash]
+----
+cat generated-page.adoc | bun run inspect:report -- --stdin \
+  --source-path /workspace/modules/ROOT/pages/generated-page.adoc
+----
+
+Fail the command when include diagnostics are present:
+
+[source,bash]
+----
+bun run inspect:report -- tests/fixtures/includes-invalid-steps/input.adoc \
+  --fail-on-diagnostics
+----
+
+Emit GitHub Actions annotations instead of JSON:
+
+[source,bash]
+----
+bun run inspect:report -- tests/fixtures/includes-invalid-steps/input.adoc \
+  --format github-actions \
+  --fail-on-diagnostics
+----
+
+Inputs:
+
+* one input file path, or `--stdin`
+* optional `--source-path` to preserve source identity in the output
+* optional `--format json|github-actions`
+* optional `--fail-on-diagnostics`
+
+Outputs:
+
+* JSON payload with `inputPath`, `sourcePath`, and a normalized inspection report
+* or GitHub Actions `::error`, `::warning`, and `::notice` annotations
+
+Operator rule:
+
+* use this script for validation and reporting
+* do not reimplement IR traversal in CI or release scripts unless the library API cannot express the needed behavior
+
+Provenance:
+
+* Note: `Inspection helpers expose normalized validation surfaces`
+* Code: `scripts/inspection-report.ts`, `src/markdown/include-diagnostics.ts`, `tests/unit/inspection-report-script.test.ts`, `tests/integration/inspection-report-script.test.ts`
+
+=== Run Release Validation
+
+Before publish, validate the package as built and packed, not just as source code.
+
+Recommended sequence:
+
+[source,bash]
+----
+make build
+bun run check
+bun run release:check
+----
+
+The release workflow in `.github/workflows/release.yml` follows the same shape:
+
+* install with Bun
+* build
+* generate an inspection artifact
+* emit inspection annotations
+* run `bun run check`
+* run `bun run release:check`
+
+What `scripts/release-check.mjs` verifies today:
+
+* required `dist/**` artifacts exist
+* ESM and CJS root exports load
+* ESM and CJS extension exports load
+* `renderGfm` and `collectMarkdownInspectionReport` are exported from the root package
+* `createAntoraExtensionScaffold` is exported from the extension package
+* inspection reports retain include diagnostics
+* `npm pack --dry-run --json` contains required publish artifacts and excludes forbidden bundle output
+
+Important conflict to preserve:
+
+* the note `Release and package identity use scoped npm publishing` describes a publishable package identity
+* the extension package is publishable, but still exports a scaffold helper rather than a full extension registration implementation
+
+Provenance:
+
+* Note: `Release and package identity use scoped npm publishing`
+* Code: `scripts/release-check.mjs`, `.github/workflows/release.yml`, `package.json`
+
+== Commands And Behavior
+
+=== Primary Commands
+
+[cols="1,3" options="header"]
+|===
+|Command |Behavior
+
+|`make install`
+|Installs dependencies using the configured package manager. Defaults to Bun because `PM ?= bun`.
+
+|`make build`
+|Runs the package build and emits `dist/**` artifacts for the library and extension entrypoints.
+
+|`make test`
+|Runs the full Vitest suite with coverage through the configured package manager.
+
+|`make unit`
+|Runs unit tests only.
+
+|`make integration`
+|Runs integration tests only.
+
+|`make reference`
+|Runs the reference compatibility suite in `tests/integration/reference-antora.test.ts`.
+
+|`make inspect-report INPUT=...`
+|Emits a machine-readable inspection report for one input file by delegating to `bun run inspect:report`.
+
+|`bun run check`
+|Runs Biome checks and the full coverage-enabled Vitest suite.
+
+|`bun run release:check`
+|Runs pre-publish package integrity checks against built artifacts and `npm pack --dry-run`.
+
+|`make docs`
+|Builds the Antora docs site.
+|===
+
+Provenance:
+
+* Notes: `Inspection helpers expose normalized validation surfaces`; `Release and package identity use scoped npm publishing`; `Repository scripts and referenced files must stay in lockstep`
+* Code: `Makefile`, `package.json`
+
+=== Inspection Script Behavior
+
+The inspection script accepts these supported modes:
+
+* path input
+* stdin input
+* JSON output
+* GitHub Actions annotation output
+* non-zero exit on diagnostics with `--fail-on-diagnostics`
+
+Known behavior from the implementation and tests:
+
+* `empty-tag-selection` is emitted as a warning in GitHub Actions mode
+* other include diagnostics currently emit as errors in GitHub Actions mode
+* mixed `--stdin` plus a file path is rejected
+* missing file input is rejected
+* invalid `--format` values are rejected
+
+These failure modes print a usage message and exit with a non-zero status.
+
+Provenance:
+
+* Note: `Inspection helpers expose normalized validation surfaces`
+* Code: `scripts/inspection-report.ts`, `tests/unit/inspection-report-script.test.ts`
+
+== Validation And Troubleshooting
+
+=== Golden Tests: What Counts And What Does Not
+
+The notes `Testing relies on golden fixtures and deterministic snapshots` and `Golden tests require rendered output comparison` define the exact-output contract.
+
+A true golden validation path must:
+
+. convert AsciiDoc input into Markdown IR
+. normalize the IR
+. render a specific flavor
+. compare the rendered output against `expected.<flavor>.md`
+
+If a test loads a fixture but never compares rendered output, it is not a golden test in this repository’s terminology.
+
+Where to look:
+
+* `tests/integration/fixture-golden.test.ts`
+* `tests/fixtures/**`
+
+Troubleshooting guidance:
+
+* if a rendering change is intentional, review the exact flavor outputs
+* if a change only updates structure assertions without touching expected markdown, the test may not be covering the real contract you think it covers
+
+Provenance:
+
+* Notes: `Golden tests require rendered output comparison`; `Testing relies on golden fixtures and deterministic snapshots`
+* Code: `tests/integration/fixture-golden.test.ts`, `tests/fixtures/**`
+
+=== Use Inspection Helpers Instead Of Ad-Hoc Traversal
+
+The note `Inspection helpers expose normalized validation surfaces` is the operator rule for diagnostics and reporting.
+
+Use:
+
+* `collectIncludeDiagnostics`
+* `collectIncludeDirectives`
+* `collectXrefs`
+* `collectXrefTargets`
+* `collectMarkdownInspectionReport`
+
+Do not:
+
+* reimplement traversal logic in CI without a strong reason
+* mix inspection concerns into renderer policy code
+* sort report output in downstream consumers unless you are intentionally changing presentation only
+
+Troubleshooting hint:
+
+If two validation consumers disagree, verify that both are operating on normalized documents and that one has not reimplemented traversal incompletely.
+
+Provenance:
+
+* Note: `Inspection helpers expose normalized validation surfaces`
+* Code: `src/markdown/include-diagnostics.ts`, `scripts/inspection-report.ts`
+
+=== Reference Fixtures: Coverage, Provenance, And Scope
+
+Four notes define the reference suite:
+
+* `Reference testing uses official Antora documentation as a compatibility corpus`
+* `Reference fixtures are curated and provenance locked`
+* `Reference corpus should cover navigation xrefs includes and admonitions`
+* `Reference tests check semantic invariants not exact bytes`
+
+Operator guidance:
+
+* use local fixtures for exact-output checks
+* use reference fixtures for realistic semantic compatibility checks
+* keep reference snapshots curated and provenance-locked
+* refresh reference coverage deliberately instead of mirroring large upstream trees
+
+What the manifest records:
+
+* source project
+* source paths
+* capture date
+* local path
+* `sha256`
+* coverage tags
+* rationale
+* semantic expectations
+
+Troubleshooting guidance:
+
+* if a reference test fails because the hash changed, confirm whether the snapshot was intentionally refreshed
+* if a reference test passes but real regressions slipped through, the next step is often better coverage tags or a better representative fixture, not a bigger uncurated corpus
+
+Provenance:
+
+* Notes: `Reference testing uses official Antora documentation as a compatibility corpus`; `Reference fixtures are curated and provenance locked`; `Reference corpus should cover navigation xrefs includes and admonitions`; `Reference tests check semantic invariants not exact bytes`
+* Code: `tests/reference/manifest.json`, `tests/reference/fixtures/**`, `tests/integration/reference-antora.test.ts`
+
+=== Common Failure Modes
+
+[cols="1,3" options="header"]
+|===
+|Failure mode |What to check
+
+|Golden output changed unexpectedly
+|Review `tests/integration/fixture-golden.test.ts`, the affected `expected.<flavor>.md` files, normalization logic, fallback behavior, and flavor routing.
+
+|Inspection report exits non-zero
+|Check include diagnostics in the emitted JSON or GitHub Actions output. `invalid-line-step`, `invalid-line-range`, `invalid-indent`, and similar failures come from include semantics.
+
+|GitHub Actions annotations look incomplete
+|Confirm the script is using `--format github-actions`, and that the consumer did not bypass `collectMarkdownInspectionReport`.
+
+|Reference suite is noisy
+|Check whether the issue is a hash drift, a stale coverage assumption in `tests/reference/manifest.json`, or a real semantic regression in xrefs, includes, fallback, tables, or admonitions.
+|===
+
+Provenance:
+
+* Notes: `Golden tests require rendered output comparison`; `Inspection helpers expose normalized validation surfaces`; `Reference tests check semantic invariants not exact bytes`
+* Code: `scripts/inspection-report.ts`, `tests/unit/inspection-report-script.test.ts`, `tests/integration/reference-antora.test.ts`
+
+== Release And Integrity
+
+=== Package Identity And Publish Checks
+
+The note `Release and package identity use scoped npm publishing` is the release anchor.
+
+The repository publishes as `@wsmy/antora-markdown-exporter` and is expected to behave like a publishable TypeScript package.
+
+Release integrity checks should confirm:
+
+* built contents exist in `dist/**`
+* the exports map is coherent
+* CLI and package metadata are aligned
+* release validation uses the same semantic inspection surfaces as the rest of the repository
+
+Current conflict to preserve:
+
+* the package identity is real and enforced
+* the extension export is also real and packaged
+* the extension export still represents scaffold maturity, not a finished Antora runtime integration
+
+Provenance:
+
+* Note: `Release and package identity use scoped npm publishing`
+* Code: `package.json`, `scripts/release-check.mjs`, `.github/workflows/release.yml`
+
+=== Keep Scripts, Docs, And Files In Lockstep
+
+The note `Repository scripts and referenced files must stay in lockstep` is the repository integrity rule.
+
+Before considering a release or operational change complete, verify that:
+
+* `package.json` scripts point to real files
+* `bin` entries point to real files
+* `README.md` commands still match the current repo
+* CI workflows use the intended commands
+* tests refer to files that still exist
+
+In this repository, stale references are blocking issues, not cleanup backlog.
+
+Provenance:
+
+* Note: `Repository scripts and referenced files must stay in lockstep`
+* Code: `tests/unit/repository-contract.test.ts`, `package.json`, `.github/workflows/ci.yml`, `.github/workflows/release.yml`, `README.md`
+
+== Reference Notes
+
+This manual is primarily grounded in the following notes:
+
+* `Golden tests require rendered output comparison`
+* `Inspection helpers expose normalized validation surfaces`
+* `Reference corpus should cover navigation xrefs includes and admonitions`
+* `Reference fixtures are curated and provenance locked`
+* `Reference testing uses official Antora documentation as a compatibility corpus`
+* `Reference tests check semantic invariants not exact bytes`
+* `Testing relies on golden fixtures and deterministic snapshots`
+* `Release and package identity use scoped npm publishing`
+* `Repository scripts and referenced files must stay in lockstep`
+
+Use the notes for canonical rationale, and use the cited code files for current operational truth.
