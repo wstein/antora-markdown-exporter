@@ -268,13 +268,13 @@ Each target is a thin delegate to the matching package-manager script.
 
 `make integration` runs the broader integration suite. `make reference` runs only the provenance-locked compatibility cases, including recursive include inlining, stepped and open-ended include slicing, anchor and alias preservation, component/module/version-aware xrefs, family-aware site routing, aligned tables, admonitions, mixed block sequences, and visible unsupported fallbacks where support is still intentionally deferred.
 
-To export the Antora module pages in `docs/modules/**/pages/**/*.adoc` to Markdown using the repository pipeline, run:
+To export the main Antora modules to Markdown using the repository pipeline, run:
 
 ```bash
 make markdown
 ```
 
-This emits Markdown files under `build/markdown/**` using the same conversion path as the library API: AsciiDoc assembly mapping, normalization, and flavor rendering. Use `ARGS="--flavor gitlab"` or alternate `--output-root` / `--modules-root` values when you need a different target.
+This emits flat module documents under `build/markdown/architecture.md`, `build/markdown/manual.md`, and `build/markdown/onboarding.md` using the same conversion path as the library API: AsciiDoc assembly mapping, normalization, and flavor rendering. Use `ARGS="--flavor gitlab"` or alternate `--output-root` / `--modules-root` values when you need a different target.
 
 To build only the assembled module PDFs without rebuilding the full Antora HTML site, run:
 

@@ -1,12 +1,5 @@
-import {
-	mkdir,
-	readdir,
-	readFile,
-	rm,
-	stat,
-	writeFile,
-} from "node:fs/promises";
-import { dirname, extname, relative, resolve, sep } from "node:path";
+import { mkdir, readFile, rm, stat, writeFile } from "node:fs/promises";
+import { resolve } from "node:path";
 import {
 	convertAssemblyToMarkdownIR,
 	type MarkdownFlavorName,
@@ -22,6 +15,7 @@ export type ExportAntoraModulesOptions = {
 
 export type ExportedMarkdownFile = {
 	inputPath: string;
+	moduleName: string;
 	outputPath: string;
 	relativeInputPath: string;
 	relativeOutputPath: string;
@@ -35,13 +29,18 @@ const markdownFlavors = new Set<MarkdownFlavorName>([
 ]);
 const asciidocControlLinePattern =
 	/^(?:\/\/|ifdef::|ifndef::|endif::|:[A-Za-z0-9_-]+:|<<<<\s*)/;
+const exportableModules = ["architecture", "manual", "onboarding"] as const;
 
 function usage(): string {
 	return [
 		"Usage: bun scripts/export-antora-modules.ts [--modules-root <dir>] [--output-root <dir>] [--flavor <gfm|commonmark|gitlab|strict>]",
 		"",
-		"Export Antora module pages from docs/modules/**/pages/**/*.adoc into Markdown using the repository pipeline.",
+		"Export one assembled Markdown document per Antora module using the repository pipeline.",
 	].join("\n");
+}
+
+export function getExportableModuleNames(): string[] {
+	return [...exportableModules];
 }
 
 export function sanitizeAntoraPageSource(source: string): string {
@@ -145,61 +144,37 @@ export function parseArguments(argv: string[]): ExportAntoraModulesOptions {
 	};
 }
 
-async function listFilesRecursively(rootDir: string): Promise<string[]> {
-	const entries = await readdir(rootDir, { withFileTypes: true });
-	const nested = await Promise.all(
-		entries.map(async (entry) => {
-			const entryPath = resolve(rootDir, entry.name);
-			if (entry.isDirectory()) {
-				return listFilesRecursively(entryPath);
-			}
+export function getAntoraModuleRoot(
+	modulesRoot: string,
+	moduleName: string,
+): string {
+	return resolve(modulesRoot, moduleName);
+}
 
-			return [entryPath];
-		}),
+export function getAntoraModuleIndexPath(
+	modulesRoot: string,
+	moduleName: string,
+): string {
+	return resolve(
+		getAntoraModuleRoot(modulesRoot, moduleName),
+		"pages/index.adoc",
 	);
-
-	return nested.flat();
 }
 
-export async function collectAntoraPageFiles(
-	modulesRoot: string,
-): Promise<string[]> {
-	const files = await listFilesRecursively(modulesRoot);
-
-	return files
-		.filter(
-			(filePath) =>
-				extname(filePath) === ".adoc" && filePath.split(sep).includes("pages"),
-		)
-		.sort();
-}
-
-export function mapAntoraPageToMarkdownPath(
-	modulesRoot: string,
+export function mapAntoraModuleToMarkdownPath(
 	outputRoot: string,
-	pagePath: string,
+	moduleName: string,
 ): ExportedMarkdownFile {
-	const relativeInputPath = relative(modulesRoot, pagePath);
-	const relativeOutputPath = relativeInputPath.replace(/\.adoc$/u, ".md");
+	const relativeInputPath = `${moduleName}/pages/index.adoc`;
+	const relativeOutputPath = `${moduleName}.md`;
 
 	return {
-		inputPath: pagePath,
+		inputPath: relativeInputPath,
+		moduleName,
 		outputPath: resolve(outputRoot, relativeOutputPath),
 		relativeInputPath,
 		relativeOutputPath,
 	};
-}
-
-export function getAntoraModuleRootForPage(pagePath: string): string {
-	const segments = pagePath.split(sep);
-	const pagesIndex = segments.lastIndexOf("pages");
-	if (pagesIndex <= 0) {
-		throw new Error(
-			`Page path is not inside an Antora pages directory: ${pagePath}`,
-		);
-	}
-
-	return segments.slice(0, pagesIndex).join(sep) || sep;
 }
 
 export async function exportAntoraModulesToMarkdown(
@@ -223,29 +198,40 @@ export async function exportAntoraModulesToMarkdown(
 	await rm(options.outputRoot, { force: true, recursive: true });
 	await mkdir(options.outputRoot, { recursive: true });
 
-	const pageFiles = await collectAntoraPageFiles(options.modulesRoot);
 	const exportedFiles: ExportedMarkdownFile[] = [];
 
-	for (const pageFile of pageFiles) {
-		const source = sanitizeAntoraPageSource(await readFile(pageFile, "utf8"));
-		const mapping = mapAntoraPageToMarkdownPath(
+	for (const moduleName of exportableModules) {
+		const moduleIndexPath = getAntoraModuleIndexPath(
 			options.modulesRoot,
+			moduleName,
+		);
+		const moduleIndexStats = await stat(moduleIndexPath).catch(() => undefined);
+		if (moduleIndexStats === undefined || !moduleIndexStats.isFile()) {
+			throw new Error(`Module index page does not exist: ${moduleIndexPath}`);
+		}
+
+		const source = sanitizeAntoraPageSource(
+			await readFile(moduleIndexPath, "utf8"),
+		);
+		const mapping = mapAntoraModuleToMarkdownPath(
 			options.outputRoot,
-			pageFile,
+			moduleName,
 		);
 		const document = normalizeMarkdownIR(
 			convertAssemblyToMarkdownIR(source, {
-				includeRootDir: getAntoraModuleRootForPage(pageFile),
-				sourcePath: pageFile,
+				includeRootDir: getAntoraModuleRoot(options.modulesRoot, moduleName),
+				sourcePath: moduleIndexPath,
 			}),
 		);
 		const markdown = cleanRenderedMarkdown(
 			renderMarkdown(document, options.flavor),
 		);
 
-		await mkdir(dirname(mapping.outputPath), { recursive: true });
 		await writeFile(mapping.outputPath, `${markdown}\n`);
-		exportedFiles.push(mapping);
+		exportedFiles.push({
+			...mapping,
+			inputPath: moduleIndexPath,
+		});
 	}
 
 	return exportedFiles;
@@ -264,6 +250,7 @@ async function main(): Promise<void> {
 				outputRoot: options.outputRoot,
 				files: exportedFiles.map((entry) => ({
 					inputPath: entry.relativeInputPath,
+					moduleName: entry.moduleName,
 					outputPath: entry.relativeOutputPath,
 				})),
 			},

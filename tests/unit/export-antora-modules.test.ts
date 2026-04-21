@@ -4,10 +4,11 @@ import { resolve } from "node:path";
 import { describe, expect, it } from "vitest";
 import {
 	cleanRenderedMarkdown,
-	collectAntoraPageFiles,
 	exportAntoraModulesToMarkdown,
-	getAntoraModuleRootForPage,
-	mapAntoraPageToMarkdownPath,
+	getAntoraModuleIndexPath,
+	getAntoraModuleRoot,
+	getExportableModuleNames,
+	mapAntoraModuleToMarkdownPath,
 	parseArguments,
 	sanitizeAntoraPageSource,
 } from "../../scripts/export-antora-modules.ts";
@@ -52,66 +53,48 @@ describe("export antora modules script", () => {
 		expect(options.flavor).toBe("gitlab");
 	});
 
-	it("maps antora pages to markdown paths", () => {
-		const mapping = mapAntoraPageToMarkdownPath(
-			resolve("/repo/docs/modules"),
+	it("exposes the supported module names", () => {
+		expect(getExportableModuleNames()).toEqual([
+			"architecture",
+			"manual",
+			"onboarding",
+		]);
+	});
+
+	it("maps antora modules to flat markdown paths", () => {
+		const mapping = mapAntoraModuleToMarkdownPath(
 			resolve("/repo/build/markdown"),
-			resolve("/repo/docs/modules/manual/pages/index.adoc"),
+			"manual",
 		);
 
 		expect(mapping.relativeInputPath).toBe("manual/pages/index.adoc");
-		expect(mapping.relativeOutputPath).toBe("manual/pages/index.md");
-		expect(mapping.outputPath).toBe(
-			resolve("/repo/build/markdown/manual/pages/index.md"),
-		);
+		expect(mapping.relativeOutputPath).toBe("manual.md");
+		expect(mapping.outputPath).toBe(resolve("/repo/build/markdown/manual.md"));
 	});
 
-	it("finds the antora module root for a page", () => {
+	it("finds the antora module root and index path", () => {
 		expect(
-			getAntoraModuleRootForPage(
-				resolve("/repo/docs/modules/architecture/pages/index.adoc"),
-			),
+			getAntoraModuleRoot(resolve("/repo/docs/modules"), "architecture"),
 		).toBe(resolve("/repo/docs/modules/architecture"));
+		expect(
+			getAntoraModuleIndexPath(resolve("/repo/docs/modules"), "architecture"),
+		).toBe(resolve("/repo/docs/modules/architecture/pages/index.adoc"));
 	});
 
-	it("collects only antora page files", async () => {
-		const root = await mkdtemp(resolve(tmpdir(), "antora-modules-"));
-		const modulesRoot = resolve(root, "modules");
-		await mkdir(resolve(modulesRoot, "guide/pages"), { recursive: true });
-		await mkdir(resolve(modulesRoot, "guide/partials"), { recursive: true });
-		await writeFile(
-			resolve(modulesRoot, "guide/pages/index.adoc"),
-			"= Guide\n",
-		);
-		await writeFile(
-			resolve(modulesRoot, "guide/partials/snippet.adoc"),
-			"ignored",
-		);
-
-		const files = await collectAntoraPageFiles(modulesRoot);
-
-		expect(files).toEqual([resolve(modulesRoot, "guide/pages/index.adoc")]);
-	});
-
-	it("exports antora pages to markdown using the repository pipeline", async () => {
-		const root = await mkdtemp(resolve(tmpdir(), "antora-export-"));
+	it("exports one markdown file per antora module", async () => {
+		const root = await mkdtemp(resolve(tmpdir(), "antora-module-export-"));
 		const modulesRoot = resolve(root, "modules");
 		const outputRoot = resolve(root, "markdown");
 
-		await mkdir(resolve(modulesRoot, "guide/pages"), { recursive: true });
-		await mkdir(resolve(modulesRoot, "guide/partials"), { recursive: true });
-		await writeFile(
-			resolve(modulesRoot, "guide/partials/snippet.adoc"),
-			"Included line.\n",
-		);
-		await writeFile(
-			resolve(modulesRoot, "guide/pages/index.adoc"),
-			"= Guide\n\ninclude::../partials/snippet.adoc[]\n\n== Next Steps\n\nSee xref:other.adoc[other].\n",
-		);
-		await writeFile(
-			resolve(modulesRoot, "guide/pages/other.adoc"),
-			"= Other\n\nHello.\n",
-		);
+		for (const moduleName of getExportableModuleNames()) {
+			await mkdir(resolve(modulesRoot, moduleName, "pages"), {
+				recursive: true,
+			});
+			await writeFile(
+				resolve(modulesRoot, moduleName, "pages/index.adoc"),
+				`= ${moduleName}\n\nBody for ${moduleName}.\n`,
+			);
+		}
 
 		const exportedFiles = await exportAntoraModulesToMarkdown({
 			flavor: "gfm",
@@ -120,17 +103,17 @@ describe("export antora modules script", () => {
 		});
 
 		expect(exportedFiles.map((entry) => entry.relativeOutputPath)).toEqual([
-			"guide/pages/index.md",
-			"guide/pages/other.md",
+			"architecture.md",
+			"manual.md",
+			"onboarding.md",
 		]);
 
-		const markdown = await readFile(
-			resolve(outputRoot, "guide/pages/index.md"),
+		const manualMarkdown = await readFile(
+			resolve(outputRoot, "manual.md"),
 			"utf8",
 		);
-		expect(markdown).toContain("# Guide");
-		expect(markdown).toContain("Included line.");
-		expect(markdown).toContain("[other](other.adoc)");
+		expect(manualMarkdown).toContain("# manual");
+		expect(manualMarkdown).toContain("Body for manual.");
 	});
 
 	it("resolves antora partial includes from the module root", async () => {
@@ -144,6 +127,9 @@ describe("export antora modules script", () => {
 		await mkdir(resolve(modulesRoot, "architecture/partials"), {
 			recursive: true,
 		});
+		await mkdir(resolve(modulesRoot, "manual/pages"), { recursive: true });
+		await mkdir(resolve(modulesRoot, "onboarding/pages"), { recursive: true });
+
 		await writeFile(
 			resolve(modulesRoot, "architecture/partials/section.adoc"),
 			"== Included Section\n\nBody text.\n",
@@ -151,6 +137,14 @@ describe("export antora modules script", () => {
 		await writeFile(
 			resolve(modulesRoot, "architecture/pages/index.adoc"),
 			"= Architecture\n\ninclude::partial$section.adoc[]\n",
+		);
+		await writeFile(
+			resolve(modulesRoot, "manual/pages/index.adoc"),
+			"= Manual\n\nBody.\n",
+		);
+		await writeFile(
+			resolve(modulesRoot, "onboarding/pages/index.adoc"),
+			"= Onboarding\n\nBody.\n",
 		);
 
 		await exportAntoraModulesToMarkdown({
@@ -160,7 +154,7 @@ describe("export antora modules script", () => {
 		});
 
 		const markdown = await readFile(
-			resolve(outputRoot, "architecture/pages/index.md"),
+			resolve(outputRoot, "architecture.md"),
 			"utf8",
 		);
 		expect(markdown).toContain("# Included Section");
