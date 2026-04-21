@@ -831,4 +831,83 @@ describe("convertAssemblyToMarkdownIR", () => {
 			},
 		]);
 	});
+
+	it("groups multiline asciidoc table rows using the declared column count", () => {
+		const document = convertAssemblyToMarkdownIR(
+			[
+				'[cols="1,2,2"]',
+				"|===",
+				"|Priority",
+				"|Quality goal",
+				"|Why it matters",
+				"",
+				"|1",
+				"|Deterministic, reviewable output",
+				"|Stable golden tests depend on this.",
+				"",
+				"|2",
+				"|Inspectable validation surfaces",
+				"|Release checks reuse normalized inspection data.",
+				"|===",
+			].join("\n"),
+		);
+
+		expect(document.children).toEqual([
+			{
+				type: "table",
+				align: [null, null, null],
+				header: {
+					cells: [
+						{ children: [{ type: "text", value: "Priority" }] },
+						{ children: [{ type: "text", value: "Quality goal" }] },
+						{ children: [{ type: "text", value: "Why it matters" }] },
+					],
+				},
+				rows: [
+					{
+						cells: [
+							{ children: [{ type: "text", value: "1" }] },
+							{
+								children: [
+									{
+										type: "text",
+										value: "Deterministic, reviewable output",
+									},
+								],
+							},
+							{
+								children: [
+									{
+										type: "text",
+										value: "Stable golden tests depend on this.",
+									},
+								],
+							},
+						],
+					},
+					{
+						cells: [
+							{ children: [{ type: "text", value: "2" }] },
+							{
+								children: [
+									{
+										type: "text",
+										value: "Inspectable validation surfaces",
+									},
+								],
+							},
+							{
+								children: [
+									{
+										type: "text",
+										value: "Release checks reuse normalized inspection data.",
+									},
+								],
+							},
+						],
+					},
+				],
+			},
+		]);
+	});
 });

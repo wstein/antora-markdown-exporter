@@ -684,15 +684,12 @@ function parseList(
 	return { block: rootList, nextIndex: index };
 }
 
-function parseTableRow(line: string): MarkdownTableRow {
-	const cells = line
+function parseTableRowCells(line: string): string[] {
+	return line
 		.split("|")
 		.slice(1)
-		.map((cell) => ({
-			children: parseInline(cell.trim()),
-		}));
-
-	return { cells };
+		.map((cell) => cell.trim())
+		.filter((cell) => cell.length > 0);
 }
 
 function parseTable(
@@ -702,14 +699,48 @@ function parseTable(
 ): { block: MarkdownTable | MarkdownBlock; nextIndex: number } {
 	let index = startIndex + 1;
 	const rows: MarkdownTableRow[] = [];
+	let currentRowCells: string[] = [];
+	let expectedColumnCount =
+		align?.length && align.length > 0 ? align.length : undefined;
+
+	function flushCurrentRow(): void {
+		if (currentRowCells.length === 0) {
+			return;
+		}
+
+		if (expectedColumnCount === undefined) {
+			expectedColumnCount = currentRowCells.length;
+		}
+
+		rows.push({
+			cells: currentRowCells.map((cell) => ({
+				children: parseInline(cell),
+			})),
+		});
+		currentRowCells = [];
+	}
 
 	while (index < lines.length && (lines[index]?.trim() ?? "") !== "|===") {
 		const line = lines[index]?.trim() ?? "";
-		if (line.length > 0 && line.startsWith("|")) {
-			rows.push(parseTableRow(line));
+		if (line.length === 0) {
+			flushCurrentRow();
+			index += 1;
+			continue;
+		}
+
+		if (line.startsWith("|")) {
+			currentRowCells.push(...parseTableRowCells(line));
+			if (
+				expectedColumnCount !== undefined &&
+				currentRowCells.length >= expectedColumnCount
+			) {
+				flushCurrentRow();
+			}
 		}
 		index += 1;
 	}
+
+	flushCurrentRow();
 
 	if (index >= lines.length) {
 		return {

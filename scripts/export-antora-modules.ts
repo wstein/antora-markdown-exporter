@@ -1,5 +1,6 @@
 import { mkdir, readFile, rm, stat, writeFile } from "node:fs/promises";
 import { resolve } from "node:path";
+import { pathToFileURL } from "node:url";
 import {
 	convertAssemblyToMarkdownIR,
 	type MarkdownFlavorName,
@@ -83,6 +84,89 @@ export function cleanRenderedMarkdown(markdown: string): string {
 		.replaceAll(/^\\?\*{2,}.*<[^>\n]+>.*$/gm, "")
 		.replaceAll(/\n{3,}/g, "\n\n")
 		.trim();
+}
+
+function slugifyHeading(text: string): string {
+	return text
+		.toLowerCase()
+		.replace(/<[^>]+>/g, "")
+		.replace(/[`*_~[\]()]/g, "")
+		.replace(/[^a-z0-9\s-]/g, "")
+		.trim()
+		.replace(/\s+/g, "-");
+}
+
+export function addMarkdownTableOfContents(markdown: string): string {
+	const lines = markdown.split("\n");
+	const entries: Array<{
+		href: string;
+		level: number;
+		text: string;
+	}> = [];
+	let firstHeadingSeen = false;
+
+	for (let index = 0; index < lines.length; index += 1) {
+		const line = lines[index];
+		const headingMatch = line?.match(/^(#{1,6})\s+(.+)$/);
+		if (headingMatch === null || headingMatch === undefined) {
+			continue;
+		}
+
+		const [, markers, rawText] = headingMatch;
+		if (markers === undefined || rawText === undefined) {
+			continue;
+		}
+
+		if (!firstHeadingSeen) {
+			firstHeadingSeen = true;
+			continue;
+		}
+
+		let anchorMatch: RegExpMatchArray | null = null;
+		for (
+			let previousIndex = index - 1;
+			previousIndex >= 0;
+			previousIndex -= 1
+		) {
+			const previousLine = lines[previousIndex]?.trim() ?? "";
+			if (previousLine.length === 0) {
+				continue;
+			}
+
+			anchorMatch = previousLine.match(/^<a id="([^"]+)"><\/a>$/);
+			break;
+		}
+		const text = rawText.trim();
+		const href = anchorMatch?.[1] ?? slugifyHeading(text);
+		entries.push({
+			href: `#${href}`,
+			level: markers.length,
+			text,
+		});
+	}
+
+	if (entries.length === 0) {
+		return markdown;
+	}
+
+	const baseLevel = Math.min(...entries.map((entry) => entry.level));
+	const toc = [
+		"## Table of Contents",
+		"",
+		...entries.map(
+			(entry) =>
+				`${"  ".repeat(entry.level - baseLevel)}- [${entry.text}](${entry.href})`,
+		),
+	].join("\n");
+
+	const [firstLine, ...rest] = lines;
+	if (firstLine === undefined) {
+		return markdown;
+	}
+
+	return [firstLine, "", toc, "", ...rest]
+		.join("\n")
+		.replaceAll(/\n{3,}/g, "\n\n");
 }
 
 export function parseArguments(argv: string[]): ExportAntoraModulesOptions {
@@ -226,8 +310,9 @@ export async function exportAntoraModulesToMarkdown(
 		const markdown = cleanRenderedMarkdown(
 			renderMarkdown(document, options.flavor),
 		);
+		const withToc = addMarkdownTableOfContents(markdown);
 
-		await writeFile(mapping.outputPath, `${markdown}\n`);
+		await writeFile(mapping.outputPath, `${withToc}\n`);
 		exportedFiles.push({
 			...mapping,
 			inputPath: moduleIndexPath,
@@ -260,12 +345,23 @@ async function main(): Promise<void> {
 	);
 }
 
-try {
-	await main();
-} catch (error) {
-	const message = error instanceof Error ? error.message : String(error);
-	console.error(message);
-	console.error("");
-	console.error(usage());
-	process.exitCode = 1;
+function isDirectExecution(): boolean {
+	const entry = process.argv[1];
+	if (!entry) {
+		return false;
+	}
+
+	return import.meta.url === pathToFileURL(resolve(entry)).href;
+}
+
+if (isDirectExecution()) {
+	try {
+		await main();
+	} catch (error) {
+		const message = error instanceof Error ? error.message : String(error);
+		console.error(message);
+		console.error("");
+		console.error(usage());
+		process.exitCode = 1;
+	}
 }

@@ -3,6 +3,7 @@ import { tmpdir } from "node:os";
 import { resolve } from "node:path";
 import { describe, expect, it } from "vitest";
 import {
+	addMarkdownTableOfContents,
 	cleanRenderedMarkdown,
 	exportAntoraModulesToMarkdown,
 	getAntoraModuleIndexPath,
@@ -36,6 +37,21 @@ describe("export antora modules script", () => {
 				'Intro\n\\<!-- md-ir-include {"target":"partial$section.adoc"} --\\>\n> Unsupported: include directive is not yet inlined: include::partial$section.adoc[]\n\\[options="header"]\n\\***\\<Diagram or Table\\>**\\*\n\nBody\n',
 			),
 		).toBe("Intro\n\nBody");
+	});
+
+	it("adds a markdown table of contents from rendered headings", () => {
+		expect(
+			addMarkdownTableOfContents(
+				'# Title\n\n<a id="section-one"></a>\n\n# Section One\n\n## Detail\n',
+			),
+		).toContain(
+			[
+				"## Table of Contents",
+				"",
+				"- [Section One](#section-one)",
+				"  - [Detail](#detail)",
+			].join("\n"),
+		);
 	});
 
 	it("parses explicit arguments", () => {
@@ -92,7 +108,7 @@ describe("export antora modules script", () => {
 			});
 			await writeFile(
 				resolve(modulesRoot, moduleName, "pages/index.adoc"),
-				`= ${moduleName}\n\nBody for ${moduleName}.\n`,
+				`= ${moduleName}\n\n== Section\n\nBody for ${moduleName}.\n`,
 			);
 		}
 
@@ -113,6 +129,8 @@ describe("export antora modules script", () => {
 			"utf8",
 		);
 		expect(manualMarkdown).toContain("# manual");
+		expect(manualMarkdown).toContain("## Table of Contents");
+		expect(manualMarkdown).toContain("- [Section](#section)");
 		expect(manualMarkdown).toContain("Body for manual.");
 	});
 
