@@ -6,14 +6,17 @@ title: Antora module markdown export should use the canonical repository pipelin
 
 ## Summary
 
-Antora module markdown export should use the canonical repository pipeline because generated Markdown artifacts must reflect the same semantic mapping, normalization, and flavor rendering rules that the package exposes everywhere else.
+Antora module markdown export should use the canonical repository pipeline because generated Markdown artifacts must reflect the same Antora Assembler integration, semantic mapping, normalization, and flavor rendering rules that the package exposes everywhere else.
 
 ## What
 
-When the repository exports Markdown from Antora module source pages, it should:
+When the repository exports Markdown from documentation modules, it should:
 
-- read page sources from `docs/modules/**/pages/**/*.adoc`
-- convert them with the repository-owned AsciiDoc-to-IR pipeline
+- build an Antora playbook
+- aggregate and classify content through the Antora 3.1 pipeline
+- build navigation
+- assemble one module document per exported module through Assembler
+- convert assembled AsciiDoc with the repository-owned AsciiDoc-to-IR pipeline
 - normalize the IR before rendering
 - render with one explicit Markdown flavor
 - write deterministic output under a generated directory such as `build/markdown/**`
@@ -35,6 +38,9 @@ One pipeline keeps exported artifacts, package behavior, and validation expectat
 
 Implement Antora module export through one maintained script in `scripts/**` that uses:
 
+- Antora playbook/content/navigation APIs
+- `@antora/assembler`
+- `createMarkdownConverter`
 - `convertAssemblyToMarkdownIR`
 - `normalizeMarkdownIR`
 - `renderMarkdown`

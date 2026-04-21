@@ -4,7 +4,7 @@ This manual is for operators and maintainers who need to run, validate, and rele
 
 The manual is task-oriented on purpose. For contributor-first explanations, see the onboarding guide. For the most precise architectural statements, prefer the cited notes and the implementation files they point to.
 
-When notes describe a broader intended system than the code currently ships, this manual preserves that uncertainty explicitly. In particular, the repository exposes a real markdown conversion and validation kernel, but the outer Antora integration boundary still signals scaffold maturity rather than a full runtime registration contract.
+When notes describe a broader intended system than the code currently ships, this manual preserves that uncertainty explicitly. In particular, the repository now exposes both a real markdown conversion and validation kernel and a real Assembler-backed Antora extension entrypoint.
 
 == Core Workflows
 
@@ -92,7 +92,7 @@ Current uncertainty to preserve:
 
 * the package and docs describe an Antora exporter pipeline
 * the repository clearly implements conversion, rendering, inspection, testing, and release checks
-* the extension boundary remains scaffolded in `src/extension/index.ts`
+* the extension boundary in `src/extension/index.ts` is now part of the supported runtime path
 
 === Generate An Inspection Report
 
@@ -199,7 +199,7 @@ What `scripts/release-check.mjs` verifies during that process:
 * ESM and CJS root exports load
 * ESM and CJS extension exports load
 * `renderGfm` and `collectMarkdownInspectionReport` are exported from the root package
-* `createAntoraExtensionScaffold` is exported from the extension package
+* `createMarkdownConverter` and `register` are exported from the extension package
 * inspection reports retain include diagnostics
 * `npm pack --dry-run --json` contains required publish artifacts and excludes forbidden bundle output
 
@@ -207,7 +207,7 @@ Important conflict to preserve:
 
 * the package identity and publish workflow are real
 * the extension export is also real and packaged
-* the extension export still signals scaffold maturity rather than a full Antora runtime registration contract
+* the extension package now implements the Antora runtime registration contract through Assembler
 
 == Commands And Behavior
 
@@ -394,7 +394,7 @@ Current conflict to preserve:
 
 * the package identity is real and enforced
 * the extension export is also real and packaged
-* the extension export still represents scaffold maturity, not a finished Antora runtime integration
+* the extension export is a real runtime integration surface and should stay aligned with package docs and release checks
 
 === Keep Scripts, Docs, And Files In Lockstep
 

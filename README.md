@@ -1,6 +1,6 @@
 # @wsmy/antora-markdown-exporter
 
-Antora Assembler based Markdown exporter scaffold with semantic IR, explicit flavor capabilities, transparent fenced extension preservation, centralized fallback policy, and renderer profiles for GitHub Flavored Markdown, CommonMark, GitLab Flavored Markdown, and a strict canonical mode.
+Antora Assembler based Markdown exporter with semantic IR, explicit flavor capabilities, transparent fenced extension preservation, centralized fallback policy, and renderer profiles for GitHub Flavored Markdown, CommonMark, GitLab Flavored Markdown, and a strict canonical mode.
 
 ## Install
 
@@ -217,18 +217,17 @@ The emitted JSON contains the normalized inspection report plus the resolved inp
 }
 ```
 
-Current scaffold coverage includes headings, paragraphs, inline links, dedicated xref nodes with inspectable Antora target metadata and first-class family kinds, dedicated anchor and page-alias nodes, images, ordered and unordered lists, nested lists, thematic breaks, aligned tables, policy-gated raw HTML fallback nodes, footnote placeholders, fenced code blocks with dedicated callout-list nodes and verbatim language-tag preservation for transparent extensions such as `mermaid`, block quotes, dedicated admonition nodes, and recursive include inlining with dedicated include-directive metadata, for both `partial$` and relative include paths, including tagged-region selection, multi-tag extraction, overlapping-tag precedence, open-ended and stepped line-range unions, invalid-selector diagnostics, indentation, and `leveloffset`, when source-path context is available. Flavor policies can now render page-family xrefs either as source-shaped `.adoc` destinations or as site-shaped Antora-style routes, including `_images`, `_attachments`, and `_examples` asset families where configured.
+Current converter coverage includes headings, paragraphs, inline links, dedicated xref nodes with inspectable Antora target metadata and first-class family kinds, dedicated anchor and page-alias nodes, images, ordered and unordered lists, nested lists, thematic breaks, aligned tables, policy-gated raw HTML fallback nodes, footnote placeholders, fenced code blocks with dedicated callout-list nodes and verbatim language-tag preservation for transparent extensions such as `mermaid`, block quotes, dedicated admonition nodes, and recursive include inlining with dedicated include-directive metadata, for both `partial$` and relative include paths, including tagged-region selection, multi-tag extraction, overlapping-tag precedence, open-ended and stepped line-range unions, invalid-selector diagnostics, indentation, and `leveloffset`, when source-path context is available. Flavor policies can now render page-family xrefs either as source-shaped `.adoc` destinations or as site-shaped Antora-style routes, including `_images`, `_attachments`, and `_examples` asset families where configured.
 
-### Extension scaffold
+### Extension
 
 ```ts
-import { createAntoraExtensionScaffold } from "@wsmy/antora-markdown-exporter";
+import { register } from "@wsmy/antora-markdown-exporter/extension";
 
-const extension = createAntoraExtensionScaffold();
-console.log(extension.kind);
+export { register };
 ```
 
-`createAntoraExtensionScaffold()` is intentionally scaffolded metadata, not a full Antora extension registration contract yet.
+The extension entrypoint delegates to `@antora/assembler.configure()` using the repository’s Markdown converter, matching the Antora Assembler custom exporter contract.
 
 ### CLI
 
@@ -308,4 +307,4 @@ After a tag-triggered `Release` workflow completes successfully, the separate Pa
 
 ## Package
 
-This repository is shaped as a library-first package with a small CLI entrypoint. The published package exposes the core markdown pipeline API and a scaffolded Antora extension helper under `./extension`.
+This repository is shaped as a library-first package with a small CLI entrypoint. The published package exposes the core markdown pipeline API and a real Antora extension entrypoint under `./extension`.

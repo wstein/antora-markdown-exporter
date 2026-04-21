@@ -9,7 +9,7 @@ The repository’s markdown kernel and validation surfaces are much more mature 
 
 Mitigation::
 
-* keep scaffold naming explicit in `src/extension/index.ts` and public docs
-* remove dead scaffold artifacts before broadening public contracts
+* keep the real extension entrypoint, README examples, and release checks aligned
+* remove dead pre-extension scaffolding artifacts when they linger in docs or tests
 * treat repository self-consistency checks as release gates
-* implement the real Antora registration slice before renaming scaffold boundaries to stronger terms
+* extend converter coverage and tests together whenever richer assembled AsciiDoc constructs are supported

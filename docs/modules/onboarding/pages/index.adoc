@@ -10,21 +10,21 @@ When note intent and current implementation maturity differ, this guide says so 
 
 The most important onboarding concept comes from the note `Antora extension entrypoints must reflect actual integration maturity`.
 
-The repository is named and documented as an Antora Markdown exporter, but the current public extension entrypoint in `src/extension/index.ts` still exposes `createAntoraExtensionScaffold()`, which returns scaffold metadata rather than registering a real Antora extension contract. New contributors should treat that as an intentional honesty boundary.
+The repository is named and documented as an Antora Markdown exporter, and the public extension entrypoint in `src/extension/index.ts` now does the work that name implies: it exports `register()` and delegates to `@antora/assembler.configure()` with the repository’s Markdown converter.
 
 Why this matters:
 
 * public names must match real behavior
 * architecture docs are only useful if maturity is signaled honestly
-* review quality drops quickly when scaffolding looks more complete than it is
+* review quality drops quickly when names and examples overstate or understate the real boundary
 
 Current conflict to keep in mind:
 
 * the note `Exporter pipeline uses Assembler and a direct TypeScript converter` describes a pipeline whose first stage is Antora Assembler
 * the code currently implements the conversion and rendering kernel in `src/exporter/**` and `src/markdown/**`
-* the shipped Antora integration boundary is still scaffolded rather than fully registered
+* the shipped Antora integration boundary is now real and should be treated as part of the supported package surface
 
-As a contributor, assume the markdown kernel is real and tested, while the outer Antora registration story is still incomplete unless you can point to code that proves otherwise.
+As a contributor, assume both the markdown kernel and the outer Antora registration path are real, and make changes in ways that keep those two layers aligned.
 
 === Think In Pipeline Stages
 
@@ -236,7 +236,7 @@ Current uncertainty to preserve:
 
 * the notes describe an Antora Assembler based outer pipeline
 * the codebase clearly implements the markdown kernel and validation surfaces
-* the extension boundary still signals scaffold maturity rather than a full registration contract
+* the package now exports a real Assembler-backed extension entrypoint under `./extension`
 
 That is the current contributor reality.
 

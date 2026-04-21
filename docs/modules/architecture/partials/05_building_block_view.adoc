@@ -5,7 +5,7 @@
 === Whitebox Overall System
 Motivation::
 
-The decomposition follows the notes `Exporter pipeline uses Assembler and a direct TypeScript converter`, `Markdown IR is the canonical render boundary`, `Flavor renderers are syntax adapters over one semantic layer`, `Include metadata transport is an internal implementation detail`, `Xref target resolution is a separate lowering phase`, and `Inspection helpers expose normalized validation surfaces`. The code implements a library-first markdown kernel with a separate scaffolded Antora boundary.
+The decomposition follows the notes `Exporter pipeline uses Assembler and a direct TypeScript converter`, `Markdown IR is the canonical render boundary`, `Flavor renderers are syntax adapters over one semantic layer`, `Include metadata transport is an internal implementation detail`, `Xref target resolution is a separate lowering phase`, and `Inspection helpers expose normalized validation surfaces`. The code implements a library-first markdown kernel together with a real Assembler-backed Antora extension boundary.
 
 Contained Building Blocks::
 
@@ -13,8 +13,8 @@ Contained Building Blocks::
 |===
 |Building block |Responsibility
 
-|Extension scaffold
-|`src/extension/index.ts` exposes `createAntoraExtensionScaffold()` and signals current maturity explicitly. It does not yet register a real Antora extension.
+|Extension entrypoint
+|`src/extension/index.ts` exposes `register()` and `createMarkdownConverter()`. `register()` delegates to `@antora/assembler.configure()` and makes the package usable as a real Antora exporter extension.
 
 |Assembly converter
 |`src/exporter/convert-assembly.ts` parses assembled AsciiDoc-like input into semantic markdown nodes, including headings, lists, links, xrefs, images, admonitions, callouts, tables, include directives, diagnostics, anchors, aliases, and unsupported nodes.
@@ -57,7 +57,7 @@ Directory/File Location::
 
 Open Issues/Problems/Risks::
 
-The notes describe a stable architectural center and the code matches that direction. The remaining risk is not inside the kernel itself but at the outer Antora integration boundary, which still stops at scaffold status.
+The notes describe a stable architectural center and the code matches that direction. The remaining risk is not the absence of an outer Antora integration boundary, but drift between the real extension entrypoint and the repository-owned conversion semantics it is supposed to expose.
 
 ==== Conversion And Include Handling
 
@@ -71,7 +71,7 @@ Directory/File Location::
 
 Open Issues/Problems/Risks::
 
-The private marker transport is intentionally isolated, but the surrounding architecture still assumes an upstream assembly step that is not yet implemented as a first-class runtime integration in this repository.
+The private marker transport is intentionally isolated, and the surrounding architecture now has a first-class runtime integration through the Assembler-backed extension entrypoint. The main ongoing risk is conversion coverage for richer assembled AsciiDoc constructs, not missing registration itself.
 
 ==== Validation And Release Surfaces
 
