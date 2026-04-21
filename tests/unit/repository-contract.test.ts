@@ -105,6 +105,9 @@ describe("repository contract", () => {
 		);
 		expect(describePackage()).toContain(packageJson.description);
 		expect(packageJson.description.toLowerCase()).not.toContain("scaffold");
+		expect(packageJson.description.toLowerCase()).not.toContain("placeholder");
+		expect(releaseWorkflow).toContain("PACKAGE_DESCRIPTION=$(node -p");
+		expect(releaseWorkflow).toContain("$" + "{PACKAGE_DESCRIPTION}.");
 	});
 
 	it("keeps CI and release workflows aligned with the develop/tag operating model", () => {

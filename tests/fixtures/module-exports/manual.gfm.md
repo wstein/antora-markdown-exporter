@@ -19,7 +19,7 @@
   - [4.2. Keep Scripts, Docs, And Files In Lockstep](#42-keep-scripts-docs-and-files-in-lockstep)
 - [Chapter 5. Reference Notes](#chapter-5-reference-notes)
 
-This manual is for operators and maintainers who need to run, validate, and release `@wsmy/antora-markdown-exporter` using the repository’s supported workflows.
+This manual is for operators and maintainers who need to run, validate, and release `@wsmy/antora-markdown-exporter`, the Antora Assembler based Markdown exporter with semantic IR, inspection surfaces, and explicit Markdown flavor rendering.
 
 The manual is task-oriented on purpose. For contributor-first explanations, see the onboarding guide. For the most precise architectural statements, prefer the cited notes and the implementation files they point to.
 

@@ -6,7 +6,7 @@
 |Decision |Rationale |Current consequence
 
 |Use Antora Assembler as the export boundary
-|The notes `Exporter pipeline uses Assembler and a direct TypeScript converter` and `Antora extension entrypoints must reflect actual integration maturity` define the outer integration contract. The repository should expose a real Antora exporter extension, not a metadata-only placeholder.
+|The notes `Exporter pipeline uses Assembler and a direct TypeScript converter` and `Antora extension entrypoints must reflect actual integration maturity` define the outer integration contract. The repository should expose a real Antora exporter extension, not a metadata-only helper.
 |`src/extension/index.ts` registers through `@antora/assembler.configure()` and keeps assembly outside renderer-local logic.
 
 |Keep the Markdown IR as the canonical semantic boundary

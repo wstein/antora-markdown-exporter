@@ -222,8 +222,11 @@ jobs:
           ALREADY_PUBLISHED: ${{ needs.npm.outputs.already_published }}
         run: |
           set -euo pipefail
+          PACKAGE_DESCRIPTION=$(node -p "JSON.parse(require('fs').readFileSync('package.json', 'utf8')).description")
           cat > release-artifacts/release-body.md <<EOF
           Release \`${RELEASE_TAG}\` publishes \`@wsmy/antora-markdown-exporter@${RELEASE_VERSION}\`.
+
+          ${PACKAGE_DESCRIPTION}.
 
           - Source commit: \`${{ needs.gate.outputs.release_sha }}\`
           - npm publish: $( [ "${ALREADY_PUBLISHED}" = "true" ] && printf 'already present on npm, publish step skipped' || printf 'published from the certified tarball artifact' )
