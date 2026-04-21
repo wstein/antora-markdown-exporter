@@ -4,6 +4,17 @@ This guide helps new contributors build the right mental model before making cha
 
 When note intent and current implementation maturity differ, this guide says so explicitly. For precise architectural details, prefer the notes cited in each section and the implementation files they point to.
 
+== Reading Status Markers
+
+The docs now use a small claim-status grammar from the note `Documentation claims should distinguish implementation test and workflow evidence`.
+
+`Implemented`:: Behavior exists in repository code.
+`Test-enforced`:: Behavior is pinned by automated tests.
+`CI-enforced`:: Behavior is executed or guarded by repository workflows.
+`Intended`:: The repository documents the design direction, but proof is not yet complete.
+
+Use those markers whenever a contributor-facing document makes a strong claim about determinism, workflow automation, or supported converter behavior.
+
 == Mental Models
 
 === Start With The Real Boundary, Not The Marketing Boundary
@@ -224,6 +235,20 @@ At a high level, contributors can think about the repository in six layers:
 . Canonical markdown kernel in `src/markdown/ir.ts` and `src/markdown/normalize.ts`
 . Policy and lowering layers in `src/markdown/fallback.ts` and `src/markdown/xref-resolution.ts`
 . Flavor renderers and validation surfaces in `src/markdown/render/**` and `src/markdown/include-diagnostics.ts`
+
+Those layers are exposed through one contract family:
+
+* root package API in `src/index.ts`
+* Antora extension API in `src/extension/index.ts`
+* repository operator scripts in `scripts/export-antora-modules.ts`, `scripts/inspection-report.ts`, and `scripts/release.js`
+* release and publication workflows in `.github/workflows/release.yml` and `.github/workflows/pages.yml`
+
+Status summary:
+
+* `Implemented`: root package API, extension API, and operator scripts
+* `Test-enforced`: repository contracts, module export goldens, structural parity checks, and public API tests
+* `CI-enforced`: `CI`, `Release`, and `Pages` workflows as pinned in `tests/unit/repository-contract.test.ts`
+* `Intended`: broader converter coverage beyond the currently tested support matrix
 
 The test suite mirrors those layers:
 

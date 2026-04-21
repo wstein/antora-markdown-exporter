@@ -4,8 +4,9 @@
 
 - [Chapter 1. Introduction and Goals](#chapter-1-introduction-and-goals)
   - [1.1. Requirements Overview](#11-requirements-overview)
-  - [1.2. Quality Goals](#12-quality-goals)
-  - [1.3. Stakeholders](#13-stakeholders)
+  - [1.2. Claim Status Grammar](#12-claim-status-grammar)
+  - [1.3. Quality Goals](#13-quality-goals)
+  - [1.4. Stakeholders](#14-stakeholders)
 - [Chapter 2. Architecture Constraints](#chapter-2-architecture-constraints)
 - [Chapter 3. Context and Scope](#chapter-3-context-and-scope)
   - [3.1. Business Context](#31-business-context)
@@ -29,11 +30,12 @@
 - [Chapter 9. Architecture Decisions](#chapter-9-architecture-decisions)
 - [Chapter 10. Quality Requirements](#chapter-10-quality-requirements)
   - [10.1. Quality Requirements Overview](#101-quality-requirements-overview)
-  - [10.2. Quality Scenarios](#102-quality-scenarios)
-    - [10.2.1. QS-1 Deterministic Golden Rendering](#1021-qs-1-deterministic-golden-rendering)
-    - [10.2.2. QS-2 Reference Compatibility With Locked Provenance](#1022-qs-2-reference-compatibility-with-locked-provenance)
-    - [10.2.3. QS-3 Valid Extensions Stay Out Of Fallback](#1023-qs-3-valid-extensions-stay-out-of-fallback)
-    - [10.2.4. QS-4 Repository Self-Consistency Before Release](#1024-qs-4-repository-self-consistency-before-release)
+  - [10.2. Proof Matrix](#102-proof-matrix)
+  - [10.3. Quality Scenarios](#103-quality-scenarios)
+    - [10.3.1. QS-1 Deterministic Golden Rendering](#1031-qs-1-deterministic-golden-rendering)
+    - [10.3.2. QS-2 Reference Compatibility With Locked Provenance](#1032-qs-2-reference-compatibility-with-locked-provenance)
+    - [10.3.3. QS-3 Valid Extensions Stay Out Of Fallback](#1033-qs-3-valid-extensions-stay-out-of-fallback)
+    - [10.3.4. QS-4 Repository Self-Consistency Before Release](#1034-qs-4-repository-self-consistency-before-release)
 - [Chapter 11. Risks and Technical Debts](#chapter-11-risks-and-technical-debts)
 - [Chapter 12. Reference Notes](#chapter-12-reference-notes)
 
@@ -42,6 +44,18 @@
 ## 1.1. Requirements Overview
 
 `@wsmy/antora-markdown-exporter` is a library-first TypeScript package that converts assembled AsciiDoc into a normalized Markdown intermediate representation (IR), normalizes that IR, and renders it into explicit Markdown flavors. The current public API centers on `convertAssemblyToMarkdownIR`, `normalizeMarkdownIR`, `renderMarkdown` and flavor helpers, plus inspection helpers for include diagnostics and xref targets.
+
+## 1.2. Claim Status Grammar
+
+This architecture document uses the claim-status grammar from the note `Documentation claims should distinguish implementation test and workflow evidence`.
+
+**`Implemented`:** The behavior exists in repository code.
+
+**`Test-enforced`:** The behavior is pinned by automated tests.
+
+**`CI-enforced`:** The behavior is executed or guarded by repository workflows.
+
+**`Intended`:** The design direction is documented, but the repository does not yet prove it completely.
 
 The main architectural goals are:
 
@@ -55,7 +69,7 @@ The notes `Exporter pipeline uses Assembler and a direct TypeScript converter`, 
 
 The main uncertainty is no longer whether a real Antora registration path exists. It does. The remaining architectural concern is keeping that outer registration path, its converter coverage, and the public documentation aligned as the pipeline evolves.
 
-## 1.2. Quality Goals
+## 1.3. Quality Goals
 
 | Priority | Quality goal | Why it matters |
 | --- | --- | --- |
@@ -64,7 +78,7 @@ The main uncertainty is no longer whether a real Antora registration path exists
 | 3 | Inspectable validation surfaces | The note `Inspection helpers expose normalized validation surfaces` requires reusable inspection results for include diagnostics and xref metadata so CI, release checks, and tooling do not reimplement recursive IR traversal. |
 | 4 | Honest public maturity signaling | The note `Antora extension entrypoints must reflect actual integration maturity` requires naming and public examples to match what the package actually ships today. |
 
-## 1.3. Stakeholders
+## 1.4. Stakeholders
 
 | Role/Name | Contact | Expectations |
 | --- | --- | --- |
@@ -272,9 +286,20 @@ These decisions are intentionally implementation-facing. They explain why the re
 | Fidelity | Valid semantic constructs, including transparent fenced extensions, must be preserved explicitly where safe. |
 | Honesty | Public package surfaces and docs must not imply a fuller Antora integration than the code currently implements. |
 
-## 10.2. Quality Scenarios
+## 10.2. Proof Matrix
 
-### 10.2.1. QS-1 Deterministic Golden Rendering
+| Claim | Status | Evidence surface | Proof files |
+| --- | --- | --- | --- |
+| Deterministic output and stable inspection ordering | `Implemented`, `Test-enforced` | Canonical semantic pipeline and golden/reference checks | `src/exporter/**`; `src/markdown/**`; `tests/integration/fixture-golden.test.ts`; `tests/integration/module-export-golden.test.ts`; `tests/integration/reference-antora.test.ts` |
+| Centralized fallback policy | `Implemented`, `Test-enforced` | One fallback layer shared by renderers | `src/markdown/fallback.ts`; `tests/unit/fallback.test.ts`; `tests/integration/raw-html-policy.test.ts` |
+| Reusable inspection surfaces | `Implemented`, `Test-enforced` | Inspection helpers and machine-readable reporting | `src/markdown/include-diagnostics.ts`; `scripts/inspection-report.ts`; `tests/unit/include-diagnostics.test.ts`; `tests/unit/inspection-report-script.test.ts` |
+| Module export follows the package pipeline | `Implemented`, `Test-enforced` | Shared module-source assembly plus module-export tests | `scripts/docs-module-sources.mjs`; `scripts/export-antora-modules.ts`; `tests/unit/export-antora-modules.test.ts`; `tests/integration/module-export-golden.test.ts` |
+| Release promotion and Pages publication | `CI-enforced` | Tag-triggered release workflow and follow-on Pages workflow | `.github/workflows/release.yml`; `.github/workflows/pages.yml`; `tests/unit/repository-contract.test.ts` |
+| Broader converter coverage beyond the published matrix | `Intended` | Future semantic extensions and fixtures | Support matrix in the operator manual; note `Converter coverage should be published as a support matrix` |
+
+## 10.3. Quality Scenarios
+
+### 10.3.1. QS-1 Deterministic Golden Rendering
 
 **Context/Background:** Local fixture tests exercise the canonical render contract.
 
@@ -288,7 +313,7 @@ These decisions are intentionally implementation-facing. They explain why the re
 
 Notes cited: `Golden tests require rendered output comparison`; `Testing relies on golden fixtures and deterministic snapshots`
 
-### 10.2.2. QS-2 Reference Compatibility With Locked Provenance
+### 10.3.2. QS-2 Reference Compatibility With Locked Provenance
 
 **Context/Background:** The project validates realistic Antora content without using live upstream documents as byte-exact truth.
 
@@ -302,7 +327,7 @@ Notes cited: `Golden tests require rendered output comparison`; `Testing relies 
 
 Notes cited: `Reference testing uses official Antora documentation as a compatibility corpus`; `Reference tests check semantic invariants not exact bytes`; `Reference fixtures are curated and provenance locked`; `Reference corpus should cover navigation xrefs includes and admonitions`
 
-### 10.2.3. QS-3 Valid Extensions Stay Out Of Fallback
+### 10.3.3. QS-3 Valid Extensions Stay Out Of Fallback
 
 **Context/Background:** A source document contains a fenced code block with an authored language tag such as `mermaid`.
 
@@ -316,7 +341,7 @@ Notes cited: `Reference testing uses official Antora documentation as a compatib
 
 Notes cited: `Transparent extensions are not fallback mechanisms`; `The architecture favors explicit extension over implicit degradation`
 
-### 10.2.4. QS-4 Repository Self-Consistency Before Release
+### 10.3.4. QS-4 Repository Self-Consistency Before Release
 
 **Context/Background:** A release or CI run validates packaging, scripts, and tracked files.
 

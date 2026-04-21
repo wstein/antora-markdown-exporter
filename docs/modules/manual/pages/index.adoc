@@ -8,6 +8,27 @@ When notes describe a broader intended system than the code currently ships, thi
 
 == Core Workflows
 
+=== Read Status Markers First
+
+This manual uses the claim-status grammar from the note `Documentation claims should distinguish implementation test and workflow evidence`.
+
+[cols="1,3" options="header"]
+|===
+|Marker |Meaning
+
+|`Implemented`
+|The behavior exists in repository code today.
+
+|`Test-enforced`
+|The behavior is pinned by automated tests in `tests/**`.
+
+|`CI-enforced`
+|The behavior is executed or guarded by `.github/workflows/**`.
+
+|`Intended`
+|The behavior is the documented design direction, but the proof surface is still incomplete.
+|===
+
 === Run The Standard Repository Loop
 
 The repository’s primary execution path is Bun-first through `make` and `package.json` scripts.
@@ -94,6 +115,45 @@ Current uncertainty to preserve:
 * the package and docs describe an Antora exporter pipeline
 * the repository clearly implements conversion, rendering, inspection, testing, and release checks
 * the extension boundary in `src/extension/index.ts` is now part of the supported runtime path
+
+=== Operator Prerequisites Matrix
+
+Use this matrix before troubleshooting local environment failures.
+
+[cols="1,1,2,2" options="header"]
+|===
+|Dependency |Where it is needed |Status |Evidence
+
+|Bun 1.3.13
+|Primary local development path, `make` targets, build, tests, export scripts
+|`Implemented`, `Test-enforced`
+|`package.json`; `Makefile`; `tests/unit/repository-contract.test.ts`
+
+|Node.js
+|Package metadata reads, release-body generation, build scripts invoked through npm-compatible tooling
+|`Implemented`
+|`package.json`; `.github/workflows/release.yml`
+
+|Ruby + `asciidoctor-pdf`
+|Module PDF generation and published docs site build
+|`Implemented`, `CI-enforced`
+|`package.json`; `scripts/build-docs-site.mjs`; `.github/workflows/ci.yml`; `.github/workflows/pages.yml`
+
+|Antora CLI and site generator
+|Static site build and Assembler-backed export flows
+|`Implemented`
+|`package.json`; `antora-playbook.yml`; `scripts/build-docs-site.mjs`
+
+|Poppler `pdftotext`
+|PDF-versus-Markdown structural parity tests
+|`Test-enforced`, `CI-enforced`
+|`tests/integration/module-export-structure.test.ts`; `.github/workflows/ci.yml`
+
+|GitHub Actions runners
+|Release publishing and Pages publication
+|`CI-enforced`
+|`.github/workflows/release.yml`; `.github/workflows/pages.yml`; `tests/unit/repository-contract.test.ts`
+|===
 
 === Generate An Inspection Report
 
@@ -278,6 +338,31 @@ Known behavior from the implementation and tests:
 
 These failure modes print a usage message and exit with a non-zero status.
 
+=== Canonical Contract Family
+
+The repository exposes one coherent contract family rather than separate ad-hoc tools:
+
+[cols="1,3,1" options="header"]
+|===
+|Surface |Role |Status
+
+|Root package API
+|Conversion, normalization, rendering, and inspection helpers from `src/index.ts`
+|`Implemented`, `Test-enforced`
+
+|Extension package API
+|Assembler-backed Antora entrypoint from `src/extension/index.ts`
+|`Implemented`, `Test-enforced`
+
+|Operator scripts
+|Repository automation entrypoints in `scripts/export-antora-modules.ts`, `scripts/inspection-report.ts`, and `scripts/release.js`
+|`Implemented`, `Test-enforced`
+
+|Workflow automation
+|Release and publication behavior in `.github/workflows/release.yml` and `.github/workflows/pages.yml`
+|`CI-enforced`
+|===
+
 == Validation And Troubleshooting
 
 === Golden Tests: What Counts And What Does Not
@@ -357,6 +442,50 @@ Troubleshooting guidance:
 * if a reference test fails because the hash changed, confirm whether the snapshot was intentionally refreshed
 * if a reference test passes but real regressions slipped through, the next step is often better coverage tags or a better representative fixture, not a bigger uncurated corpus
 
+=== Converter Support Matrix
+
+The note `Converter coverage should be published as a support matrix` defines the honesty bar for feature coverage.
+
+[cols="1,1,2,2" options="header"]
+|===
+|Construct family |Status |Current scope |Evidence
+
+|Section structure and headings
+|Supported
+|Assembled module exports, chapter/section numbering parity, and heading rendering are covered for the documentation modules.
+|`tests/integration/module-export-golden.test.ts`; `tests/integration/module-export-structure.test.ts`
+
+|Xrefs, anchors, and page aliases
+|Supported
+|Structured xref metadata, lowering, and rendering are part of the semantic pipeline and inspection surfaces.
+|`tests/unit/xref-resolution.test.ts`; `tests/unit/include-diagnostics.test.ts`; reference fixtures
+
+|Include directives and diagnostics
+|Supported
+|Recursive include handling, tagged-region selection, line ranges, and diagnostics are implemented and exposed through inspection helpers.
+|`tests/unit/include-metadata.test.ts`; `tests/unit/include-diagnostics.test.ts`; `tests/integration/reference-antora.test.ts`
+
+|Admonitions, images, and tables
+|Supported
+|These constructs are converted and rendered through the semantic pipeline and appear in local and reference fixtures.
+|`tests/integration/fixture-golden.test.ts`; `tests/integration/reference-antora.test.ts`
+
+|Transparent fenced extensions such as `mermaid`
+|Supported
+|Valid fenced code blocks preserve authored language tags without falling into fallback.
+|`tests/integration/fenced-extension-policy.test.ts`; reference manifest entries
+
+|Raw HTML and unsupported degradation
+|Partial
+|The repository enforces explicit fallback policy, but support depends on flavor policy and visible degradation rules rather than blanket passthrough.
+|`tests/unit/fallback.test.ts`; `tests/integration/raw-html-policy.test.ts`
+
+|Unmodeled AsciiDoc constructs outside the current IR
+|Unsupported
+|These must become explicit IR extensions or visible fallback; they are not silently normalized into “good enough” Markdown.
+|`src/markdown/ir.ts`; `src/markdown/fallback.ts`; note `Strict architecture must be extended without weakening invariants`
+|===
+
 === Common Failure Modes
 
 [cols="1,3" options="header"]
@@ -396,6 +525,43 @@ Current conflict to preserve:
 * the package identity is real and enforced
 * the extension export is also real and packaged
 * the extension export is a real runtime integration surface and should stay aligned with package docs and release checks
+
+=== Proof Matrix
+
+[cols="1,1,2,2" options="header"]
+|===
+|Claim |Status |Evidence surface |Proof files
+
+|Deterministic rendered Markdown
+|`Implemented`, `Test-enforced`
+|Semantic pipeline plus exact-output tests
+|`src/exporter/**`; `src/markdown/**`; `tests/integration/fixture-golden.test.ts`; `tests/integration/module-export-golden.test.ts`
+
+|Centralized fallback policy
+|`Implemented`, `Test-enforced`
+|Fallback layer plus policy tests
+|`src/markdown/fallback.ts`; `tests/unit/fallback.test.ts`; `tests/integration/raw-html-policy.test.ts`
+
+|Inspection surfaces for diagnostics and xrefs
+|`Implemented`, `Test-enforced`
+|Root API, inspection script, and inspection tests
+|`src/markdown/include-diagnostics.ts`; `scripts/inspection-report.ts`; `tests/unit/include-diagnostics.test.ts`; `tests/unit/inspection-report-script.test.ts`
+
+|Module Markdown export follows the canonical pipeline
+|`Implemented`, `Test-enforced`
+|Shared assembled module sources plus module export tests
+|`scripts/docs-module-sources.mjs`; `scripts/export-antora-modules.ts`; `tests/unit/export-antora-modules.test.ts`; `tests/integration/module-export-golden.test.ts`
+
+|Release integrity and publish flow
+|`Implemented`, `CI-enforced`
+|Release checks plus tag-triggered workflow
+|`scripts/release-check.mjs`; `.github/workflows/release.yml`; `tests/unit/repository-contract.test.ts`
+
+|GitHub Pages publication after successful release promotion
+|`CI-enforced`
+|Workflow handoff from `Release` to `Pages`
+|`.github/workflows/release.yml`; `.github/workflows/pages.yml`; `tests/unit/repository-contract.test.ts`
+|===
 
 === Keep Scripts, Docs, And Files In Lockstep
 

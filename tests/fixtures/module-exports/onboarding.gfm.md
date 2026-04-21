@@ -2,35 +2,50 @@
 
 ## Table of Contents
 
-- [Chapter 1. Mental Models](#chapter-1-mental-models)
-  - [1.1. Start With The Real Boundary, Not The Marketing Boundary](#11-start-with-the-real-boundary-not-the-marketing-boundary)
-  - [1.2. Think In Pipeline Stages](#12-think-in-pipeline-stages)
-  - [1.3. The Markdown IR Is The Contract](#13-the-markdown-ir-is-the-contract)
-  - [1.4. Renderers Adapt Syntax, They Do Not Redefine Meaning](#14-renderers-adapt-syntax-they-do-not-redefine-meaning)
-  - [1.5. Fallback Is A Policy Layer](#15-fallback-is-a-policy-layer)
-  - [1.6. Transparent Extensions Are Not Fallback](#16-transparent-extensions-are-not-fallback)
-  - [1.7. Include Metadata Is Private, Include Semantics Are Public](#17-include-metadata-is-private-include-semantics-are-public)
-  - [1.8. Xref Routing Is Lowering, Not Rendering](#18-xref-routing-is-lowering-not-rendering)
-  - [1.9. One Toolchain Path Is Primary](#19-one-toolchain-path-is-primary)
-- [Chapter 2. Core Workflows](#chapter-2-core-workflows)
-  - [2.1. First-Day Development Loop](#21-first-day-development-loop)
-  - [2.2. Release Flow Uses develop, main, And Semver Tags](#22-release-flow-uses-develop-main-and-semver-tags)
-  - [2.3. Where To Start When You Change Behavior](#23-where-to-start-when-you-change-behavior)
-  - [2.4. How To Reason About Documentation](#24-how-to-reason-about-documentation)
-- [Chapter 3. Core Architecture](#chapter-3-core-architecture)
-- [Chapter 4. Quality And Guardrails](#chapter-4-quality-and-guardrails)
-  - [4.1. Exact Output Matters](#41-exact-output-matters)
-  - [4.2. Reference Tests Serve A Different Purpose](#42-reference-tests-serve-a-different-purpose)
-  - [4.3. Keep Repository Contracts Honest](#43-keep-repository-contracts-honest)
-- [Chapter 5. Reference Notes](#chapter-5-reference-notes)
+- [Chapter 1. Reading Status Markers](#chapter-1-reading-status-markers)
+- [Chapter 2. Mental Models](#chapter-2-mental-models)
+  - [2.1. Start With The Real Boundary, Not The Marketing Boundary](#21-start-with-the-real-boundary-not-the-marketing-boundary)
+  - [2.2. Think In Pipeline Stages](#22-think-in-pipeline-stages)
+  - [2.3. The Markdown IR Is The Contract](#23-the-markdown-ir-is-the-contract)
+  - [2.4. Renderers Adapt Syntax, They Do Not Redefine Meaning](#24-renderers-adapt-syntax-they-do-not-redefine-meaning)
+  - [2.5. Fallback Is A Policy Layer](#25-fallback-is-a-policy-layer)
+  - [2.6. Transparent Extensions Are Not Fallback](#26-transparent-extensions-are-not-fallback)
+  - [2.7. Include Metadata Is Private, Include Semantics Are Public](#27-include-metadata-is-private-include-semantics-are-public)
+  - [2.8. Xref Routing Is Lowering, Not Rendering](#28-xref-routing-is-lowering-not-rendering)
+  - [2.9. One Toolchain Path Is Primary](#29-one-toolchain-path-is-primary)
+- [Chapter 3. Core Workflows](#chapter-3-core-workflows)
+  - [3.1. First-Day Development Loop](#31-first-day-development-loop)
+  - [3.2. Release Flow Uses develop, main, And Semver Tags](#32-release-flow-uses-develop-main-and-semver-tags)
+  - [3.3. Where To Start When You Change Behavior](#33-where-to-start-when-you-change-behavior)
+  - [3.4. How To Reason About Documentation](#34-how-to-reason-about-documentation)
+- [Chapter 4. Core Architecture](#chapter-4-core-architecture)
+- [Chapter 5. Quality And Guardrails](#chapter-5-quality-and-guardrails)
+  - [5.1. Exact Output Matters](#51-exact-output-matters)
+  - [5.2. Reference Tests Serve A Different Purpose](#52-reference-tests-serve-a-different-purpose)
+  - [5.3. Keep Repository Contracts Honest](#53-keep-repository-contracts-honest)
+- [Chapter 6. Reference Notes](#chapter-6-reference-notes)
 
 This guide helps new contributors build the right mental model before making changes. It is intentionally oriented around the canonical notes and the current repository state, not around aspirational future architecture.
 
 When note intent and current implementation maturity differ, this guide says so explicitly. For precise architectural details, prefer the notes cited in each section and the implementation files they point to.
 
-# Chapter 1. Mental Models
+# Chapter 1. Reading Status Markers
 
-## 1.1. Start With The Real Boundary, Not The Marketing Boundary
+The docs now use a small claim-status grammar from the note `Documentation claims should distinguish implementation test and workflow evidence`.
+
+**`Implemented`:** Behavior exists in repository code.
+
+**`Test-enforced`:** Behavior is pinned by automated tests.
+
+**`CI-enforced`:** Behavior is executed or guarded by repository workflows.
+
+**`Intended`:** The repository documents the design direction, but proof is not yet complete.
+
+Use those markers whenever a contributor-facing document makes a strong claim about determinism, workflow automation, or supported converter behavior.
+
+# Chapter 2. Mental Models
+
+## 2.1. Start With The Real Boundary, Not The Marketing Boundary
 
 The most important onboarding concept comes from the note `Antora extension entrypoints must reflect actual integration maturity`.
 
@@ -50,7 +65,7 @@ Current conflict to keep in mind:
 
 As a contributor, assume both the markdown kernel and the outer Antora registration path are real, and make changes in ways that keep those two layers aligned.
 
-## 1.2. Think In Pipeline Stages
+## 2.2. Think In Pipeline Stages
 
 The note `Exporter pipeline uses Assembler and a direct TypeScript converter` defines the core project shape:
 
@@ -70,7 +85,7 @@ This is why the implementation is split across:
 
 If you are touching behavior after conversion starts, your change should usually land in the exporter, IR, normalization, lowering, renderer, or tests, not in an external conversion shortcut.
 
-## 1.3. The Markdown IR Is The Contract
+## 2.3. The Markdown IR Is The Contract
 
 The note `Markdown IR is the canonical render boundary` is the main architectural rule for contributors.
 
@@ -84,7 +99,7 @@ Contributor rule of thumb:
 
 This separation is what keeps regressions explainable and testable.
 
-## 1.4. Renderers Adapt Syntax, They Do Not Redefine Meaning
+## 2.4. Renderers Adapt Syntax, They Do Not Redefine Meaning
 
 The note `Flavor renderers are syntax adapters over one semantic layer` explains how to think about flavors.
 
@@ -98,7 +113,7 @@ That means:
 
 When adding or changing a flavor, keep the semantic layer shared and the syntax surface explicit.
 
-## 1.5. Fallback Is A Policy Layer
+## 2.5. Fallback Is A Policy Layer
 
 The note `Fallback selection is centralized across markdown flavors` defines a contributor boundary that prevents subtle regressions.
 
@@ -112,7 +127,7 @@ This matters because fallback behavior is part of the contract:
 
 If you are about to add a one-off renderer branch for unsupported behavior, stop and check whether the change belongs in the fallback layer instead.
 
-## 1.6. Transparent Extensions Are Not Fallback
+## 2.6. Transparent Extensions Are Not Fallback
 
 Several notes reinforce the same point:
 
@@ -128,7 +143,7 @@ For contributors, this distinction is critical:
 - fallback is for controlled degradation, not for every unfamiliar feature
 - strictness should lead to explicit extension points, not silent lossy rewrites
 
-## 1.7. Include Metadata Is Private, Include Semantics Are Public
+## 2.7. Include Metadata Is Private, Include Semantics Are Public
 
 The note `Include metadata transport is an internal implementation detail` tells contributors what to preserve during refactors.
 
@@ -141,7 +156,7 @@ When touching includes:
 - preserve inspectability
 - do not leak the raw marker format into unrelated parser or renderer code
 
-## 1.8. Xref Routing Is Lowering, Not Rendering
+## 2.8. Xref Routing Is Lowering, Not Rendering
 
 The note `Xref target resolution is a separate lowering phase` defines another important boundary.
 
@@ -155,7 +170,7 @@ If you need to change xref behavior, start by deciding whether you are changing:
 
 Mixing those layers makes xref regressions much harder to reason about.
 
-## 1.9. One Toolchain Path Is Primary
+## 2.9. One Toolchain Path Is Primary
 
 Two notes set the contributor workflow expectation:
 
@@ -170,9 +185,9 @@ Practical onboarding takeaway:
 - expect Bun to be the default runtime for day-to-day development
 - do not add new lockfile-detection or multi-package-manager branching
 
-# Chapter 2. Core Workflows
+# Chapter 3. Core Workflows
 
-## 2.1. First-Day Development Loop
+## 3.1. First-Day Development Loop
 
 The shortest reliable contributor path today is:
 
@@ -185,7 +200,7 @@ This flow is intentionally explicit. The repository prefers a small set of stabl
 
 For package-level details, `package.json` is the durable source of truth. For contributor-friendly entrypoints, prefer `Makefile`.
 
-## 2.2. Release Flow Uses develop, main, And Semver Tags
+## 3.2. Release Flow Uses develop, main, And Semver Tags
 
 Three notes define the release operating model:
 
@@ -209,7 +224,7 @@ Why this matters for contributors:
 - it keeps release publication tied to one immutable tag input
 - it means `main` is not the branch for normal feature integration anymore
 
-## 2.3. Where To Start When You Change Behavior
+## 3.3. Where To Start When You Change Behavior
 
 Use this heuristic:
 
@@ -224,7 +239,7 @@ Use this heuristic:
 
 Then find the corresponding tests before editing code.
 
-## 2.4. How To Reason About Documentation
+## 3.4. How To Reason About Documentation
 
 Onboarding, README, notes, and architecture docs are related but not interchangeable.
 
@@ -238,7 +253,7 @@ Use them this way:
 
 If notes and implementation diverge, preserve the uncertainty and explain it instead of smoothing it away.
 
-# Chapter 3. Core Architecture
+# Chapter 4. Core Architecture
 
 At a high level, contributors can think about the repository in six layers:
 
@@ -248,6 +263,20 @@ At a high level, contributors can think about the repository in six layers:
 4. Canonical markdown kernel in `src/markdown/ir.ts` and `src/markdown/normalize.ts`
 5. Policy and lowering layers in `src/markdown/fallback.ts` and `src/markdown/xref-resolution.ts`
 6. Flavor renderers and validation surfaces in `src/markdown/render/**` and `src/markdown/include-diagnostics.ts`
+
+Those layers are exposed through one contract family:
+
+- root package API in `src/index.ts`
+- Antora extension API in `src/extension/index.ts`
+- repository operator scripts in `scripts/export-antora-modules.ts`, `scripts/inspection-report.ts`, and `scripts/release.js`
+- release and publication workflows in `.github/workflows/release.yml` and `.github/workflows/pages.yml`
+
+Status summary:
+
+- `Implemented`: root package API, extension API, and operator scripts
+- `Test-enforced`: repository contracts, module export goldens, structural parity checks, and public API tests
+- `CI-enforced`: `CI`, `Release`, and `Pages` workflows as pinned in `tests/unit/repository-contract.test.ts`
+- `Intended`: broader converter coverage beyond the currently tested support matrix
 
 The test suite mirrors those layers:
 
@@ -264,9 +293,9 @@ Current uncertainty to preserve:
 
 That is the current contributor reality.
 
-# Chapter 4. Quality And Guardrails
+# Chapter 5. Quality And Guardrails
 
-## 4.1. Exact Output Matters
+## 5.1. Exact Output Matters
 
 The notes `Testing relies on golden fixtures and deterministic snapshots` and `Golden tests require rendered output comparison` define the core quality bar.
 
@@ -279,7 +308,7 @@ A real golden test must:
 
 This is why `tests/integration/fixture-golden.test.ts` is a key contributor touchpoint. If your change affects rendering, expect golden outputs to be the primary review surface.
 
-## 4.2. Reference Tests Serve A Different Purpose
+## 5.2. Reference Tests Serve A Different Purpose
 
 The notes `Reference testing uses official Antora documentation as a compatibility corpus`, `Reference fixtures are curated and provenance locked`, `Reference corpus should cover navigation xrefs includes and admonitions`, and `Reference tests check semantic invariants not exact bytes` describe the external compatibility suite.
 
@@ -292,7 +321,7 @@ New contributors should remember:
 
 When adding a new reference case, include a clear reason for why that case earns its place in the corpus.
 
-## 4.3. Keep Repository Contracts Honest
+## 5.3. Keep Repository Contracts Honest
 
 The note `Repository scripts and referenced files must stay in lockstep` is both a quality rule and an onboarding rule.
 
@@ -305,7 +334,7 @@ A change is not complete if:
 
 Contributors should treat self-consistency as release readiness, not as optional cleanup work.
 
-# Chapter 5. Reference Notes
+# Chapter 6. Reference Notes
 
 The note `Toolchain policy must choose one primary execution path` is the best reference note to keep close while onboarding because it ties together contributor expectations across `README.md`, `Makefile`, `package.json`, CI, and validation scripts.
 

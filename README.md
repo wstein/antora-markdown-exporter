@@ -4,6 +4,17 @@ Antora Assembler based Markdown exporter with semantic IR, inspection surfaces, 
 
 The package exposes explicit flavor capabilities, transparent fenced extension preservation, centralized fallback policy, and renderer profiles for GitHub Flavored Markdown, CommonMark, GitLab Flavored Markdown, and a strict canonical mode.
 
+## Status Markers
+
+This repository uses a small claim-status grammar in its docs:
+
+- `Implemented`: present in repository code
+- `Test-enforced`: pinned by automated tests
+- `CI-enforced`: executed or guarded by repository workflows
+- `Intended`: documented design direction that is not yet fully enforced
+
+The operator manual publishes the fuller proof matrix, support matrix, and prerequisites matrix.
+
 ## Install
 
 ```bash
