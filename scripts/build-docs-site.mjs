@@ -1,71 +1,86 @@
 import { spawnSync } from "node:child_process";
-import { mkdirSync, readFileSync, rmSync, writeFileSync } from "node:fs";
+import {
+	mkdirSync,
+	mkdtempSync,
+	readFileSync,
+	rmSync,
+	writeFileSync,
+} from "node:fs";
 import { dirname, resolve } from "node:path";
 import { fileURLToPath } from "node:url";
 
 const DOCUMENT_TITLE_PATTERN = /^=\s+.+\n?/;
+const PDF_MODULES = ["architecture", "manual", "onboarding"];
 
 export function stripDocumentTitle(source) {
 	return source.replace(DOCUMENT_TITLE_PATTERN, "");
 }
 
-export function createPdfBookSource(rootDir) {
-	const rootIndex = stripDocumentTitle(
-		readFileSync(
-			resolve(rootDir, "docs/modules/ROOT/pages/index.adoc"),
-			"utf8",
-		),
-	).trim();
-	const manualIndex = stripDocumentTitle(
-		readFileSync(
-			resolve(rootDir, "docs/modules/manual/pages/index.adoc"),
-			"utf8",
-		),
-	).trim();
-	const onboardingIndex = stripDocumentTitle(
-		readFileSync(
-			resolve(rootDir, "docs/modules/onboarding/pages/index.adoc"),
-			"utf8",
-		),
-	).trim();
-
-	return `= Antora Markdown Exporter Documentation
+function createBookPreamble(title) {
+	return `= ${title}
 :doctype: book
 :toc:
 :toclevels: 3
 :sectnums:
 :reproducible:
-:imagesdir: ../docs/modules/architecture/images
 
-== Documentation
-
-${rootIndex}
-
-include::../docs/modules/architecture/partials/config.adoc[]
-
-== Architecture
-
-include::../docs/modules/architecture/partials/01_introduction_and_goals.adoc[]
-include::../docs/modules/architecture/partials/02_architecture_constraints.adoc[]
-include::../docs/modules/architecture/partials/03_context_and_scope.adoc[]
-include::../docs/modules/architecture/partials/04_solution_strategy.adoc[]
-include::../docs/modules/architecture/partials/05_building_block_view.adoc[]
-include::../docs/modules/architecture/partials/06_runtime_view.adoc[]
-include::../docs/modules/architecture/partials/07_deployment_view.adoc[]
-include::../docs/modules/architecture/partials/08_concepts.adoc[]
-include::../docs/modules/architecture/partials/09_architecture_decisions.adoc[]
-include::../docs/modules/architecture/partials/10_quality_requirements.adoc[]
-include::../docs/modules/architecture/partials/11_technical_risks.adoc[]
-include::../docs/modules/architecture/partials/12_glossary.adoc[]
-
-== Manual
-
-${manualIndex}
-
-== Onboarding
-
-${onboardingIndex}
 `;
+}
+
+export function createArchitecturePdfSource(rootDir) {
+	const partialsDir = resolve(rootDir, "docs/modules/architecture/partials");
+	const imagesDir = resolve(rootDir, "docs/modules/architecture/images");
+
+	return `${createBookPreamble("Architecture")}:imagesdir: ${imagesDir}
+
+include::${resolve(partialsDir, "config.adoc")}[]
+
+include::${resolve(partialsDir, "01_introduction_and_goals.adoc")}[]
+include::${resolve(partialsDir, "02_architecture_constraints.adoc")}[]
+include::${resolve(partialsDir, "03_context_and_scope.adoc")}[]
+include::${resolve(partialsDir, "04_solution_strategy.adoc")}[]
+include::${resolve(partialsDir, "05_building_block_view.adoc")}[]
+include::${resolve(partialsDir, "06_runtime_view.adoc")}[]
+include::${resolve(partialsDir, "07_deployment_view.adoc")}[]
+include::${resolve(partialsDir, "08_concepts.adoc")}[]
+include::${resolve(partialsDir, "09_architecture_decisions.adoc")}[]
+include::${resolve(partialsDir, "10_quality_requirements.adoc")}[]
+include::${resolve(partialsDir, "11_technical_risks.adoc")}[]
+include::${resolve(partialsDir, "12_glossary.adoc")}[]
+`;
+}
+
+function readModulePageBody(rootDir, moduleName) {
+	return stripDocumentTitle(
+		readFileSync(
+			resolve(rootDir, `docs/modules/${moduleName}/pages/index.adoc`),
+			"utf8",
+		),
+	).trim();
+}
+
+export function createModulePdfSource(rootDir, moduleName) {
+	if (moduleName === "architecture") {
+		return createArchitecturePdfSource(rootDir);
+	}
+
+	if (moduleName === "manual") {
+		return `${createBookPreamble("Operator Manual")}${readModulePageBody(
+			rootDir,
+			moduleName,
+		)}
+`;
+	}
+
+	if (moduleName === "onboarding") {
+		return `${createBookPreamble("Onboarding")}${readModulePageBody(
+			rootDir,
+			moduleName,
+		)}
+`;
+	}
+
+	throw new Error(`Unsupported PDF module: ${moduleName}`);
 }
 
 function runCommand(command, args, cwd) {
@@ -80,25 +95,43 @@ function runCommand(command, args, cwd) {
 	}
 }
 
-export function getPdfOutputPath(rootDir) {
+export function getPdfOutputPath(rootDir, moduleName) {
 	return resolve(
 		rootDir,
-		"build/site/antora-markdown-exporter/antora-markdown-exporter.pdf",
+		"build/site/antora-markdown-exporter",
+		`${moduleName}.pdf`,
 	);
 }
 
-export function buildDocsSite(rootDir) {
+export function getPdfModuleNames() {
+	return [...PDF_MODULES];
+}
+
+export function buildDocsPdf(rootDir) {
 	const buildDir = resolve(rootDir, "build");
-	const pdfSourcePath = resolve(buildDir, "antora-markdown-exporter-book.adoc");
-	const pdfOutputPath = getPdfOutputPath(rootDir);
-
 	mkdirSync(buildDir, { recursive: true });
-	writeFileSync(pdfSourcePath, createPdfBookSource(rootDir));
+	const tempDir = mkdtempSync(resolve(buildDir, "pdf-build-"));
 
+	try {
+		for (const moduleName of PDF_MODULES) {
+			const pdfSourcePath = resolve(tempDir, `${moduleName}.pdf.adoc`);
+			const pdfOutputPath = getPdfOutputPath(rootDir, moduleName);
+			writeFileSync(pdfSourcePath, createModulePdfSource(rootDir, moduleName));
+			mkdirSync(dirname(pdfOutputPath), { recursive: true });
+			runCommand(
+				"asciidoctor-pdf",
+				["-o", pdfOutputPath, pdfSourcePath],
+				rootDir,
+			);
+		}
+	} finally {
+		rmSync(tempDir, { force: true, recursive: true });
+	}
+}
+
+export function buildDocsSite(rootDir) {
 	runCommand("antora", ["antora-playbook.yml"], rootDir);
-	mkdirSync(dirname(pdfOutputPath), { recursive: true });
-	runCommand("asciidoctor-pdf", ["-o", pdfOutputPath, pdfSourcePath], rootDir);
-	rmSync(pdfSourcePath, { force: true });
+	buildDocsPdf(rootDir);
 }
 
 function isDirectExecution() {

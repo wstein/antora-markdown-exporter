@@ -245,6 +245,7 @@ make test
 make unit
 make integration
 make reference
+make pdf
 make markdown
 make inspect-report INPUT=tests/fixtures/sample/input.adoc
 bun run inspect:report -- tests/fixtures/sample/input.adoc
@@ -261,7 +262,7 @@ make check
 make PM=npm install
 ```
 
-Documentation publication follows the same operating model. `make docs` builds the local Antora site into `build/site`, generates `build/site/antora-markdown-exporter/antora-markdown-exporter.pdf`, and `.github/workflows/pages.yml` deploys that site to `https://wstein.github.io/antora-markdown-exporter` only after a successful tag-triggered `Release` workflow has already fast-forwarded `main` to the published commit.
+Documentation publication follows the same operating model. `make docs` builds the local Antora site into `build/site`, generates module PDFs at `build/site/antora-markdown-exporter/architecture.pdf`, `build/site/antora-markdown-exporter/manual.pdf`, and `build/site/antora-markdown-exporter/onboarding.pdf`, and `.github/workflows/pages.yml` deploys that site to `https://wstein.github.io/antora-markdown-exporter` only after a successful tag-triggered `Release` workflow has already fast-forwarded `main` to the published commit.
 
 Each target is a thin delegate to the matching package-manager script.
 
@@ -274,6 +275,12 @@ make markdown
 ```
 
 This emits Markdown files under `build/markdown/**` using the same conversion path as the library API: AsciiDoc assembly mapping, normalization, and flavor rendering. Use `ARGS="--flavor gitlab"` or alternate `--output-root` / `--modules-root` values when you need a different target.
+
+To build only the assembled module PDFs without rebuilding the full Antora HTML site, run:
+
+```bash
+make pdf
+```
 
 ## Release
 

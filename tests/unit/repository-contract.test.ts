@@ -70,6 +70,8 @@ describe("repository contract", () => {
 		expect(packageJson.scripts["docs:build"]).toBe(
 			"node scripts/build-docs-site.mjs",
 		);
+		expect(packageJson.scripts["pdf:build"]).toContain("buildDocsPdf");
+		expect(existsSync(resolve(root, "scripts/build-docs-site.mjs"))).toBe(true);
 		expect(packageJson.scripts["export:modules"]).toBe(
 			"bun scripts/export-antora-modules.ts",
 		);
@@ -102,6 +104,7 @@ describe("repository contract", () => {
 		expect(pagesWorkflow).toContain(
 			"gem install asciidoctor-pdf --no-document",
 		);
+		expect(pagesWorkflow).toContain("bun run docs:build");
 		expect(pagesWorkflow).toContain("actions/upload-pages-artifact@v3");
 		expect(pagesWorkflow).toContain("actions/deploy-pages@v4");
 		expect(pagesWorkflow).toContain("path: build/site");

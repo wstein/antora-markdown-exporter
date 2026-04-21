@@ -3,7 +3,11 @@
 
 This section is the landing page for the Antora documentation set.
 
-Download the assembled site guide as a PDF: link:antora-markdown-exporter.pdf[antora-markdown-exporter.pdf].
+Download the module PDFs:
+
+* link:architecture.pdf[architecture.pdf]
+* link:manual.pdf[manual.pdf]
+* link:onboarding.pdf[onboarding.pdf]
 
 Use the dedicated modules for the main documentation streams:
 

@@ -33,6 +33,8 @@ const markdownFlavors = new Set<MarkdownFlavorName>([
 	"gitlab",
 	"strict",
 ]);
+const asciidocControlLinePattern =
+	/^(?:\/\/|ifdef::|ifndef::|endif::|:[A-Za-z0-9_-]+:|<<<<\s*)/;
 
 function usage(): string {
 	return [
@@ -40,6 +42,48 @@ function usage(): string {
 		"",
 		"Export Antora module pages from docs/modules/**/pages/**/*.adoc into Markdown using the repository pipeline.",
 	].join("\n");
+}
+
+export function sanitizeAntoraPageSource(source: string): string {
+	const sanitizedLines: string[] = [];
+	let skippingArc42Help = false;
+
+	for (const line of source.split(/\r?\n/)) {
+		if (line.startsWith("ifdef::arc42help[]")) {
+			skippingArc42Help = true;
+			continue;
+		}
+
+		if (line.startsWith("endif::arc42help[]")) {
+			skippingArc42Help = false;
+			continue;
+		}
+
+		if (skippingArc42Help || asciidocControlLinePattern.test(line)) {
+			continue;
+		}
+
+		sanitizedLines.push(line);
+	}
+
+	return `${sanitizedLines.join("\n").trim()}\n`;
+}
+
+export function cleanRenderedMarkdown(markdown: string): string {
+	return markdown
+		.replaceAll(/\\<!-- md-ir-include .*?--\\>\s*/g, "")
+		.replaceAll(
+			/\n> Unsupported: include directive is not yet inlined: include::[^\n]+\n?/g,
+			"\n",
+		)
+		.replaceAll(/ifdef::arc42help\\\[\\\].*?endif::arc42help\\\[\\\]\n*/gs, "")
+		.replaceAll(/^\/\/.*$/gm, "")
+		.replaceAll(/^:.*$/gm, "")
+		.replaceAll(/^\\?\[(?:options|cols).*$/gm, "")
+		.replaceAll(/^\*\*<[^>\n]+>\*\*$/gm, "")
+		.replaceAll(/^\\?\*{2,}.*<[^>\n]+>.*$/gm, "")
+		.replaceAll(/\n{3,}/g, "\n\n")
+		.trim();
 }
 
 export function parseArguments(argv: string[]): ExportAntoraModulesOptions {
@@ -146,6 +190,18 @@ export function mapAntoraPageToMarkdownPath(
 	};
 }
 
+export function getAntoraModuleRootForPage(pagePath: string): string {
+	const segments = pagePath.split(sep);
+	const pagesIndex = segments.lastIndexOf("pages");
+	if (pagesIndex <= 0) {
+		throw new Error(
+			`Page path is not inside an Antora pages directory: ${pagePath}`,
+		);
+	}
+
+	return segments.slice(0, pagesIndex).join(sep) || sep;
+}
+
 export async function exportAntoraModulesToMarkdown(
 	options: ExportAntoraModulesOptions,
 ): Promise<ExportedMarkdownFile[]> {
@@ -171,7 +227,7 @@ export async function exportAntoraModulesToMarkdown(
 	const exportedFiles: ExportedMarkdownFile[] = [];
 
 	for (const pageFile of pageFiles) {
-		const source = await readFile(pageFile, "utf8");
+		const source = sanitizeAntoraPageSource(await readFile(pageFile, "utf8"));
 		const mapping = mapAntoraPageToMarkdownPath(
 			options.modulesRoot,
 			options.outputRoot,
@@ -179,10 +235,13 @@ export async function exportAntoraModulesToMarkdown(
 		);
 		const document = normalizeMarkdownIR(
 			convertAssemblyToMarkdownIR(source, {
+				includeRootDir: getAntoraModuleRootForPage(pageFile),
 				sourcePath: pageFile,
 			}),
 		);
-		const markdown = renderMarkdown(document, options.flavor);
+		const markdown = cleanRenderedMarkdown(
+			renderMarkdown(document, options.flavor),
+		);
 
 		await mkdir(dirname(mapping.outputPath), { recursive: true });
 		await writeFile(mapping.outputPath, `${markdown}\n`);

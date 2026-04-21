@@ -3,10 +3,13 @@ import { tmpdir } from "node:os";
 import { resolve } from "node:path";
 import { describe, expect, it } from "vitest";
 import {
+	cleanRenderedMarkdown,
 	collectAntoraPageFiles,
 	exportAntoraModulesToMarkdown,
+	getAntoraModuleRootForPage,
 	mapAntoraPageToMarkdownPath,
 	parseArguments,
+	sanitizeAntoraPageSource,
 } from "../../scripts/export-antora-modules.ts";
 
 describe("export antora modules script", () => {
@@ -16,6 +19,22 @@ describe("export antora modules script", () => {
 		expect(options.flavor).toBe("gfm");
 		expect(options.modulesRoot).toBe(resolve("docs/modules"));
 		expect(options.outputRoot).toBe(resolve("build/markdown"));
+	});
+
+	it("removes export-only asciidoc control lines from page sources", () => {
+		expect(
+			sanitizeAntoraPageSource(
+				"= Title\n:toc:\n// comment\n<<<<\nBody\nifndef::revnumber[:revnumber: n/a]\n",
+			),
+		).toBe("= Title\nBody\n");
+	});
+
+	it("removes include marker artifacts from rendered markdown", () => {
+		expect(
+			cleanRenderedMarkdown(
+				'Intro\n\\<!-- md-ir-include {"target":"partial$section.adoc"} --\\>\n> Unsupported: include directive is not yet inlined: include::partial$section.adoc[]\n\\[options="header"]\n\\***\\<Diagram or Table\\>**\\*\n\nBody\n',
+			),
+		).toBe("Intro\n\nBody");
 	});
 
 	it("parses explicit arguments", () => {
@@ -45,6 +64,14 @@ describe("export antora modules script", () => {
 		expect(mapping.outputPath).toBe(
 			resolve("/repo/build/markdown/manual/pages/index.md"),
 		);
+	});
+
+	it("finds the antora module root for a page", () => {
+		expect(
+			getAntoraModuleRootForPage(
+				resolve("/repo/docs/modules/architecture/pages/index.adoc"),
+			),
+		).toBe(resolve("/repo/docs/modules/architecture"));
 	});
 
 	it("collects only antora page files", async () => {
@@ -104,5 +131,41 @@ describe("export antora modules script", () => {
 		expect(markdown).toContain("# Guide");
 		expect(markdown).toContain("Included line.");
 		expect(markdown).toContain("[other](other.adoc)");
+	});
+
+	it("resolves antora partial includes from the module root", async () => {
+		const root = await mkdtemp(resolve(tmpdir(), "antora-partial-export-"));
+		const modulesRoot = resolve(root, "modules");
+		const outputRoot = resolve(root, "markdown");
+
+		await mkdir(resolve(modulesRoot, "architecture/pages"), {
+			recursive: true,
+		});
+		await mkdir(resolve(modulesRoot, "architecture/partials"), {
+			recursive: true,
+		});
+		await writeFile(
+			resolve(modulesRoot, "architecture/partials/section.adoc"),
+			"== Included Section\n\nBody text.\n",
+		);
+		await writeFile(
+			resolve(modulesRoot, "architecture/pages/index.adoc"),
+			"= Architecture\n\ninclude::partial$section.adoc[]\n",
+		);
+
+		await exportAntoraModulesToMarkdown({
+			flavor: "gfm",
+			modulesRoot,
+			outputRoot,
+		});
+
+		const markdown = await readFile(
+			resolve(outputRoot, "architecture/pages/index.md"),
+			"utf8",
+		);
+		expect(markdown).toContain("# Included Section");
+		expect(markdown).toContain("Body text.");
+		expect(markdown).not.toContain("Unsupported: include directive");
+		expect(markdown).not.toContain("md-ir-include");
 	});
 });

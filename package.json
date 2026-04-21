@@ -34,6 +34,7 @@
 	"scripts": {
 		"build": "tsup --dts --format esm,cjs --out-dir dist src/index.ts src/extension/index.ts",
 		"docs:build": "node scripts/build-docs-site.mjs",
+		"pdf:build": "node -e \"import('./scripts/build-docs-site.mjs').then(({ buildDocsPdf }) => buildDocsPdf(process.cwd()))\"",
 		"test": "vitest run --coverage",
 		"test:watch": "vitest",
 		"unit": "vitest run tests/unit",
