@@ -62,6 +62,17 @@ graph TD
 
 This differs from controlled fallback behavior. Raw HTML and unsupported constructs still flow through explicit policy decisions, while valid fenced blocks preserve their authored language tag verbatim.
 
+### Render Contract
+
+The renderer works with four explicit categories:
+
+- native markdown: semantic nodes that map directly to supported Markdown output
+- transparent extensions: valid semantic nodes, such as fenced `codeBlock` nodes with authored language tags like `mermaid`, that remain verbatim instead of degrading
+- controlled fallback: policy-mediated degradation paths such as unsupported markers or raw HTML fallback when a flavor allows it
+- unsupported degradation: visible fallback for malformed or unrepresentable constructs when no semantic or policy-preserving path exists
+
+This keeps valid author intent separate from fallback. A preserved ` ```mermaid ` fence is not raw HTML passthrough, and it is not an unsupported block.
+
 ### Validation Helpers
 
 ```ts
