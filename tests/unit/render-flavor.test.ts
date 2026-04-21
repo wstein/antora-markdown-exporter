@@ -480,4 +480,65 @@ describe("flavor-aware markdown rendering", () => {
 		expect(renderGitLab(document)).toBe(["> > 3. Deep item", ""].join("\n"));
 		expect(renderStrict(document)).toBe(["> > 1. Deep item", ""].join("\n"));
 	});
+
+	it("indents nested blockquote continuations inside list items consistently", () => {
+		const document = {
+			type: "document" as const,
+			children: [
+				{
+					type: "list" as const,
+					ordered: false,
+					items: [
+						{
+							children: [
+								{
+									type: "paragraph" as const,
+									children: [{ type: "text" as const, value: "Lead item" }],
+								},
+								{
+									type: "blockquote" as const,
+									children: [
+										{
+											type: "paragraph" as const,
+											children: [
+												{ type: "text" as const, value: "Quoted lead" },
+											],
+										},
+										{
+											type: "list" as const,
+											ordered: true,
+											start: 2,
+											items: [
+												{
+													children: [
+														{
+															type: "paragraph" as const,
+															children: [
+																{ type: "text" as const, value: "Nested step" },
+															],
+														},
+													],
+												},
+											],
+										},
+									],
+								},
+							],
+						},
+					],
+				},
+			],
+		};
+
+		expect(renderGitLab(document)).toBe(
+			["- Lead item", "  > Quoted lead", "  >", "  > 2. Nested step", ""].join(
+				"\n",
+			),
+		);
+		expect(renderStrict(document)).toBe(
+			["- Lead item", "  > Quoted lead", "  >", "  > 1. Nested step", ""].join(
+				"\n",
+			),
+		);
+	});
 });

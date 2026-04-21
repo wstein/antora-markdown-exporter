@@ -422,4 +422,79 @@ describe("convertAssemblyToMarkdownIR", () => {
 			},
 		]);
 	});
+
+	it("covers version-only xrefs, unmatched inline markers, standalone images, and mixed table alignment", () => {
+		const document = convertAssemblyToMarkdownIR(
+			[
+				"xref:2.0@install.adoc[]",
+				"Broken *strong and _emphasis markers stay visible",
+				"image::diagram.png[Diagram]",
+				'[cols="<1,2,>3"]',
+				"|===",
+				"| Left | Plain | Right",
+				"| body | center? | tail",
+				"|===",
+			].join("\n"),
+		);
+
+		expect(document.children).toEqual([
+			{
+				type: "paragraph",
+				children: [
+					{
+						type: "xref",
+						url: "2.0/install.adoc",
+						target: {
+							raw: "2.0@install.adoc",
+							component: undefined,
+							version: "2.0",
+							module: undefined,
+							family: {
+								kind: "page",
+								name: "page",
+							},
+							path: "install.adoc",
+							fragment: undefined,
+						},
+						children: [{ type: "text", value: "install" }],
+					},
+					{
+						type: "text",
+						value: " Broken *strong and _emphasis markers stay visible",
+					},
+				],
+			},
+			{
+				type: "paragraph",
+				children: [
+					{
+						type: "image",
+						url: "diagram.png",
+						title: undefined,
+						alt: [{ type: "text", value: "Diagram" }],
+					},
+				],
+			},
+			{
+				type: "table",
+				align: ["left", null, "right"],
+				header: {
+					cells: [
+						{ children: [{ type: "text", value: "Left" }] },
+						{ children: [{ type: "text", value: "Plain" }] },
+						{ children: [{ type: "text", value: "Right" }] },
+					],
+				},
+				rows: [
+					{
+						cells: [
+							{ children: [{ type: "text", value: "body" }] },
+							{ children: [{ type: "text", value: "center?" }] },
+							{ children: [{ type: "text", value: "tail" }] },
+						],
+					},
+				],
+			},
+		]);
+	});
 });
