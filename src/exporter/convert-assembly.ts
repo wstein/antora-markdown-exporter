@@ -888,15 +888,11 @@ function parseIncludeLineRanges(
 		.filter(Boolean)
 		.flatMap<MarkdownIncludeLineRange>((segment) => {
 			const rangeMatch = segment.match(/^(\d*)\.\.(\d*)$/);
-			if (rangeMatch?.[0] !== undefined) {
+			if (rangeMatch !== null) {
+				const [, rawStart = "", rawEnd = ""] = rangeMatch;
 				const start =
-					rangeMatch[1] === ""
-						? undefined
-						: parsePositiveInteger(rangeMatch[1]);
-				const end =
-					rangeMatch[2] === ""
-						? undefined
-						: parsePositiveInteger(rangeMatch[2]);
+					rawStart === "" ? undefined : parsePositiveInteger(rawStart);
+				const end = rawEnd === "" ? undefined : parsePositiveInteger(rawEnd);
 				if (start === undefined && end === undefined) {
 					return [];
 				}
