@@ -1,3 +1,6 @@
+import { mkdirSync, mkdtempSync, rmSync, writeFileSync } from "node:fs";
+import { tmpdir } from "node:os";
+import { join } from "node:path";
 import { describe, expect, it } from "vitest";
 import { convertAssemblyToMarkdownIR } from "../../src/exporter/convert-assembly.js";
 
@@ -492,6 +495,212 @@ describe("convertAssemblyToMarkdownIR", () => {
 							{ children: [{ type: "text", value: "center?" }] },
 							{ children: [{ type: "text", value: "tail" }] },
 						],
+					},
+				],
+			},
+		]);
+	});
+
+	it("uses the default include resolver for partials, keeps missing includes visible, and preserves paragraph boundaries", () => {
+		const fixtureRoot = mkdtempSync(
+			join(tmpdir(), "antora-markdown-exporter-"),
+		);
+
+		try {
+			const pagesDir = join(fixtureRoot, "modules", "ROOT", "pages");
+			const partialsDir = join(pagesDir, "partials");
+			mkdirSync(partialsDir, { recursive: true });
+			writeFileSync(
+				join(partialsDir, "snippet.adoc"),
+				["== Included title", "", "Included body"].join("\n"),
+			);
+
+			const sourcePath = join(pagesDir, "page.adoc");
+			const document = convertAssemblyToMarkdownIR(
+				[
+					"include::partial$snippet.adoc[leveloffset=+1]",
+					"",
+					"include::missing.adoc[]",
+					"",
+					"Trailing paragraph",
+				].join("\n"),
+				{ sourcePath },
+			);
+
+			expect(document.children).toEqual([
+				expect.objectContaining({
+					type: "includeDirective",
+					target: "partial$snippet.adoc",
+					provenance: expect.objectContaining({
+						resolvedPath: join(partialsDir, "snippet.adoc"),
+					}),
+					semantics: {
+						tagSelection: undefined,
+						lineRanges: undefined,
+						indent: undefined,
+						levelOffset: 1,
+					},
+				}),
+				{
+					type: "heading",
+					depth: 2,
+					children: [{ type: "text", value: "Included title" }],
+				},
+				{
+					type: "paragraph",
+					children: [{ type: "text", value: "Included body" }],
+				},
+				expect.objectContaining({
+					type: "includeDirective",
+					target: "missing.adoc",
+					provenance: expect.objectContaining({
+						resolvedPath: join(pagesDir, "missing.adoc"),
+					}),
+				}),
+				{
+					type: "unsupported",
+					reason:
+						"include directive is not yet inlined: include::missing.adoc[]",
+				},
+				{
+					type: "paragraph",
+					children: [{ type: "text", value: "Trailing paragraph" }],
+				},
+			]);
+		} finally {
+			rmSync(fixtureRoot, { force: true, recursive: true });
+		}
+	});
+
+	it("falls back cleanly for mixed list markers and preserves separate list blocks after type changes", () => {
+		const document = convertAssemblyToMarkdownIR(
+			[
+				". Ordered item",
+				"* Bullets restart as a separate block",
+				".* Mixed marker syntax stays literal",
+				"",
+				"* Parent",
+				"*** Too deep to nest immediately",
+			].join("\n"),
+		);
+
+		expect(document.children).toEqual([
+			{
+				type: "list",
+				ordered: true,
+				start: 1,
+				items: [
+					{
+						children: [
+							{
+								type: "paragraph",
+								children: [{ type: "text", value: "Ordered item" }],
+							},
+						],
+					},
+				],
+			},
+			{
+				type: "list",
+				ordered: false,
+				start: undefined,
+				items: [
+					{
+						children: [
+							{
+								type: "paragraph",
+								children: [
+									{
+										type: "text",
+										value: "Bullets restart as a separate block",
+									},
+								],
+							},
+						],
+					},
+				],
+			},
+			{
+				type: "paragraph",
+				children: [
+					{ type: "text", value: ".* Mixed marker syntax stays literal" },
+				],
+			},
+			{
+				type: "list",
+				ordered: false,
+				start: undefined,
+				items: [
+					{
+						children: [
+							{
+								type: "paragraph",
+								children: [{ type: "text", value: "Parent" }],
+							},
+						],
+					},
+				],
+			},
+			{
+				type: "list",
+				ordered: false,
+				start: undefined,
+				items: [
+					{
+						children: [
+							{
+								type: "paragraph",
+								children: [
+									{ type: "text", value: "Too deep to nest immediately" },
+								],
+							},
+						],
+					},
+				],
+			},
+		]);
+	});
+
+	it("parses successful source and quote blocks without inventing callout lists", () => {
+		const document = convertAssemblyToMarkdownIR(
+			[
+				"[source,js,linenums]",
+				"----",
+				"console.log('hi');",
+				"----",
+				"After source",
+				"",
+				"[quote]",
+				"____",
+				"== Nested heading",
+				"Quoted line",
+				"____",
+			].join("\n"),
+		);
+
+		expect(document.children).toEqual([
+			{
+				type: "codeBlock",
+				language: "js",
+				meta: "linenums",
+				value: "console.log('hi');",
+				callouts: undefined,
+			},
+			{
+				type: "paragraph",
+				children: [{ type: "text", value: "After source" }],
+			},
+			{
+				type: "blockquote",
+				children: [
+					{
+						type: "heading",
+						depth: 1,
+						children: [{ type: "text", value: "Nested heading" }],
+					},
+					{
+						type: "paragraph",
+						children: [{ type: "text", value: "Quoted line" }],
 					},
 				],
 			},
