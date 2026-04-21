@@ -260,6 +260,8 @@ make check
 make PM=npm install
 ```
 
+Documentation publication follows the same operating model. `make docs` builds the local Antora site into `build/site`, and `.github/workflows/pages.yml` deploys that site to `https://wstein.github.io/antora-markdown-exporter` whenever the release workflow fast-forwards `main` to a published commit.
+
 Each target is a thin delegate to the matching package-manager script.
 
 `make integration` runs the broader integration suite. `make reference` runs only the provenance-locked compatibility cases, including recursive include inlining, stepped and open-ended include slicing, anchor and alias preservation, component/module/version-aware xrefs, family-aware site routing, aligned tables, admonitions, mixed block sequences, and visible unsupported fallbacks where support is still intentionally deferred.
@@ -285,6 +287,8 @@ make release VERSION=v0.1.0 YES=1
 ```
 
 With the same version, the release wizard switches to finalize mode, creates the tag, and pushes only the tag. The tag-triggered GitHub Actions workflow validates the tagged commit, publishes `@wsmy/antora-markdown-exporter`, attaches release assets, and fast-forwards `main` to the released commit.
+
+The separate Pages workflow then rebuilds the Antora site from `main` and publishes the resulting static site to GitHub Pages at `https://wstein.github.io/antora-markdown-exporter`.
 
 ## Package
 
