@@ -248,9 +248,23 @@ make reference
 make inspect-report INPUT=tests/fixtures/sample/input.adoc
 bun run inspect:report -- tests/fixtures/sample/input.adoc
 bun run inspect:report -- --stdin --source-path /virtual/page.adoc < tests/fixtures/sample/input.adoc
+make docs-generate
+make docs-check
 make format
 make fix
 ```
+
+### Generated architecture documentation
+
+[`docs/architecture.md`](docs/architecture.md) is a derived, read-only narrative view over the repository's atomic notes. The notes in [`notes/`](notes) remain the canonical source of truth for architectural decisions, invariants, and rendering policy. The generator sequences a curated set of notes into a human-readable order without summarizing or paraphrasing, so the narrative stays faithful to authored intent.
+
+Regenerate the file after any change to the referenced notes:
+
+```bash
+bun run docs:generate
+```
+
+CI runs `bun run docs:check` to fail fast when the committed file drifts from the current note corpus.
 
 The primary development path uses Bun through the Makefile delegate targets. npm remains available as an explicit alternate path when needed and remains the publish channel used by `make release`:
 

@@ -16,6 +16,7 @@ jobs:
           bun-version: "1.3.13"
       - run: bun install --frozen-lockfile
       - run: bun run lint
+      - run: bun run docs:check
       - run: bun run build
       - name: Generate inspection report
         run: make inspect-report INPUT=tests/fixtures/includes-invalid-steps/input.adoc > inspection-report.json

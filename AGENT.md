@@ -8,6 +8,7 @@ Use Bun as the primary repository command runner.
 - Run Vitest through the declared package scripts instead of Bun-specific `bun test` APIs.
 - Treat the inspection helpers and `scripts/inspection-report.ts` as supported validation surfaces for CI and release checks.
 - Keep raw HTML fallback decisions centralized in `src/markdown/fallback.ts` rather than reintroducing renderer-local HTML policy.
+- Treat [`docs/architecture.md`](/Users/werner/github.com/wstein/antora-markdown-exporter/docs/architecture.md) as a derived, read-only narrative view. Architectural intent still originates in `notes/**`, and [`scripts/generate-architecture-docs.ts`](/Users/werner/github.com/wstein/antora-markdown-exporter/scripts/generate-architecture-docs.ts) must be rerun (`bun run docs:generate`) whenever the referenced notes change.
 
 ## Runtime expectations
 
