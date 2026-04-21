@@ -15,6 +15,8 @@ npm install @wsmy/antora-markdown-exporter
 ```ts
 import {
   convertAssemblyToMarkdownIR,
+  collectIncludeDiagnostics,
+  collectXrefTargets,
   normalizeMarkdownIR,
   renderMarkdown,
   renderGfm,
@@ -22,9 +24,40 @@ import {
 
 const ir = convertAssemblyToMarkdownIR("== Sample document\n\nHello world.");
 const normalized = normalizeMarkdownIR(ir);
+const includeDiagnostics = collectIncludeDiagnostics(normalized);
+const xrefTargets = collectXrefTargets(normalized);
 
 console.log(renderGfm(normalized));
 console.log(renderMarkdown(normalized, "commonmark"));
+console.log(includeDiagnostics);
+console.log(xrefTargets);
+```
+
+### Validation Helpers
+
+```ts
+import {
+  collectIncludeDiagnostics,
+  collectXrefTargets,
+  convertAssemblyToMarkdownIR,
+} from "@wsmy/antora-markdown-exporter";
+
+const document = convertAssemblyToMarkdownIR(
+  "== Sample\n\ninclude::partials/snippet.adoc[lines=1..5..0]",
+  { sourcePath: "/virtual/project/page.adoc" },
+);
+
+for (const entry of collectIncludeDiagnostics(document)) {
+  console.error(
+    `[include:${entry.target}] ${entry.diagnostic.code}: ${entry.diagnostic.message}`,
+  );
+}
+
+for (const target of collectXrefTargets(document)) {
+  console.log(
+    `[xref:${target.family?.kind ?? "page"}] ${target.raw} -> ${target.path}`,
+  );
+}
 ```
 
 Current scaffold coverage includes headings, paragraphs, inline links, dedicated xref nodes with inspectable Antora target metadata and first-class family kinds, dedicated anchor and page-alias nodes, images, ordered and unordered lists, nested lists, thematic breaks, aligned tables, raw HTML nodes, footnote placeholders, fenced code blocks with dedicated callout-list nodes, block quotes, dedicated admonition nodes, and recursive include inlining with dedicated include-directive metadata, for both `partial$` and relative include paths, including tagged-region selection, multi-tag extraction, overlapping-tag precedence, open-ended and stepped line-range unions, invalid-selector diagnostics, indentation, and `leveloffset`, when source-path context is available. Flavor policies can now render page-family xrefs either as source-shaped `.adoc` destinations or as site-shaped Antora-style routes, including `_images`, `_attachments`, and `_examples` asset families where configured.

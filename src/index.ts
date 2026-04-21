@@ -3,6 +3,8 @@ export { convertAssemblyToMarkdownIR } from "./exporter/convert-assembly.js";
 export {
 	collectIncludeDiagnostics,
 	collectIncludeDirectives,
+	collectXrefs,
+	collectXrefTargets,
 } from "./markdown/include-diagnostics.js";
 export type { MarkdownDocument } from "./markdown/ir.js";
 export type {
