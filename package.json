@@ -33,7 +33,7 @@
 	],
 	"scripts": {
 		"build": "tsup --dts --format esm,cjs --out-dir dist src/index.ts src/extension/index.ts",
-		"docs:build": "antora antora-playbook.yml",
+		"docs:build": "node scripts/build-docs-site.mjs",
 		"test": "vitest run --coverage",
 		"test:watch": "vitest",
 		"unit": "vitest run tests/unit",

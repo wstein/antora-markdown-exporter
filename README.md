@@ -260,7 +260,7 @@ make check
 make PM=npm install
 ```
 
-Documentation publication follows the same operating model. `make docs` builds the local Antora site into `build/site`, and `.github/workflows/pages.yml` deploys that site to `https://wstein.github.io/antora-markdown-exporter` only after a successful tag-triggered `Release` workflow has already fast-forwarded `main` to the published commit.
+Documentation publication follows the same operating model. `make docs` builds the local Antora site into `build/site`, generates `build/site/antora-markdown-exporter/antora-markdown-exporter.pdf`, and `.github/workflows/pages.yml` deploys that site to `https://wstein.github.io/antora-markdown-exporter` only after a successful tag-triggered `Release` workflow has already fast-forwarded `main` to the published commit.
 
 Each target is a thin delegate to the matching package-manager script.
 

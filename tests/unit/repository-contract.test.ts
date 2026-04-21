@@ -67,6 +67,9 @@ describe("repository contract", () => {
 			"tests/integration/reference-antora.test.ts",
 		);
 		expect(packageJson.scripts.release).toBe("bun scripts/release.js");
+		expect(packageJson.scripts["docs:build"]).toBe(
+			"node scripts/build-docs-site.mjs",
+		);
 		expect(packageJson.scripts["inspect:report"]).toBe(
 			"bun scripts/inspection-report.ts",
 		);
@@ -89,6 +92,10 @@ describe("repository contract", () => {
 		expect(pagesWorkflow).toContain("event == 'push'");
 		expect(pagesWorkflow).toContain("ref: main");
 		expect(pagesWorkflow).toContain("actions/configure-pages@v5");
+		expect(pagesWorkflow).toContain("ruby/setup-ruby@v1");
+		expect(pagesWorkflow).toContain(
+			"gem install asciidoctor-pdf --no-document",
+		);
 		expect(pagesWorkflow).toContain("actions/upload-pages-artifact@v3");
 		expect(pagesWorkflow).toContain("actions/deploy-pages@v4");
 		expect(pagesWorkflow).toContain("path: build/site");
