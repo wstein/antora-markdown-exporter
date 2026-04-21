@@ -1,5 +1,9 @@
 export { createAntoraExtensionScaffold } from "./extension/index.js";
 export { convertAssemblyToMarkdownIR } from "./exporter/convert-assembly.js";
+export {
+	collectIncludeDiagnostics,
+	collectIncludeDirectives,
+} from "./markdown/include-diagnostics.js";
 export type { MarkdownDocument } from "./markdown/ir.js";
 export type {
 	MarkdownFlavorName,
