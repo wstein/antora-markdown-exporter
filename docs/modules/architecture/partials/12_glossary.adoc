@@ -1,42 +1,38 @@
-[[section-glossary]]
-== Glossary
+[[section-reference-notes]]
+== Reference Notes
 
 ifdef::arc42help[]
 [role="arc42help"]
 ****
 .Contents
-The most important domain and technical terms that your stakeholders use when discussing the system.
-
-You can also see the glossary as source for translations if you work in multi-language teams.
-
-.Motivation
-You should clearly define your terms, so that all stakeholders
-
-* have an identical understanding of these terms
-* do not use synonyms and homonyms
-
-
-.Form
-
-A table with columns <Term> and <Definition>.
-
-Potentially more columns in case you need translations.
-
-
-.Further Information
-
-See https://docs.arc42.org/section-12/[Glossary] in the arc42 documentation.
-
+Reference index for the canonical notes cited by this architecture document.
 ****
 endif::arc42help[]
 
-[cols="e,2e" options="header"]
+[cols="2,3" options="header"]
 |===
-|Term |Definition
+|Section |Referenced notes
 
-|<Term-1>
-|<definition-1>
+|Introduction and Goals
+|`Antora extension entrypoints must reflect actual integration maturity`; `Exporter pipeline uses Assembler and a direct TypeScript converter`; `Fallback selection is centralized across markdown flavors`; `Flavor renderers are syntax adapters over one semantic layer`; `Include metadata transport is an internal implementation detail`; `Markdown IR is the canonical render boundary`; `Strict architecture must be extended without weakening invariants`; `The architecture favors explicit extension over implicit degradation`; `Transparent extensions are not fallback mechanisms`; `Xref target resolution is a separate lowering phase`
 
-|<Term-2>
-|<definition-2>
+|Constraints
+|`Reference fixtures are curated and provenance locked`; `Repository scripts and referenced files must stay in lockstep`
+
+|Solution Strategy
+|`Build tooling uses bun-first package manager fallback`
+
+|Runtime View
+|`Inspection helpers expose normalized validation surfaces`; `Release and package identity use scoped npm publishing`
+
+|Cross-cutting Concepts
+|`Testing relies on golden fixtures and deterministic snapshots`
+
+|Quality Requirements
+|`Golden tests require rendered output comparison`; `Reference corpus should cover navigation xrefs includes and admonitions`; `Reference fixtures are curated and provenance locked`; `Reference testing uses official Antora documentation as a compatibility corpus`; `Reference tests check semantic invariants not exact bytes`
+
+|Risks and Technical Debt
+|`Scaffold leftovers must be removed before contract expansion`
 |===
+
+This section is a provenance aid, not a second source of truth. The notes remain canonical inputs; the codebase remains the authoritative statement of what is implemented today when notes and implementation maturity differ.

@@ -6,28 +6,11 @@
 // configure EN settings for asciidoc
 include::partial$config.adoc[]
 
-= image:arc42-logo.png[arc42] Template
+= Architecture: `@wsmy/antora-markdown-exporter`
 ifndef::revnumber[:revnumber: n/a]
 ifndef::revdate[:revdate: n/a]
 ifndef::revremark[:revremark:]
 :toc-title: Table of Contents
-
-include::partial$about-arc42.adoc[]
-
-// horizontal line
-***
-
-ifdef::arc42help[]
-[role="arc42help"]
-****
-[NOTE]
-====
-This version of the template contains some help and explanations.
-It is used for familiarization with arc42 and the understanding of the concepts.
-For documentation of your own system you use better the _plain_ version.
-====
-****
-endif::arc42help[]
 
 // numbering from here on
 :numbered:

@@ -10,4 +10,4 @@
 * xref:architecture:index.adoc#section-design-decisions[Architecture Decisions]
 * xref:architecture:index.adoc#section-quality-scenarios[Quality Requirements]
 * xref:architecture:index.adoc#section-technical-risks[Risks and Technical Debts]
-* xref:architecture:index.adoc#section-glossary[Glossary]
+* xref:architecture:index.adoc#section-reference-notes[Reference Notes]

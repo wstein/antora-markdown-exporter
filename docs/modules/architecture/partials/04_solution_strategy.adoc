@@ -2,31 +2,15 @@
 == Solution Strategy
 
 
-ifdef::arc42help[]
-[role="arc42help"]
-****
-.Contents
-A short summary and explanation of the fundamental decisions and solution strategies, that shape system architecture. It includes
+The repository follows one explicit toolchain policy: development commands are delegated through the `Makefile`, which defaults to `PM ?= bun`, while npm remains the explicit publish transport and alternate package-manager path. This keeps command behavior predictable and avoids lockfile-based branching.
 
-* technology decisions
-* decisions about the top-level decomposition of the system, e.g. usage of an architectural pattern or design pattern
-* decisions on how to achieve key quality goals
-* relevant organizational decisions, e.g. selecting a development process or delegating certain tasks to third parties.
+That toolchain strategy supports the broader architectural strategy:
 
-.Motivation
-These decisions form the cornerstones for your architecture. They are the foundation for many other detailed decisions or implementation rules.
+* keep the core contract inside repository-owned TypeScript modules instead of delegating semantics to external document-conversion chains
+* keep development and CI entrypoints narrow and explicit through `make`, `package.json` scripts, and release-check automation
+* accept pragmatic extension through explicit policy and tests rather than by loosening invariants
 
-.Form
-Keep the explanations of such key decisions short.
+Provenance:
 
-Motivate what was decided and why it was decided that way,
-based upon problem statement, quality goals and key constraints.
-Refer to details in the following sections.
-
-
-.Further Information
-
-See https://docs.arc42.org/section-4/[Solution Strategy] in the arc42 documentation.
-
-****
-endif::arc42help[]
+* Note: `Build tooling uses bun-first package manager fallback`
+* Code: `Makefile`, `package.json`, `README.md`

@@ -16,84 +16,75 @@ These include
 endif::arc42help[]
 
 === Requirements Overview
+`@wsmy/antora-markdown-exporter` is a library-first TypeScript package that converts assembled AsciiDoc into a normalized Markdown intermediate representation (IR), normalizes that IR, and renders it into explicit Markdown flavors. The current public API centers on `convertAssemblyToMarkdownIR`, `normalizeMarkdownIR`, `renderMarkdown` and flavor helpers, plus inspection helpers for include diagnostics and xref targets.
 
-ifdef::arc42help[]
-[role="arc42help"]
-****
-.Contents
-Short description of the functional requirements, driving forces, extract (or abstract)
-of requirements. Link to (hopefully existing) requirements documents
-(with version number and information where to find it).
+The main architectural goals are:
 
-.Motivation
-From the point of view of the end users a system is created or modified to
-improve support of a business activity and/or improve the quality.
+* keep document meaning inside a canonical IR instead of spreading semantics across renderers
+* preserve valid authored constructs, including transparent fenced extensions such as `mermaid`, without misclassifying them as fallback
+* make fallback behavior explicit, centralized, and testable across flavors
+* expose stable inspection APIs for CI, release validation, and downstream tooling
+* keep package naming and extension entrypoints honest about current implementation maturity
 
-.Form
-Short textual description, probably in tabular use-case format.
-If requirements documents exist this overview should refer to these documents.
+The notes `Exporter pipeline uses Assembler and a direct TypeScript converter`, `Markdown IR is the canonical render boundary`, `Flavor renderers are syntax adapters over one semantic layer`, `Fallback selection is centralized across markdown flavors`, `Transparent extensions are not fallback mechanisms`, `The architecture favors explicit extension over implicit degradation`, `Strict architecture must be extended without weakening invariants`, `Include metadata transport is an internal implementation detail`, `Xref target resolution is a separate lowering phase`, and `Antora extension entrypoints must reflect actual integration maturity` describe the intended architecture. The codebase implements most of the markdown-kernel side of that story in `src/exporter/**`, `src/markdown/**`, `scripts/inspection-report.ts`, and the test suite.
 
-Keep these excerpts as short as possible. Balance readability of this document with potential redundancy w.r.t to requirements documents.
+One important uncertainty must remain explicit: the notes and README describe an Antora Assembler based pipeline, but the code currently exposes the post-assembly conversion boundary and a scaffolded extension helper rather than a full Antora extension registration contract. `src/extension/index.ts` exports `createAntoraExtensionScaffold()` with `kind: "scaffold"`, and no runtime registration flow equivalent to `registerAntoraExtension` exists yet. This is an intentional honesty boundary, not an implementation bug.
 
+Provenance:
 
-.Further Information
-
-See https://docs.arc42.org/section-1/[Introduction and Goals] in the arc42 documentation.
-
-****
-endif::arc42help[]
+* Notes: `Exporter pipeline uses Assembler and a direct TypeScript converter`; `Markdown IR is the canonical render boundary`; `Flavor renderers are syntax adapters over one semantic layer`; `Fallback selection is centralized across markdown flavors`; `Transparent extensions are not fallback mechanisms`; `The architecture favors explicit extension over implicit degradation`; `Strict architecture must be extended without weakening invariants`; `Include metadata transport is an internal implementation detail`; `Xref target resolution is a separate lowering phase`; `Antora extension entrypoints must reflect actual integration maturity`
+* Code: `src/index.ts`, `src/extension/index.ts`, `src/exporter/convert-assembly.ts`, `src/exporter/include-metadata.ts`, `src/markdown/ir.ts`, `src/markdown/flavor.ts`, `src/markdown/fallback.ts`, `src/markdown/xref-resolution.ts`, `src/markdown/include-diagnostics.ts`
 
 === Quality Goals
+[options="header",cols="1,2,2"]
+|===
+|Priority |Quality goal |Why it matters
 
-ifdef::arc42help[]
-[role="arc42help"]
-****
-.Contents
-The top three (max five) quality goals for the architecture whose fulfillment is of highest importance to the major stakeholders. 
-We really mean quality goals for the architecture. Don't confuse them with project goals.
-They are not necessarily identical.
+|1
+|Deterministic, reviewable output
+|The notes `Markdown IR is the canonical render boundary`, `Flavor renderers are syntax adapters over one semantic layer`, and `Testing relies on golden fixtures and deterministic snapshots` all assume that semantic decisions are centralized and that rendered output is stable enough for golden tests and release validation.
 
-Consider this overview of potential topics (based upon the ISO 25010 standard):
+|2
+|Semantic fidelity with explicit escape hatches
+|The notes `Transparent extensions are not fallback mechanisms`, `The architecture favors explicit extension over implicit degradation`, and `Strict architecture must be extended without weakening invariants` require the system to preserve valid author intent where safe and to degrade visibly only through explicit policy.
 
-image::01_2_iso-25010-topics-EN-2023.drawio.png["Categories of Quality Requirements"]
+|3
+|Inspectable validation surfaces
+|The note `Inspection helpers expose normalized validation surfaces` requires reusable inspection results for include diagnostics and xref metadata so CI, release checks, and tooling do not reimplement recursive IR traversal.
 
-.Motivation
-You should know the quality goals of your most important stakeholders, since they will influence fundamental architectural decisions. 
-Make sure to be very concrete about these qualities, avoid buzzwords.
-If you as an architect do not know how the quality of your work will be judged...
+|4
+|Honest public maturity signaling
+|The note `Antora extension entrypoints must reflect actual integration maturity` requires naming and public examples to match what the package actually ships today.
+|===
 
-.Form
-A table with quality goals and concrete scenarios, ordered by priorities
-****
-endif::arc42help[]
+Provenance:
+
+* Notes: `Markdown IR is the canonical render boundary`; `Flavor renderers are syntax adapters over one semantic layer`; `Testing relies on golden fixtures and deterministic snapshots`; `Transparent extensions are not fallback mechanisms`; `The architecture favors explicit extension over implicit degradation`; `Strict architecture must be extended without weakening invariants`; `Inspection helpers expose normalized validation surfaces`; `Antora extension entrypoints must reflect actual integration maturity`
+* Code: `src/markdown/ir.ts`, `src/markdown/include-diagnostics.ts`, `tests/integration/fixture-golden.test.ts`, `tests/unit/extension-scaffold.test.ts`
 
 === Stakeholders
-
-ifdef::arc42help[]
-[role="arc42help"]
-****
-.Contents
-Explicit overview of stakeholders of the system, i.e. all person, roles or organizations that
-
-* should know the architecture
-* have to be convinced of the architecture
-* have to work with the architecture or with code
-* need the documentation of the architecture for their work
-* have to come up with decisions about the system or its development
-
-.Motivation
-You should know all parties involved in development of the system or affected by the system.
-Otherwise, you may get nasty surprises later in the development process.
-These stakeholders determine the extent and the level of detail of your work and its results.
-
-.Form
-Table with role names, person names, and their expectations with respect to the architecture and its documentation.
-****
-endif::arc42help[]
-
 [options="header",cols="1,2,2"]
 |===
 |Role/Name|Contact|Expectations
-| _<Role-1>_ | _<Contact-1>_ | _<Expectation-1>_
-| _<Role-2>_ | _<Contact-2>_ | _<Expectation-2>_
+
+|Architects and maintainers
+|Repository contributors
+|Need a clear account of current invariants, implemented boundaries, and known maturity gaps so architectural change does not silently weaken determinism.
+
+|Library consumers
+|Developers importing `@wsmy/antora-markdown-exporter`
+|Need stable render and inspection APIs, predictable flavor behavior, and accurate statements about package and extension maturity.
+
+|Release and CI owners
+|Maintainers of `.github/workflows/**`, `scripts/release-check.mjs`, and `scripts/inspection-report.ts`
+|Need deterministic validation surfaces, machine-readable inspection output, and repository self-consistency between scripts, packaging metadata, and tracked files.
+
+|Documentation authors using Antora content
+|Upstream AsciiDoc and Antora authors
+|Need preserved semantics for headings, xrefs, includes, admonitions, tables, images, anchors, aliases, and valid fenced extensions, plus visible degradation for unsupported constructs.
 |===
+
+Provenance:
+
+* Notes: `Release and package identity use scoped npm publishing`; `Inspection helpers expose normalized validation surfaces`; `Repository scripts and referenced files must stay in lockstep`; `Reference corpus should cover navigation xrefs includes and admonitions`
+* Code: `README.md`, `package.json`, `.github/workflows/ci.yml`, `.github/workflows/release.yml`, `scripts/inspection-report.ts`

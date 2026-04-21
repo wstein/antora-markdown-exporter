@@ -2,50 +2,36 @@
 == Runtime View
 
 
-ifdef::arc42help[]
-[role="arc42help"]
-****
-.Contents
-The runtime view describes concrete behavior and interactions of the system’s building blocks in form of scenarios from the following areas:
+=== Convert Assembled Content To Flavor-Specific Markdown
 
-* important use cases or features: how do building blocks execute them?
-* interactions at critical external interfaces: how do building blocks cooperate with users and neighboring systems?
-* operation and administration: launch, start-up, stop
-* error and exception scenarios
+This scenario is based on the notes `Exporter pipeline uses Assembler and a direct TypeScript converter` and `Release and package identity use scoped npm publishing`.
 
-Remark: The main criterion for the choice of possible scenarios (sequences, workflows) is their *architectural relevance*. It is *not* important to describe a large number of scenarios. You should rather document a representative selection.
+1. An upstream caller provides assembled AsciiDoc content to `convertAssemblyToMarkdownIR(source, { sourcePath })`.
+2. The converter in `src/exporter/convert-assembly.ts` parses blocks and inline constructs into semantic IR nodes.
+3. Include directives are inlined when source-path context is available; include metadata, diagnostics, and provenance are preserved as dedicated `includeDirective` nodes rather than being dropped.
+4. The caller normalizes the document through `normalizeMarkdownIR`.
+5. Xref targets remain structured until lowering in `src/markdown/xref-resolution.ts`.
+6. A flavor renderer serializes the normalized document according to `src/markdown/flavor.ts` and `src/markdown/fallback.ts`.
 
-.Motivation
-You should understand how (instances of) building blocks of your system perform their job and communicate at runtime.
-You will mainly capture scenarios in your documentation to communicate your architecture to stakeholders that are less willing or able to read and understand the static models (building block view, deployment view).
+Notable aspect::
 
-.Form
-There are many notations for describing scenarios, e.g.
+The implemented runtime begins at the conversion boundary. The assembly stage described by the architecture notes is still external to the shipped runtime path, and the extension boundary remains scaffolded.
 
-* numbered list of steps (in natural language)
-* activity diagrams or flow charts
-* sequence diagrams
-* BPMN or EPCs (event process chains)
-* state machines
-* ...
+=== Collect Inspection Data For CI Or Release Validation
 
+This scenario is based on the notes `Inspection helpers expose normalized validation surfaces` and `Release and package identity use scoped npm publishing`.
 
-.Further Information
+1. A caller converts source to IR, typically with a real file-backed `sourcePath`.
+2. `collectMarkdownInspectionReport(document)` normalizes the document before traversal.
+3. The inspection layer walks nested blocks, callout lists, footnote definitions, tables, and inline containers to gather include directives, include diagnostics, xrefs, and xref targets in normalized document order.
+4. `scripts/inspection-report.ts` serializes that report either as JSON or GitHub Actions annotations.
+5. CI or release checks fail when diagnostics are present and `--fail-on-diagnostics` is used.
 
-See https://docs.arc42.org/section-6/[Runtime View] in the arc42 documentation.
+Notable aspect::
 
-****
-endif::arc42help[]
+Validation uses one maintained normalized inspection surface instead of separate ad-hoc traversals in CI scripts.
 
-=== <Runtime Scenario 1>
+Provenance:
 
-
-* _<insert runtime diagram or textual description of the scenario>_
-* _<insert description of the notable aspects of the interactions between the
-building block instances depicted in this diagram.>_
-
-=== <Runtime Scenario 2>
-
-=== ...
-
-=== <Runtime Scenario n>
+* Notes: `Exporter pipeline uses Assembler and a direct TypeScript converter`; `Inspection helpers expose normalized validation surfaces`; `Release and package identity use scoped npm publishing`
+* Code: `src/exporter/convert-assembly.ts`, `src/markdown/normalize.ts`, `src/markdown/xref-resolution.ts`, `src/markdown/include-diagnostics.ts`, `scripts/inspection-report.ts`
