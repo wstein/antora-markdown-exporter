@@ -706,4 +706,29 @@ describe("convertAssemblyToMarkdownIR", () => {
 			},
 		]);
 	});
+
+	it("keeps malformed or unapplied table directives visible without mis-parsing later content", () => {
+		const document = convertAssemblyToMarkdownIR(
+			[
+				'[cols="1,2"]',
+				"Not a table fence",
+				"",
+				"|===",
+				"| Header only",
+				"",
+				"NOTE: Parsed admonition",
+			].join("\n"),
+		);
+
+		expect(document.children).toEqual([
+			{
+				type: "paragraph",
+				children: [{ type: "text", value: '[cols="1,2"] Not a table fence' }],
+			},
+			{
+				type: "unsupported",
+				reason: "table fence is not closed correctly",
+			},
+		]);
+	});
 });

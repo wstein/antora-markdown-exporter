@@ -547,4 +547,101 @@ describe("flavor-aware markdown rendering", () => {
 			),
 		);
 	});
+
+	it("covers plain citation style, labeled footnote fallback, blank list-item lines, and code fences without languages", () => {
+		const plainCitationFlavor = resolveMarkdownFlavor({
+			...markdownFlavorSpecs.gitlab,
+			citationStyle: "plain",
+			name: "gitlab",
+		});
+		const rendered = renderMarkdown(
+			{
+				type: "document",
+				children: [
+					{
+						type: "paragraph" as const,
+						children: [
+							{
+								type: "footnoteReference" as const,
+								identifier: "note-7",
+								label: "Readable note",
+							},
+							{ type: "text" as const, value: " " },
+							{
+								type: "citation" as const,
+								identifier: "cite-key",
+								label: "Ignored label",
+							},
+						],
+					},
+					{
+						type: "list" as const,
+						ordered: false,
+						items: [
+							{
+								children: [
+									{
+										type: "paragraph" as const,
+										children: [{ type: "text" as const, value: "Lead item" }],
+									},
+									{
+										type: "blockquote" as const,
+										children: [
+											{
+												type: "paragraph" as const,
+												children: [
+													{ type: "text" as const, value: "Quoted line" },
+												],
+											},
+											{
+												type: "paragraph" as const,
+												children: [],
+											},
+										],
+									},
+								],
+							},
+						],
+					},
+					{
+						type: "codeBlock" as const,
+						value: "plain fence",
+					},
+				],
+			},
+			plainCitationFlavor,
+		);
+		const strictRendered = renderStrict({
+			type: "document",
+			children: [
+				{
+					type: "paragraph" as const,
+					children: [
+						{
+							type: "footnoteReference" as const,
+							identifier: "note-7",
+							label: "Readable note",
+						},
+					],
+				},
+			],
+		});
+
+		expect(rendered).toBe(
+			[
+				"[^note-7] [cite-key]",
+				"",
+				"- Lead item",
+				"  > Quoted line",
+				"  >",
+				"  >",
+				"",
+				"```",
+				"plain fence",
+				"```",
+				"",
+			].join("\n"),
+		);
+		expect(strictRendered).toBe("[Readable note]\n");
+	});
 });
