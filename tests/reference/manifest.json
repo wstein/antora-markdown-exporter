@@ -419,6 +419,25 @@
 		}
 	},
 	{
+		"id": "antora-include-invalid-steps",
+		"sourceProject": "antora/docs.antora.org",
+		"sourceUrl": "https://gitlab.com/antora/docs.antora.org",
+		"sourcePath": "modules/ROOT/pages/page-partials.adoc",
+		"sourceCapturedAt": "2026-04-21",
+		"localPath": "tests/reference/fixtures/antora-include-invalid-steps/input.adoc",
+		"sha256": "cc4c2de91d3cd55fd2d5c4ea5aed3eb5897c02591ff39a169c8b50d8fad938fb",
+		"coverage": ["includes", "diagnostics", "invalid-steps", "negative-cases"],
+		"rationale": "Exercises malformed stepped include ranges so compatibility checks prove invalid step selectors emit diagnostics while rendering falls back to stable inlined content.",
+		"expectations": {
+			"nodeTypes": ["heading", "paragraph", "includeDirective"],
+			"includeDiagnosticCodes": ["invalid-line-step", "invalid-line-range"],
+			"renderedContains": [
+				"First line. Second line. Third line. Fourth line. Fifth line."
+			],
+			"renderedExcludes": ["Unsupported:"]
+		}
+	},
+	{
 		"id": "antora-xrefs-site-routing",
 		"sourceProject": "antora/docs.antora.org",
 		"sourceUrl": "https://gitlab.com/antora/docs.antora.org",
@@ -458,6 +477,45 @@
 						"[overview](docs/2.0/api/index.html#overview)",
 						"[diagram](docs/2.0/_images/diagram.png)",
 						"[guide](docs/2.0/_attachments/guide.pdf)"
+					]
+				}
+			}
+		}
+	},
+	{
+		"id": "antora-xrefs-unknown-family",
+		"sourceProject": "antora/docs.antora.org",
+		"sourceUrl": "https://gitlab.com/antora/docs.antora.org",
+		"sourcePath": "modules/ROOT/pages/xref.adoc",
+		"sourceCapturedAt": "2026-04-21",
+		"localPath": "tests/reference/fixtures/antora-xrefs-unknown-family/input.adoc",
+		"sha256": "5fd46d680652c649f44a7bbbda6b90e24ae423491480b5e4a99d4fc0c36247f0",
+		"coverage": [
+			"xrefs",
+			"site-routing",
+			"unknown-families",
+			"fallback-routing",
+			"multi-flavor"
+		],
+		"rationale": "Exercises unknown xref families so compatibility checks prove unsupported family routing stays intentionally source-shaped while page-family targets still adopt site-style output where configured.",
+		"expectations": {
+			"nodeTypes": ["heading", "paragraph"],
+			"renderedContains": [
+				"[demo](docs/2.0/ROOT/video/demo.mp4)",
+				"[overview](docs/2.0/api/page/index.adoc#overview)"
+			],
+			"renderedExcludes": ["Unsupported:"],
+			"renderedByFlavor": {
+				"gitlab": {
+					"contains": [
+						"[demo](docs/2.0/ROOT/video/demo.mp4)",
+						"[overview](docs/2.0/api/index.html#overview)"
+					]
+				},
+				"strict": {
+					"contains": [
+						"[demo](docs/2.0/ROOT/video/demo.mp4)",
+						"[overview](docs/2.0/api/index.html#overview)"
 					]
 				}
 			}

@@ -1,0 +1,17 @@
+[
+	{
+		"target": "partials/snippet.adoc",
+		"diagnostics": [
+			{
+				"code": "invalid-line-step",
+				"message": "include line steps must be positive integers",
+				"source": "1..5..0"
+			},
+			{
+				"code": "invalid-line-range",
+				"message": "include line selectors must be positive integers or ranges",
+				"source": "1..5..bad"
+			}
+		]
+	}
+]
