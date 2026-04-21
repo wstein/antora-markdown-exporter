@@ -27,7 +27,7 @@ console.log(renderGfm(normalized));
 console.log(renderMarkdown(normalized, "commonmark"));
 ```
 
-Current scaffold coverage includes headings, paragraphs, inline links, dedicated xref nodes with inspectable Antora target metadata, dedicated anchor and page-alias nodes, images, ordered and unordered lists, nested lists, thematic breaks, aligned tables, raw HTML nodes, footnote placeholders, fenced code blocks with dedicated callout-list nodes, block quotes, dedicated admonition nodes, and recursive include inlining with dedicated include-directive metadata, for both `partial$` and relative include paths, including tagged-region selection, multi-tag extraction, overlapping-tag precedence, open-ended line-range unions, indentation, and `leveloffset`, when source-path context is available. Flavor policies can now render page-family xrefs either as source-shaped `.adoc` destinations or as site-shaped Antora-style routes, including `_images` and `_attachments` asset families where configured.
+Current scaffold coverage includes headings, paragraphs, inline links, dedicated xref nodes with inspectable Antora target metadata and first-class family kinds, dedicated anchor and page-alias nodes, images, ordered and unordered lists, nested lists, thematic breaks, aligned tables, raw HTML nodes, footnote placeholders, fenced code blocks with dedicated callout-list nodes, block quotes, dedicated admonition nodes, and recursive include inlining with dedicated include-directive metadata, for both `partial$` and relative include paths, including tagged-region selection, multi-tag extraction, overlapping-tag precedence, open-ended and stepped line-range unions, invalid-selector diagnostics, indentation, and `leveloffset`, when source-path context is available. Flavor policies can now render page-family xrefs either as source-shaped `.adoc` destinations or as site-shaped Antora-style routes, including `_images`, `_attachments`, and `_examples` asset families where configured.
 
 ### Extension scaffold
 
@@ -67,7 +67,7 @@ make PM=npm install
 
 Each target is a thin delegate to the matching package-manager script.
 
-`make integration` runs the broader integration suite. `make reference` runs only the provenance-locked compatibility cases, including recursive include inlining, anchor and alias preservation, component/module/version-aware xrefs, aligned tables, admonitions, mixed block sequences, and visible unsupported fallbacks where support is still intentionally deferred.
+`make integration` runs the broader integration suite. `make reference` runs only the provenance-locked compatibility cases, including recursive include inlining, stepped and open-ended include slicing, anchor and alias preservation, component/module/version-aware xrefs, family-aware site routing, aligned tables, admonitions, mixed block sequences, and visible unsupported fallbacks where support is still intentionally deferred.
 
 ## Release
 
