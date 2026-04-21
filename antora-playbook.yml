@@ -1,5 +1,6 @@
 site:
   title: Antora Markdown Exporter
+  url: https://wstein.github.io/antora-markdown-exporter
   start_page: antora-markdown-exporter::index.adoc
 
 content:

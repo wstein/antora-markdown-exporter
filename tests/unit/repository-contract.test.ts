@@ -18,6 +18,14 @@ const releaseWorkflow = readFileSync(
 	resolve(root, ".github/workflows/release.yml"),
 	"utf8",
 );
+const pagesWorkflow = readFileSync(
+	resolve(root, ".github/workflows/pages.yml"),
+	"utf8",
+);
+const antoraPlaybook = readFileSync(
+	resolve(root, "antora-playbook.yml"),
+	"utf8",
+);
 
 describe("repository contract", () => {
 	it("keeps referenced package files in the tree", () => {
@@ -36,6 +44,7 @@ describe("repository contract", () => {
 		expect(existsSync(resolve(root, ".github/workflows/release.yml"))).toBe(
 			true,
 		);
+		expect(existsSync(resolve(root, ".github/workflows/pages.yml"))).toBe(true);
 	});
 
 	it("keeps published file references aligned with tracked files", () => {
@@ -70,5 +79,16 @@ describe("repository contract", () => {
 		expect(releaseWorkflow).toContain("origin/develop$");
 		expect(releaseWorkflow).toContain('head_branch=="develop"');
 		expect(releaseWorkflow).toContain("git push origin main");
+	});
+
+	it("keeps GitHub Pages deployment aligned with the published docs site", () => {
+		expect(pagesWorkflow).toContain("branches: [main]");
+		expect(pagesWorkflow).toContain("actions/configure-pages@v5");
+		expect(pagesWorkflow).toContain("actions/upload-pages-artifact@v3");
+		expect(pagesWorkflow).toContain("actions/deploy-pages@v4");
+		expect(pagesWorkflow).toContain("path: build/site");
+		expect(antoraPlaybook).toContain(
+			"url: https://wstein.github.io/antora-markdown-exporter",
+		);
 	});
 });
