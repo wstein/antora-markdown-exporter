@@ -2,7 +2,7 @@
 id: 20260420194000
 aliases: ["Script-file consistency", "Repository self-consistency", "Referenced file lockstep"]
 tags: ["repository", "tooling", "consistency", "governance"]
-target: v0.1
+target: current
 ---
 Repository scripts and referenced files must stay in lockstep because a package cannot be considered buildable, testable, or publishable when its scripts, metadata, and documentation refer to files that do not exist. Self-consistency is a release prerequisite, not optional polish.
 

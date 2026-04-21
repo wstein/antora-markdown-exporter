@@ -2,7 +2,7 @@
 id: 20260420194100
 aliases: ["Primary toolchain policy", "Bun Node policy", "Execution path policy"]
 tags: ["tooling", "repository", "policy", "build"]
-target: v0.1
+target: current
 ---
 Toolchain policy must choose one primary execution path because mixed Bun-first and Node/npm-first instructions create avoidable confusion in builds, tests, CI, and contributor expectations. Secondary compatibility paths are acceptable, but one path must be authoritative.
 

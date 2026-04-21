@@ -2,7 +2,7 @@
 id: 20260420193200
 aliases: ["Flavor renderer boundary", "Markdown flavor adapters", "Syntax adapters", "GLFM", "glfm"]
 tags: ["markdown", "renderer", "flavors", "architecture"]
-target: v0.1
+target: current
 ---
 Flavor renderers are syntax adapters over one normalized semantic layer rather than independent document translators. Each renderer may differ in syntax choices and supported constructs, but it must not redefine document meaning.
 
@@ -44,6 +44,8 @@ Do not allow renderer-local semantics that bypass the IR or normalization passes
 
 
 - [[Markdown IR is the canonical render boundary]] - Semantic meaning is defined upstream of flavor rendering.
+- [[Raw HTML is a controlled fallback not a default rendering path]] - HTML passthrough must be an explicit flavor policy, not renderer default behavior.
+- [[Markdown Guide Extended Syntax is a capability reference not a specification]] - Feature discovery must not override explicit flavor capabilities.
 - [[Testing relies on golden fixtures and deterministic snapshots]] - Per-flavor golden outputs verify this boundary.
 - src/markdown/flavor.ts - Flavor capability and policy definitions.
 - src/markdown/render/gfm.ts - GFM renderer.

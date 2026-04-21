@@ -2,7 +2,7 @@
 id: 20260420193700
 aliases: ["Semantic invariant reference tests", "Reference assertions", "Compatibility invariants"]
 tags: ["testing", "invariants", "compatibility", "markdown"]
-target: v0.1
+target: current
 ---
 Reference tests check semantic invariants rather than exact byte output because external documentation corpora are best used to validate robustness, structural preservation, and fallback behavior, not to replace deterministic local golden fixtures.
 

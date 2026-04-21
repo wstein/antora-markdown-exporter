@@ -2,7 +2,7 @@
 id: 20260420193300
 aliases: ["Golden fixture testing", "Deterministic snapshot testing", "Render contract tests"]
 tags: ["testing", "vitest", "snapshots", "determinism"]
-target: v0.1
+target: current
 ---
 Testing relies on golden fixtures and deterministic snapshots because Markdown export regressions are easiest to detect at the exact-output boundary. Structural tests remain useful, but the frozen render contract is enforced through fixture-based expected outputs.
 

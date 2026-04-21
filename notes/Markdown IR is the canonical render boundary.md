@@ -2,7 +2,7 @@
 id: 20260420193100
 aliases: ["Markdown semantic layer", "Markdown IR boundary", "Canonical render boundary"]
 tags: ["architecture", "ir", "markdown", "renderer"]
-target: v0.1
+target: current
 ---
 The Markdown IR is the canonical render boundary for the repository and preserves document meaning independently from any concrete Markdown flavor. All renderer logic must consume normalized semantic nodes instead of source-specific or syntax-specific structures.
 
@@ -42,6 +42,7 @@ Do not let renderers accept raw AsciiDoc AST nodes. Renderers only consume norma
 
 - [[Exporter pipeline uses Assembler and a direct TypeScript converter]] - The pipeline feeds the IR boundary.
 - [[Flavor renderers are syntax adapters over one semantic layer]] - Renderers depend on this invariant.
+- [[Raw HTML is a controlled fallback not a default rendering path]] - HTML fallback must remain explicit and policy-bound at the render boundary.
 - [[Testing relies on golden fixtures and deterministic snapshots]] - Snapshot tests validate the frozen render contract.
 - src/markdown/ir.ts - Canonical semantic node definitions.
 - src/markdown/normalize.ts - IR normalization pass.

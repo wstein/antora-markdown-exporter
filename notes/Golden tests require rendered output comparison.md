@@ -2,7 +2,7 @@
 id: 20260420194200
 aliases: ["Real golden tests", "Rendered output comparison", "Golden contract requirement"]
 tags: ["testing", "golden", "renderer", "contracts"]
-target: v0.1
+target: current
 ---
 Golden tests require rendered output comparison because a fixture test is not a golden test unless it renders the target output and compares it against an expected artifact. Loading a fixture without exact-output assertion only proves fixture plumbing.
 

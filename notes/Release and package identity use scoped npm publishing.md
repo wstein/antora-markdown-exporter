@@ -2,7 +2,7 @@
 id: 20260420193400
 aliases: ["Scoped npm publishing", "Package identity", "Release package policy"]
 tags: ["packaging", "npm", "release", "repository"]
-target: v0.1
+target: current
 ---
 The package identity uses scoped npm publishing under `@wsmy/antora-markdown-exporter` and the repository should behave like a publishable TypeScript package instead of a Bun-init application. Tooling, exports, and release checks must reinforce that identity.
 

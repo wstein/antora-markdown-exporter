@@ -2,7 +2,7 @@
 id: 20260420194400
 aliases: ["Scaffold cleanup rule", "Leftover removal policy", "Migration cleanup invariant"]
 tags: ["repository", "cleanup", "migration", "quality"]
-target: v0.1
+target: current
 ---
 Scaffold leftovers must be removed before contract expansion because placeholder files, obsolete runtime assumptions, and dead migration artifacts reduce trust faster than missing features do. Cleanup should precede broadening the public contract.
 
