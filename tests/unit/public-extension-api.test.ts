@@ -9,7 +9,9 @@ import {
 describe("public extension API", () => {
 	it("exposes package metadata through the root entrypoint", () => {
 		expect(PACKAGE_NAME).toBe("@wsmy/antora-markdown-exporter");
-		expect(describePackage()).toContain("Markdown exporter");
+		expect(describePackage()).toBe(
+			"Antora Assembler based Markdown exporter with semantic IR, inspection surfaces, and explicit Markdown flavor rendering.",
+		);
 	});
 
 	it("exports the real Antora extension entrypoints", () => {

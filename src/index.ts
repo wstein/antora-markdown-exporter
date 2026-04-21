@@ -32,5 +32,5 @@ export {
 export const PACKAGE_NAME = "@wsmy/antora-markdown-exporter";
 
 export function describePackage() {
-	return "Antora Assembler based Markdown exporter with semantic IR and explicit Markdown flavor rendering paths.";
+	return "Antora Assembler based Markdown exporter with semantic IR, inspection surfaces, and explicit Markdown flavor rendering.";
 }

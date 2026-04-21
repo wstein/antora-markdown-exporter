@@ -219,7 +219,7 @@ If notes and implementation diverge, preserve the uncertainty and explain it ins
 At a high level, contributors can think about the repository in six layers:
 
 . Public package and CLI surface in `src/index.ts`, `package.json`, and `bin/**`
-. Scaffolded Antora extension boundary in `src/extension/**`
+. Assembler-backed Antora extension boundary in `src/extension/**`
 . Assembly-to-IR conversion in `src/exporter/**`
 . Canonical markdown kernel in `src/markdown/ir.ts` and `src/markdown/normalize.ts`
 . Policy and lowering layers in `src/markdown/fallback.ts` and `src/markdown/xref-resolution.ts`

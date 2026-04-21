@@ -1,6 +1,7 @@
 import { existsSync, readFileSync } from "node:fs";
 import { resolve } from "node:path";
 import { describe, expect, it } from "vitest";
+import { describePackage } from "../../src/index.js";
 
 const root = resolve(__dirname, "../..");
 const packageJson = JSON.parse(
@@ -93,8 +94,17 @@ describe("repository contract", () => {
 		expect(exportScript).toContain('let format: "human" | "json" = "human"');
 		expect(exportScript).toContain('if (argument === "--json")');
 		expect(exportScript).toContain('if (options.format === "json")');
+		expect(exportScript).not.toContain('if (argument === "--format")');
 		expect(exportScript).toContain("Exported ");
 		expect(exportScript).toContain("Output root:");
+	});
+
+	it("keeps package metadata wording aligned with the public package description", () => {
+		expect(packageJson.description).toBe(
+			"Antora Assembler based Markdown exporter with semantic IR, inspection surfaces, and explicit Markdown flavor rendering",
+		);
+		expect(describePackage()).toContain(packageJson.description);
+		expect(packageJson.description.toLowerCase()).not.toContain("scaffold");
 	});
 
 	it("keeps CI and release workflows aligned with the develop/tag operating model", () => {
