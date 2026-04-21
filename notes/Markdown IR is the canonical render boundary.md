@@ -31,7 +31,7 @@ The IR isolates meaning from syntax, supports normalization, and makes the outpu
 Define the canonical node types in `src/markdown/ir.ts`.
 
 
-Run all source mappings through the IR before rendering. Apply normalization in `src/markdown/normalize.ts` before any flavor renderer runs.
+Run all source mappings through the IR before rendering. Apply normalization in `src/markdown/normalize.ts` before any flavor renderer runs, and lower xref targets through `src/markdown/xref-resolution.ts` before markdown link serialization.
 
 
 Do not let renderers accept raw AsciiDoc AST nodes. Renderers only consume normalized IR.
@@ -43,6 +43,7 @@ Do not let renderers accept raw AsciiDoc AST nodes. Renderers only consume norma
 - [[Exporter pipeline uses Assembler and a direct TypeScript converter]] - The pipeline feeds the IR boundary.
 - [[Flavor renderers are syntax adapters over one semantic layer]] - Renderers depend on this invariant.
 - [[Raw HTML is a controlled fallback not a default rendering path]] - HTML fallback must remain explicit and policy-bound at the render boundary.
+- [[Xref target resolution is a separate lowering phase]] - Target routing is a lowering concern, not a renderer-local one.
 - [[Testing relies on golden fixtures and deterministic snapshots]] - Snapshot tests validate the frozen render contract.
 - src/markdown/ir.ts - Canonical semantic node definitions.
 - src/markdown/normalize.ts - IR normalization pass.

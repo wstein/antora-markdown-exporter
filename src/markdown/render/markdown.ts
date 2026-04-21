@@ -1,12 +1,8 @@
 import { renderUnsupportedBlock, resolveRawHtmlFallback } from "../fallback.js";
 import type { MarkdownFlavorName, MarkdownFlavorSpec } from "../flavor.js";
 import { resolveMarkdownFlavor } from "../flavor.js";
-import type {
-	MarkdownBlock,
-	MarkdownDocument,
-	MarkdownInline,
-	MarkdownXref,
-} from "../ir.js";
+import type { MarkdownBlock, MarkdownDocument, MarkdownInline } from "../ir.js";
+import { resolveMarkdownXrefDestination } from "../xref-resolution.js";
 
 function escapeMarkdownText(value: string): string {
 	return value.replace(/[\\*_`[\]<>]/g, "\\$&");
@@ -18,54 +14,6 @@ function escapeMarkdownTitle(value: string): string {
 
 function renderLinkDestination(url: string, title?: string): string {
 	return title === undefined ? url : `${url} "${escapeMarkdownTitle(title)}"`;
-}
-
-function stripAsciiDocExtension(value: string): string {
-	return value.replace(/\.adoc$/i, ".html");
-}
-
-function renderXrefDestination(
-	node: MarkdownXref,
-	flavor: MarkdownFlavorSpec,
-): string {
-	if (flavor.xrefStyle === "source") {
-		return node.url;
-	}
-
-	const { target } = node;
-	if (target.path.length === 0) {
-		return target.fragment === undefined ? node.url : `#${target.fragment}`;
-	}
-	const segments = [target.component, target.version].filter(
-		(segment): segment is string => segment !== undefined && segment.length > 0,
-	);
-	const moduleSegment =
-		target.module !== undefined &&
-		target.module.length > 0 &&
-		!(flavor.xrefSiteOmitRootModule && target.module === "ROOT")
-			? target.module
-			: undefined;
-	if (moduleSegment !== undefined) {
-		segments.push(moduleSegment);
-	}
-
-	const family = target.family ?? { kind: "page", name: "page" };
-	if (family.kind === "page") {
-		segments.push(stripAsciiDocExtension(target.path));
-	} else {
-		const assetDirectory =
-			flavor.xrefSiteAssetFamilies[
-				family.kind as keyof typeof flavor.xrefSiteAssetFamilies
-			];
-		if (assetDirectory === undefined) {
-			return node.url;
-		}
-
-		segments.push(assetDirectory, target.path);
-	}
-	const path = segments.join("/");
-
-	return target.fragment === undefined ? path : `${path}#${target.fragment}`;
 }
 
 function renderInline(
@@ -84,7 +32,7 @@ function renderInline(
 		case "link":
 			return `[${node.children.map((child) => renderInline(child, flavor)).join("")}](${renderLinkDestination(node.url, node.title)})`;
 		case "xref":
-			return `[${node.children.map((child) => renderInline(child, flavor)).join("")}](${renderLinkDestination(renderXrefDestination(node, flavor), node.title)})`;
+			return `[${node.children.map((child) => renderInline(child, flavor)).join("")}](${renderLinkDestination(resolveMarkdownXrefDestination(node, flavor), node.title)})`;
 		case "image":
 			return `![${node.alt.map((child) => renderInline(child, flavor)).join("")}](${renderLinkDestination(node.url, node.title)})`;
 		case "hardBreak":
