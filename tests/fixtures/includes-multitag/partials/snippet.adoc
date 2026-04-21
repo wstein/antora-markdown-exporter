@@ -1,0 +1,7 @@
+// tag::intro[]
+Selected introduction.
+// end::intro[]
+
+// tag::details[]
+Selected details.
+// end::details[]

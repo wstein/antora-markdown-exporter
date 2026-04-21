@@ -879,6 +879,60 @@ function applyLevelOffset(content: string, levelOffset: string): string {
 		.join("\n");
 }
 
+function applyLineSelection(content: string, lineSpec: string): string {
+	const lines = content.split(/\r?\n/);
+	const selectedLines: string[] = [];
+
+	for (const segment of lineSpec.split(/[;,]/)) {
+		const trimmedSegment = segment.trim();
+		if (trimmedSegment.length === 0) {
+			continue;
+		}
+
+		const rangeMatch = trimmedSegment.match(/^(\d+)\.\.(\d+)$/);
+		if (rangeMatch?.[1] !== undefined && rangeMatch[2] !== undefined) {
+			const start = Number(rangeMatch[1]);
+			const end = Number(rangeMatch[2]);
+			if (!Number.isFinite(start) || !Number.isFinite(end)) {
+				continue;
+			}
+
+			for (let index = start; index <= end; index += 1) {
+				const line = lines[index - 1];
+				if (line !== undefined) {
+					selectedLines.push(line);
+				}
+			}
+			continue;
+		}
+
+		const lineNumber = Number(trimmedSegment);
+		if (!Number.isFinite(lineNumber)) {
+			continue;
+		}
+
+		const line = lines[lineNumber - 1];
+		if (line !== undefined) {
+			selectedLines.push(line);
+		}
+	}
+
+	return selectedLines.join("\n");
+}
+
+function applyIndent(content: string, indent: string): string {
+	const size = Number(indent);
+	if (!Number.isFinite(size) || size <= 0) {
+		return content;
+	}
+
+	const padding = " ".repeat(size);
+	return content
+		.split(/\r?\n/)
+		.map((line) => (line.length === 0 ? line : `${padding}${line}`))
+		.join("\n");
+}
+
 function applyIncludeAttributes(
 	content: string,
 	attributes: Record<string, string>,
@@ -891,6 +945,12 @@ function applyIncludeAttributes(
 
 	if (attributes.leveloffset !== undefined) {
 		transformed = applyLevelOffset(transformed, attributes.leveloffset);
+	}
+	if (attributes.lines !== undefined) {
+		transformed = applyLineSelection(transformed, attributes.lines);
+	}
+	if (attributes.indent !== undefined) {
+		transformed = applyIndent(transformed, attributes.indent);
 	}
 
 	return transformed;

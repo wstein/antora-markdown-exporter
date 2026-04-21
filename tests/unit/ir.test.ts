@@ -229,6 +229,85 @@ describe("Markdown IR boundary", () => {
 		);
 	});
 
+	it("applies include line selection, indent, and multi-tag extraction", () => {
+		const assembled = [
+			"== Include slices",
+			"",
+			"include::partials/snippet.adoc[lines=2..3]",
+			"",
+			"include::partials/indented.adoc[indent=2]",
+			"",
+			"include::partials/tagged.adoc[tags=intro;details]",
+		].join("\n");
+		const ir = convertAssemblyToMarkdownIR(assembled, {
+			sourcePath: "/virtual/project/input.adoc",
+			includeResolver: (includeTarget) => {
+				if (includeTarget === "partials/snippet.adoc") {
+					return [
+						"First line.",
+						"Second line.",
+						"Third line.",
+						"Fourth line.",
+					].join("\n");
+				}
+				if (includeTarget === "partials/indented.adoc") {
+					return "Indented paragraph.";
+				}
+				if (includeTarget === "partials/tagged.adoc") {
+					return [
+						"// tag::intro[]",
+						"Selected introduction.",
+						"// end::intro[]",
+						"",
+						"// tag::details[]",
+						"Selected details.",
+						"// end::details[]",
+					].join("\n");
+				}
+
+				return undefined;
+			},
+		});
+
+		expect(ir.children).toEqual(
+			expect.arrayContaining([
+				expect.objectContaining({
+					type: "includeDirective",
+					attributes: { lines: "2..3" },
+				}),
+				expect.objectContaining({
+					type: "includeDirective",
+					attributes: { indent: "2" },
+				}),
+				expect.objectContaining({
+					type: "includeDirective",
+					attributes: { tags: "intro;details" },
+				}),
+				expect.objectContaining({
+					type: "paragraph",
+					children: [{ type: "text", value: "Second line. Third line." }],
+				}),
+				expect.objectContaining({
+					type: "paragraph",
+					children: [{ type: "text", value: "Indented paragraph." }],
+				}),
+			]),
+		);
+		expect(ir.children).toEqual(
+			expect.arrayContaining([
+				expect.objectContaining({
+					type: "paragraph",
+					children: [
+						{
+							type: "text",
+							value: "Selected introduction. Selected details.",
+						},
+					],
+				}),
+			]),
+		);
+	});
+
 	it("normalizes richer Antora xref coordinates into markdown link targets", () => {
 		const assembled = [
 			"== Xref coordinates",

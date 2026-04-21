@@ -287,5 +287,53 @@
 			],
 			"renderedExcludes": ["Unsupported:"]
 		}
+	},
+	{
+		"id": "antora-include-lines",
+		"sourceProject": "antora/docs.antora.org",
+		"sourceUrl": "https://gitlab.com/antora/docs.antora.org",
+		"sourcePath": "modules/ROOT/pages/page-partials.adoc",
+		"sourceCapturedAt": "2026-04-21",
+		"localPath": "tests/reference/fixtures/antora-include-lines/input.adoc",
+		"sha256": "501e6288cc6b2b846c003387026c40df4954614536b17e367023a0b55c59a385",
+		"coverage": ["includes", "line-selection"],
+		"rationale": "Exercises include line-range selection so compatibility checks prove the converter can inline only the requested slice of a partial.",
+		"expectations": {
+			"nodeTypes": ["heading", "paragraph"],
+			"renderedContains": ["Second line.", "Third line."],
+			"renderedExcludes": ["First line.", "Fourth line.", "Unsupported:"]
+		}
+	},
+	{
+		"id": "antora-include-indent",
+		"sourceProject": "antora/docs.antora.org",
+		"sourceUrl": "https://gitlab.com/antora/docs.antora.org",
+		"sourcePath": "modules/ROOT/pages/page-partials.adoc",
+		"sourceCapturedAt": "2026-04-21",
+		"localPath": "tests/reference/fixtures/antora-include-indent/input.adoc",
+		"sha256": "b2055ca299343ef5160b78e6ff6fb97909d029362b8ba38df7fe43ccdde5a3e7",
+		"coverage": ["includes", "indent"],
+		"rationale": "Exercises include indentation so compatibility checks prove the converter preserves content while tolerating shifted source indentation.",
+		"expectations": {
+			"nodeTypes": ["heading", "paragraph"],
+			"renderedContains": ["Indented paragraph."],
+			"renderedExcludes": ["Unsupported:"]
+		}
+	},
+	{
+		"id": "antora-include-multitag",
+		"sourceProject": "antora/docs.antora.org",
+		"sourceUrl": "https://gitlab.com/antora/docs.antora.org",
+		"sourcePath": "modules/ROOT/pages/page-partials.adoc",
+		"sourceCapturedAt": "2026-04-21",
+		"localPath": "tests/reference/fixtures/antora-include-multitag/input.adoc",
+		"sha256": "d60330b7740d5aad215402e83b0dcad9a03d251a2396309a45ee285b02b55540",
+		"coverage": ["includes", "multi-tag-selection"],
+		"rationale": "Exercises multi-tag inclusion so compatibility checks prove more than one tagged snippet can be extracted from a single partial in document order.",
+		"expectations": {
+			"nodeTypes": ["heading", "paragraph"],
+			"renderedContains": ["Selected introduction.", "Selected details."],
+			"renderedExcludes": ["Unsupported:"]
+		}
 	}
 ]
