@@ -115,10 +115,34 @@ export type MarkdownPageAliases = {
 	aliases: string[];
 };
 
+export type MarkdownIncludeLineRange = {
+	end?: number;
+	start?: number;
+};
+
+export type MarkdownIncludeTagSelection = {
+	precedence: "document-order";
+	tags: string[];
+};
+
+export type MarkdownIncludeSemantics = {
+	indent?: number;
+	levelOffset?: number;
+	lineRanges?: MarkdownIncludeLineRange[];
+	tagSelection?: MarkdownIncludeTagSelection;
+};
+
+export type MarkdownIncludeProvenance = {
+	includeRootDir: string;
+	includingSourcePath: string;
+	resolvedPath?: string;
+};
+
 export type MarkdownIncludeDirective = {
 	type: "includeDirective";
 	attributes: Record<string, string>;
-	resolvedPath?: string;
+	provenance?: MarkdownIncludeProvenance;
+	semantics?: MarkdownIncludeSemantics;
 	target: string;
 };
 

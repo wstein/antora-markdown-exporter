@@ -95,6 +95,9 @@ describe("Markdown IR boundary", () => {
 				expect.objectContaining({
 					type: "includeDirective",
 					target: "partial$shared.adoc",
+					provenance: expect.objectContaining({
+						includingSourcePath: "/virtual/project/input.adoc",
+					}),
 				}),
 				expect.objectContaining({
 					type: "codeBlock",
@@ -274,14 +277,26 @@ describe("Markdown IR boundary", () => {
 				expect.objectContaining({
 					type: "includeDirective",
 					attributes: { lines: "2..3" },
+					semantics: {
+						lineRanges: [{ start: 2, end: 3 }],
+					},
 				}),
 				expect.objectContaining({
 					type: "includeDirective",
 					attributes: { indent: "2" },
+					semantics: {
+						indent: 2,
+					},
 				}),
 				expect.objectContaining({
 					type: "includeDirective",
 					attributes: { tags: "intro;details" },
+					semantics: {
+						tagSelection: {
+							precedence: "document-order",
+							tags: ["intro", "details"],
+						},
+					},
 				}),
 				expect.objectContaining({
 					type: "paragraph",
@@ -301,6 +316,88 @@ describe("Markdown IR boundary", () => {
 						{
 							type: "text",
 							value: "Selected introduction. Selected details.",
+						},
+					],
+				}),
+			]),
+		);
+	});
+
+	it("captures open-ended line unions, overlapping tags, and include provenance", () => {
+		const assembled = [
+			"== Include edge cases",
+			"",
+			"include::partials/ranges.adoc[lines=..2;4..]",
+			"",
+			"include::partials/overlap.adoc[tags=intro;details]",
+		].join("\n");
+		const ir = convertAssemblyToMarkdownIR(assembled, {
+			sourcePath: "/virtual/project/input.adoc",
+			includeResolver: (includeTarget) => {
+				if (includeTarget === "partials/ranges.adoc") {
+					return [
+						"First line.",
+						"Second line.",
+						"Third line.",
+						"Fourth line.",
+					].join("\n");
+				}
+
+				if (includeTarget === "partials/overlap.adoc") {
+					return [
+						"// tag::intro[]",
+						"Selected introduction.",
+						"// tag::details[]",
+						"Shared detail.",
+						"// end::details[]",
+						"Closing intro.",
+						"// end::intro[]",
+					].join("\n");
+				}
+
+				return undefined;
+			},
+		});
+
+		expect(ir.children).toEqual(
+			expect.arrayContaining([
+				expect.objectContaining({
+					type: "includeDirective",
+					target: "partials/ranges.adoc",
+					semantics: {
+						lineRanges: [{ end: 2 }, { start: 4 }],
+					},
+					provenance: {
+						includeRootDir: "/virtual/project",
+						includingSourcePath: "/virtual/project/input.adoc",
+						resolvedPath: "/virtual/project/partials/ranges.adoc",
+					},
+				}),
+				expect.objectContaining({
+					type: "includeDirective",
+					target: "partials/overlap.adoc",
+					semantics: {
+						tagSelection: {
+							precedence: "document-order",
+							tags: ["intro", "details"],
+						},
+					},
+				}),
+				expect.objectContaining({
+					type: "paragraph",
+					children: [
+						{
+							type: "text",
+							value: "First line. Second line. Fourth line.",
+						},
+					],
+				}),
+				expect.objectContaining({
+					type: "paragraph",
+					children: [
+						{
+							type: "text",
+							value: "Selected introduction. Shared detail. Closing intro.",
 						},
 					],
 				}),

@@ -157,13 +157,41 @@ function normalizeBlock(block: MarkdownBlock): MarkdownBlock {
 			return {
 				...block,
 				target: block.target.trim(),
-				resolvedPath: block.resolvedPath?.trim(),
 				attributes: Object.fromEntries(
 					Object.entries(block.attributes).map(([key, value]) => [
 						key.trim(),
 						value.trim(),
 					]),
 				),
+				semantics:
+					block.semantics === undefined
+						? undefined
+						: {
+								indent: block.semantics.indent,
+								levelOffset: block.semantics.levelOffset,
+								lineRanges: block.semantics.lineRanges?.map((range) => ({
+									start: range.start,
+									end: range.end,
+								})),
+								tagSelection:
+									block.semantics.tagSelection === undefined
+										? undefined
+										: {
+												precedence: block.semantics.tagSelection.precedence,
+												tags: block.semantics.tagSelection.tags
+													.map((tag) => tag.trim())
+													.filter(Boolean),
+											},
+							},
+				provenance:
+					block.provenance === undefined
+						? undefined
+						: {
+								includeRootDir: block.provenance.includeRootDir.trim(),
+								includingSourcePath:
+									block.provenance.includingSourcePath.trim(),
+								resolvedPath: block.provenance.resolvedPath?.trim(),
+							},
 			};
 		case "blockquote":
 		case "admonition":

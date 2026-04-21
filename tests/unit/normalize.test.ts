@@ -60,10 +60,23 @@ describe("normalizeMarkdownIR", () => {
 				{
 					type: "includeDirective",
 					target: " partial$shared.adoc ",
-					resolvedPath: " /tmp/shared.adoc ",
 					attributes: {
 						" tag ": " intro ",
 						" leveloffset ": " +1 ",
+					},
+					semantics: {
+						tagSelection: {
+							precedence: "document-order",
+							tags: [" intro ", " details "],
+						},
+						lineRanges: [{ start: 1, end: 3 }, { start: 5 }],
+						indent: 2,
+						levelOffset: 1,
+					},
+					provenance: {
+						includeRootDir: " /tmp/partials ",
+						includingSourcePath: " /tmp/page.adoc ",
+						resolvedPath: " /tmp/shared.adoc ",
 					},
 				},
 				{
@@ -89,10 +102,23 @@ describe("normalizeMarkdownIR", () => {
 		expect(normalized.children[0]).toEqual({
 			type: "includeDirective",
 			target: "partial$shared.adoc",
-			resolvedPath: "/tmp/shared.adoc",
 			attributes: {
 				tag: "intro",
 				leveloffset: "+1",
+			},
+			semantics: {
+				tagSelection: {
+					precedence: "document-order",
+					tags: ["intro", "details"],
+				},
+				lineRanges: [{ start: 1, end: 3 }, { start: 5 }],
+				indent: 2,
+				levelOffset: 1,
+			},
+			provenance: {
+				includeRootDir: "/tmp/partials",
+				includingSourcePath: "/tmp/page.adoc",
+				resolvedPath: "/tmp/shared.adoc",
 			},
 		});
 		expect(normalized.children[1]).toMatchObject({

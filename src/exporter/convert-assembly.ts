@@ -10,6 +10,9 @@ import type {
 	MarkdownHeading,
 	MarkdownImage,
 	MarkdownIncludeDirective,
+	MarkdownIncludeLineRange,
+	MarkdownIncludeSemantics,
+	MarkdownIncludeTagSelection,
 	MarkdownInline,
 	MarkdownList,
 	MarkdownParagraph,
@@ -818,10 +821,7 @@ function defaultIncludeResolver(
 }
 
 function selectTaggedRegions(content: string, tagValue: string): string {
-	const requestedTags = tagValue
-		.split(/[;,]/)
-		.map((tag) => tag.trim())
-		.filter(Boolean);
+	const requestedTags = parseIncludeTagSelection(tagValue)?.tags ?? [];
 	if (requestedTags.length === 0) {
 		return content;
 	}
@@ -847,6 +847,119 @@ function selectTaggedRegions(content: string, tagValue: string): string {
 	}
 
 	return selectedLines.join("\n");
+}
+
+function parsePositiveInteger(value: string): number | undefined {
+	const parsed = Number(value);
+	if (!Number.isInteger(parsed) || parsed <= 0) {
+		return undefined;
+	}
+
+	return parsed;
+}
+
+function parseIncludeTagSelection(
+	tagValue: string,
+): MarkdownIncludeTagSelection | undefined {
+	const tags = [
+		...new Set(
+			tagValue
+				.split(/[;,]/)
+				.map((tag) => tag.trim())
+				.filter(Boolean),
+		),
+	];
+	if (tags.length === 0) {
+		return undefined;
+	}
+
+	return {
+		precedence: "document-order",
+		tags,
+	};
+}
+
+function parseIncludeLineRanges(
+	lineSpec: string,
+): MarkdownIncludeLineRange[] | undefined {
+	const ranges = lineSpec
+		.split(/[;,]/)
+		.map((segment) => segment.trim())
+		.filter(Boolean)
+		.flatMap<MarkdownIncludeLineRange>((segment) => {
+			const rangeMatch = segment.match(/^(\d*)\.\.(\d*)$/);
+			if (rangeMatch?.[0] !== undefined) {
+				const start =
+					rangeMatch[1] === ""
+						? undefined
+						: parsePositiveInteger(rangeMatch[1]);
+				const end =
+					rangeMatch[2] === ""
+						? undefined
+						: parsePositiveInteger(rangeMatch[2]);
+				if (start === undefined && end === undefined) {
+					return [];
+				}
+
+				if (
+					start !== undefined &&
+					end !== undefined &&
+					Number.isFinite(start) &&
+					Number.isFinite(end)
+				) {
+					return start <= end ? [{ start, end }] : [{ start: end, end: start }];
+				}
+
+				return [{ start, end }];
+			}
+
+			const lineNumber = parsePositiveInteger(segment);
+			return lineNumber === undefined
+				? []
+				: [{ start: lineNumber, end: lineNumber }];
+		});
+
+	return ranges.length === 0 ? undefined : ranges;
+}
+
+function parseIncludeSemantics(
+	attributes: Record<string, string>,
+): MarkdownIncludeSemantics | undefined {
+	const tagValue = attributes.tag ?? attributes.tags;
+	const tagSelection =
+		tagValue === undefined ? undefined : parseIncludeTagSelection(tagValue);
+	const lineRanges =
+		attributes.lines === undefined
+			? undefined
+			: parseIncludeLineRanges(attributes.lines);
+	const indent =
+		attributes.indent === undefined
+			? undefined
+			: parsePositiveInteger(attributes.indent);
+	const levelOffsetMatch = attributes.leveloffset?.match(/^([+-]?\d+)$/);
+	const levelOffset =
+		levelOffsetMatch?.[1] === undefined
+			? undefined
+			: Number(levelOffsetMatch[1]);
+
+	if (
+		tagSelection === undefined &&
+		lineRanges === undefined &&
+		indent === undefined &&
+		(levelOffset === undefined || !Number.isFinite(levelOffset))
+	) {
+		return undefined;
+	}
+
+	return {
+		tagSelection,
+		lineRanges,
+		indent,
+		levelOffset:
+			levelOffset !== undefined && Number.isFinite(levelOffset)
+				? levelOffset
+				: undefined,
+	};
 }
 
 function applyLevelOffset(content: string, levelOffset: string): string {
@@ -881,39 +994,27 @@ function applyLevelOffset(content: string, levelOffset: string): string {
 
 function applyLineSelection(content: string, lineSpec: string): string {
 	const lines = content.split(/\r?\n/);
+	const ranges = parseIncludeLineRanges(lineSpec);
+	if (ranges === undefined) {
+		return content;
+	}
+
 	const selectedLines: string[] = [];
+	const seenLineNumbers = new Set<number>();
 
-	for (const segment of lineSpec.split(/[;,]/)) {
-		const trimmedSegment = segment.trim();
-		if (trimmedSegment.length === 0) {
-			continue;
-		}
-
-		const rangeMatch = trimmedSegment.match(/^(\d+)\.\.(\d+)$/);
-		if (rangeMatch?.[1] !== undefined && rangeMatch[2] !== undefined) {
-			const start = Number(rangeMatch[1]);
-			const end = Number(rangeMatch[2]);
-			if (!Number.isFinite(start) || !Number.isFinite(end)) {
+	for (const range of ranges) {
+		const start = range.start ?? 1;
+		const end = range.end ?? lines.length;
+		for (let index = start; index <= end; index += 1) {
+			if (seenLineNumbers.has(index)) {
 				continue;
 			}
 
-			for (let index = start; index <= end; index += 1) {
-				const line = lines[index - 1];
-				if (line !== undefined) {
-					selectedLines.push(line);
-				}
+			const line = lines[index - 1];
+			if (line !== undefined) {
+				selectedLines.push(line);
+				seenLineNumbers.add(index);
 			}
-			continue;
-		}
-
-		const lineNumber = Number(trimmedSegment);
-		if (!Number.isFinite(lineNumber)) {
-			continue;
-		}
-
-		const line = lines[lineNumber - 1];
-		if (line !== undefined) {
-			selectedLines.push(line);
 		}
 	}
 
@@ -987,7 +1088,12 @@ function expandIncludes(
 			`<!-- md-ir-include ${JSON.stringify({
 				target: includeTarget,
 				attributes: directive.attributes,
-				resolvedPath,
+				semantics: parseIncludeSemantics(directive.attributes),
+				provenance: {
+					includeRootDir,
+					includingSourcePath: options.sourcePath,
+					resolvedPath,
+				},
 			})} -->`,
 		);
 		if (visited.has(resolvedPath)) {
@@ -1037,14 +1143,16 @@ function parseIncludeDirectiveMarker(
 
 	const payload = JSON.parse(match[1]) as {
 		attributes: Record<string, string>;
-		resolvedPath?: string;
+		provenance?: MarkdownIncludeDirective["provenance"];
+		semantics?: MarkdownIncludeDirective["semantics"];
 		target: string;
 	};
 	return {
 		type: "includeDirective",
 		target: payload.target,
 		attributes: payload.attributes,
-		resolvedPath: payload.resolvedPath,
+		semantics: payload.semantics,
+		provenance: payload.provenance,
 	};
 }
 
