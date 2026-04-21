@@ -173,39 +173,35 @@ function renderBlock(block: MarkdownBlock, flavor: MarkdownFlavorSpec): string {
 				.join("\n");
 		case "admonition": {
 			const [first, ...rest] = block.children;
-			const firstParagraph =
+			const firstParagraph = {
+				type: "paragraph" as const,
+				children: [
+					{
+						type: "strong" as const,
+						children: [
+							{
+								type: "text" as const,
+								value: `${renderAdmonitionLabel(block.kind)}:`,
+							},
+						],
+					},
+				],
+			};
+			const children =
 				first?.type === "paragraph"
-					? {
-							...first,
-							children: [
-								{
-									type: "strong" as const,
-									children: [
-										{
-											type: "text" as const,
-											value: `${renderAdmonitionLabel(block.kind)}:`,
-										},
-									],
-								},
-								{ type: "text" as const, value: " " },
-								...first.children,
-							],
-						}
-					: {
-							type: "paragraph" as const,
-							children: [
-								{
-									type: "strong" as const,
-									children: [
-										{
-											type: "text" as const,
-											value: `${renderAdmonitionLabel(block.kind)}:`,
-										},
-									],
-								},
-							],
-						};
-			return [firstParagraph, ...rest]
+					? [
+							{
+								...first,
+								children: [
+									...firstParagraph.children,
+									{ type: "text" as const, value: " " },
+									...first.children,
+								],
+							},
+							...rest,
+						]
+					: [firstParagraph, ...block.children];
+			return children
 				.map((child) => renderBlock(child, flavor))
 				.join("\n\n")
 				.split("\n")

@@ -116,6 +116,30 @@ bun run inspect:report -- tests/fixtures/includes-invalid-steps/input.adoc \
 
 Current GitHub Actions mode emits `::error` annotations for hard include diagnostics and `::warning` for degradations that still preserve usable output, such as an empty tag selection.
 
+Example GitHub Actions step using the Makefile delegate target, artifact upload, and native annotations:
+
+```yaml
+- name: Generate inspection report
+  run: |
+    make inspect-report INPUT=tests/fixtures/includes-invalid-steps/input.adoc \
+      > inspection-report.json
+
+- name: Upload inspection report
+  uses: actions/upload-artifact@v4
+  with:
+    name: inspection-report
+    path: inspection-report.json
+
+- name: Emit inspection annotations
+  run: |
+    make inspect-report INPUT=tests/fixtures/includes-invalid-steps/input.adoc \
+      PM=bun \
+      > /dev/null
+    bun run inspect:report -- tests/fixtures/includes-invalid-steps/input.adoc \
+      --format github-actions \
+      --fail-on-diagnostics
+```
+
 The emitted JSON contains the normalized inspection report plus the resolved input and source paths:
 
 ```json
