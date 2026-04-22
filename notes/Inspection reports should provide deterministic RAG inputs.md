@@ -17,7 +17,7 @@ The existing normalized inspection surface should grow into an agent-oriented ex
 - deterministic across runs
 - derived from normalized Markdown semantics
 - narrow enough for retrieval and prompt assembly
-- explicit about xrefs, targets, and source identity
+- explicit about headings, anchors, page aliases, xrefs, targets, and source identity
 
 This work should extend `collectMarkdownInspectionReport` and adjacent inspection helpers rather than creating an unrelated agent-only parser.
 
@@ -37,7 +37,7 @@ Using the normalized inspection surface as the base keeps agentic integrations i
 Prefer additions that:
 
 - normalize before producing agent-facing output
-- preserve source identifiers, xref targets, and document order
+- preserve source identifiers, document order, and best-effort source locations when the structured input exposes them
 - serialize to stable text or data structures that snapshot tests can compare exactly
 - reuse `collectMarkdownInspectionReport` rather than duplicating traversal logic
 

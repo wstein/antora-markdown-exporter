@@ -43,6 +43,8 @@ Prefer implementation steps that:
 - preserve one converter pipeline under `src/extension/index.ts`
 - prove the behavior through integration tests that exercise the real Antora generator context
 
+The repository now reads default export flavor and xref fallback label policy from `antora-playbook.yml` attributes and keeps `assembly.root_level` in `antora-assembler.yml`. Wrapper flags remain overrides, not the only policy source.
+
 Do not add a second custom configuration format for repository use.
 
 Do not move policy into shell wrappers when the Antora runtime can own it directly.

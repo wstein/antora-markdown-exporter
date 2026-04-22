@@ -170,7 +170,7 @@ Inputs:
 Outputs:
 
 * JSON payload with `inputPath`, `sourcePath`, and a normalized inspection report
-* or a deterministic RAG-oriented JSON payload with ordered xref entries
+* or a deterministic RAG-oriented JSON payload with ordered headings, anchors, page aliases, xrefs, and best-effort source locations
 * or a GitHub Actions `::notice` annotation
 
 Operator rule:
@@ -347,6 +347,7 @@ Operator direction to keep in mind:
 
 * widen provenance-locked reference coverage deliberately when the published support matrix grows
 * keep MultiMarkdown-specific compatibility pressure in curated reference fixtures instead of relying only on local synthetic render tests
+* pin metadata fallback, table-caption behavior, and attribute-carrying link or image rendering in the provenance corpus when those behaviors are part of the published flavor contract
 * move export-policy controls toward Antora-native playbook or Assembler configuration rather than accumulating wrapper-only script flags
 
 Troubleshooting guidance:
@@ -363,6 +364,7 @@ Use:
 * `collectXrefs`
 * `collectXrefTargets`
 * `collectMarkdownInspectionReport`
+* `collectMarkdownInspectionRagDocument`
 
 Do not:
 

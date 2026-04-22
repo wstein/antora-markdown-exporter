@@ -15,6 +15,7 @@ The provenance corpus should cover MultiMarkdown edge cases because the `multima
 Reference fixtures should include realistic edge cases that stress MultiMarkdown-specific behavior such as:
 
 - metadata blocks
+- heading-derived metadata fallback
 - definition lists
 - citations
 - footnotes
@@ -41,6 +42,12 @@ Add compact curated reference inputs that:
 - record provenance and hash locking
 - assert semantic invariants for shared behavior
 - assert MultiMarkdown-specific rendered markers only where the flavor contract truly differs
+
+The repository now includes provenance-locked cases for:
+
+- heading-derived metadata fallback
+- table captions
+- attribute-carrying external links and images
 
 Do not replace the local fixture corpus. Use reference fixtures to widen compatibility pressure, not to displace deterministic local golden tests.
 

@@ -211,6 +211,80 @@
 		}
 	},
 	{
+		"id": "antora-multimarkdown-metadata-fallback",
+		"sourceProject": "@wsmy/antora-markdown-exporter",
+		"sourceUrl": "https://github.com/wsmy/antora-markdown-exporter",
+		"sourcePath": "tests/reference/fixtures/antora-multimarkdown-metadata-fallback/input.adoc",
+		"sourceCapturedAt": "2026-04-22",
+		"localPath": "tests/reference/fixtures/antora-multimarkdown-metadata-fallback/input.adoc",
+		"sha256": "391227f7c25aaa0fef8d0cdc3d49b159a1047c0f4ce2cf0249fc7405471ce6bf",
+		"coverage": ["multimarkdown", "metadata", "headings"],
+		"rationale": "Pins the heading-derived metadata fallback path so MultiMarkdown exports keep emitting a stable title block even when the AsciiDoc input omits a document title line.",
+		"expectations": {
+			"nodeTypes": ["heading", "paragraph"],
+			"renderedContains": ["# Runtime Guide", "Body text."],
+			"renderedByFlavor": {
+				"multimarkdown": {
+					"contains": [
+						"Title: Runtime Guide",
+						"Date: 2026-04-22",
+						"Body text."
+					],
+					"excludes": ["# Runtime Guide"]
+				}
+			}
+		}
+	},
+	{
+		"id": "antora-multimarkdown-table-caption",
+		"sourceProject": "@wsmy/antora-markdown-exporter",
+		"sourceUrl": "https://github.com/wsmy/antora-markdown-exporter",
+		"sourcePath": "tests/reference/fixtures/antora-multimarkdown-table-caption/input.adoc",
+		"sourceCapturedAt": "2026-04-22",
+		"localPath": "tests/reference/fixtures/antora-multimarkdown-table-caption/input.adoc",
+		"sha256": "a7fc56c7aef7ce4b3e6c1683380a8e4356b949379be7947302c5fb82de52739b",
+		"coverage": ["multimarkdown", "tables", "captions"],
+		"rationale": "Adds a compact provenance-locked table-caption case so MultiMarkdown caption syntax stays under compatibility pressure instead of being covered only by local renderer tests.",
+		"expectations": {
+			"nodeTypes": ["heading", "table"],
+			"renderedContains": ["| Status | Owner |", "| Done | Docs |"],
+			"renderedByFlavor": {
+				"multimarkdown": {
+					"contains": ["Title: Tables", "[Release readiness]"]
+				}
+			}
+		}
+	},
+	{
+		"id": "antora-multimarkdown-link-image-attributes",
+		"sourceProject": "@wsmy/antora-markdown-exporter",
+		"sourceUrl": "https://github.com/wsmy/antora-markdown-exporter",
+		"sourcePath": "tests/reference/fixtures/antora-multimarkdown-link-image-attributes/input.adoc",
+		"sourceCapturedAt": "2026-04-22",
+		"localPath": "tests/reference/fixtures/antora-multimarkdown-link-image-attributes/input.adoc",
+		"sha256": "70034ee9480e7830d6bf62cc49ed37ce56b28c2217bca315555b1315160d9aa6",
+		"coverage": ["multimarkdown", "links", "images", "attributes"],
+		"rationale": "Pins attribute-carrying external links and images into the provenance corpus so MultiMarkdown reference definitions keep preserving those normalized attributes exactly.",
+		"expectations": {
+			"nodeTypes": ["heading", "paragraph"],
+			"renderedContains": [
+				"[Example site](https://example.com)",
+				"![Architecture figure](diagram.png \"System diagram\")"
+			],
+			"renderedByFlavor": {
+				"multimarkdown": {
+					"contains": [
+						"Title: Assets",
+						"See [Example site][link-1].",
+						"![Architecture figure][image-2]",
+						"[link-1]: https://example.com class=external target=_blank rel=noopener",
+						"[image-2]: diagram.png \"System diagram\" width=320 height=240"
+					]
+				}
+			}
+		}
+	},
+	{
 		"id": "antora-images-tables",
 		"sourceProject": "antora/docs.antora.org",
 		"sourceUrl": "https://gitlab.com/antora/docs.antora.org",

@@ -1,0 +1,5 @@
+= Assets
+
+See https://example.com[Example site,role=external,window=_blank].
+
+image::diagram.png[Architecture figure,title=System diagram,width=320,height=240]

@@ -122,7 +122,7 @@ console.log(rag.entries);
 ```
 
 Inspection helpers normalize before traversal and return entries in document order, so the combined report is stable enough for CI, release validation, and snapshot-style contract tests.
-`collectMarkdownInspectionRagDocument(document)` narrows that same normalized surface into deterministic ordered entries for agentic retrieval and prompt assembly without reparsing rendered Markdown.
+`collectMarkdownInspectionRagDocument(document)` narrows that same normalized surface into deterministic ordered entries for agentic retrieval and prompt assembly without reparsing rendered Markdown. The RAG document now includes headings, anchors, page aliases, and best-effort source locations alongside xrefs so chunking and retrieval can stay on the semantic side of the pipeline.
 
 When unlabeled xrefs need a different display form, the structured extractor and extension runtime also accept `xrefFallbackLabelStyle`. Use `fragment-or-basename` for labels like `setup`, or `fragment-or-path` for labels like `guide/setup`.
 
@@ -145,7 +145,7 @@ for (const target of report.xrefTargets) {
 }
 ```
 
-For machine-readable CI output, the repository also ships a Bun-native example script. JSON and GitHub Actions modes serialize the normalized inspection report directly, and `rag-json` emits the agent-oriented inspection shape.
+For machine-readable CI output, the repository also ships a Bun-native example script. JSON and GitHub Actions modes serialize the normalized inspection report directly, and `rag-json` emits the agent-oriented inspection shape with document metadata, headings, anchors, page aliases, xrefs, and best-effort source locations.
 
 ```bash
 bun run inspect:report -- tests/fixtures/xrefs/input.adoc > inspection-report.json
