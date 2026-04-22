@@ -216,7 +216,7 @@ The emitted JSON contains the normalized inspection report plus the resolved inp
 }
 ```
 
-Current structured converter coverage includes headings, paragraphs, inline links, dedicated xref nodes, dedicated anchor and page-alias nodes, images, ordered and unordered lists, thematic breaks, aligned tables, policy-gated raw HTML fallback nodes, fenced code blocks, block quotes, and dedicated admonition nodes. The extension/runtime path now goes through structured extraction and lowering rather than the removed text parser. For the authoritative statement of what is supported, partial, or intentionally unsupported, use the operator manual’s support matrix instead of prose summaries.
+Current structured converter coverage includes headings, paragraphs, inline links, dedicated xref nodes, dedicated anchor and page-alias nodes, images, ordered and unordered lists, thematic breaks, aligned tables, policy-gated raw HTML fallback nodes, fenced code blocks, block quotes, and dedicated admonition nodes. The extension/runtime path now goes through structured extraction and lowering rather than the removed text parser. The repository also publishes both `assemblyStructureInvariants` and `assemblyStructureSpecification` from the root package so adapter-boundary rules are visible as code, not just prose. For the authoritative statement of what is supported, partial, or intentionally unsupported, use the operator manual’s support matrix instead of prose summaries.
 
 ### Extension
 

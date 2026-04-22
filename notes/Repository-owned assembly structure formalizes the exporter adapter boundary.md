@@ -24,6 +24,8 @@ The contract now also publishes explicit invariants in `src/adapter/assembly-str
 - unsupported-node behavior
 - deterministic inline fallback rules
 
+It also now ships a formal typed specification in `src/adapter/assembly-structure-spec.ts` and exports that specification from the package root. That makes the adapter boundary auditable through code, package exports, and tests at the same time.
+
 ## Why
 
 Without a repository-owned adapter boundary:
@@ -40,6 +42,8 @@ Keep the structured assembly contract in a dedicated module and test it directly
 
 Treat `assemblyStructureInvariants` as the review checklist for extractor and lowering changes. If a change weakens one of those invariants, update the contract, support matrix, and proof surface together instead of relying on implementation drift.
 
+Treat `assemblyStructureSpecification` as the higher-level statement of scope and review rules. The invariants capture the enforceable contract points; the specification explains how those points fit together and why helper-module changes must stay aligned with them.
+
 Extend it only when:
 
 - the extractor can produce the new structure
@@ -54,5 +58,6 @@ Do not treat the adapter as a hidden alias for Markdown IR or as a disguised con
 - [[Exporter pipeline uses Assembler and a direct TypeScript converter]] - The adapter sits between assembled source and Markdown IR lowering.
 - [[Markdown IR is the canonical render boundary]] - The adapter lowers into IR rather than replacing it.
 - src/adapter/assembly-structure.ts - Repository-owned structured assembly contract.
+- src/adapter/assembly-structure-spec.ts - Formal typed specification for the adapter contract.
 - src/adapter/asciidoctor-structure.ts - Structured extractor entrypoint over the repository-owned contract.
 - tests/unit/assembly-structure.test.ts - Contract tests for the adapter.

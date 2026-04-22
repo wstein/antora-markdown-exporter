@@ -367,7 +367,7 @@ The structured rewrite changed what the exporter owns.
 | Concern | Current owner | Contributor expectation |
 | --- | --- | --- |
 | Include expansion and most low-level block formation | Antora Assembler plus Asciidoctor loading | Do not rebuild exporter-side include parsing or low-level block parsing. |
-| Structured semantic mapping | `src/adapter/asciidoctor-structure.ts` and helper modules | Keep mapping behavior aligned with `assemblyStructureInvariants` and the support matrix. |
+| Structured semantic mapping | `src/adapter/asciidoctor-structure.ts` and helper modules | Keep mapping behavior aligned with `assemblyStructureInvariants`, `assemblyStructureSpecification`, and the support matrix. |
 | Markdown IR lowering | `src/exporter/structured-to-ir.ts` | Change this layer when semantic structure is already present but the IR mapping is wrong or incomplete. |
 | Inspection surfaces | `src/markdown/inspection.ts` | Prefer normalized semantic inspection over ad-hoc renderer traversal or dormant include transport assumptions. |
 
@@ -378,6 +378,7 @@ This ledger turns the architecture story into reviewable evidence. Use it when a
 | Claim family | Implementation evidence | Test evidence | Workflow evidence | Review note |
 | --- | --- | --- | --- | --- |
 | Conversion semantics stay centralized | `src/adapter/asciidoctor-structure.ts`; `src/exporter/structured-to-ir.ts` | `tests/unit/asciidoctor-structure.test.ts`; `tests/unit/structured-to-ir.test.ts`; `tests/unit/ir.test.ts` | `bun run check` | Refactors should change structural extraction, lowering, and tests together. |
+| Adapter contract rules stay explicit | `src/adapter/assembly-structure.ts`; `src/adapter/assembly-structure-spec.ts`; `src/index.ts` | `tests/unit/assembly-structure.test.ts`; `tests/unit/repository-contract.test.ts` | `bun run check` | The adapter boundary should remain reviewable as exported code, not only as architecture prose. |
 | Rendered Markdown stays deterministic | `src/markdown/normalize.ts`; `src/markdown/render/**` | `tests/integration/fixture-golden.test.ts`; `tests/integration/module-export-golden.test.ts` | `make test`; `.github/workflows/ci.yml` | Golden diffs are the primary review artifact for rendering changes. |
 | Inspection stays machine-readable | `src/markdown/inspection.ts`; `scripts/inspection-report.ts` | `tests/unit/inspection.test.ts`; `tests/unit/inspection-report-script.test.ts` | `bun run inspect:report`; CI annotation consumers | Prefer normalized report surfaces over ad-hoc traversal. |
 | Release and publication claims stay bounded | `scripts/release-check.mjs`; `scripts/release.js`; `antora-playbook.yml` | `tests/unit/repository-contract.test.ts` | `.github/workflows/release.yml`; `.github/workflows/pages.yml`; `build/markdown/review-bundle/.github/workflows/**` | Do not describe publication behavior without linking both workflow files and the contract test. |

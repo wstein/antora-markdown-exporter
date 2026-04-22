@@ -90,8 +90,11 @@ Practical consequences:
 * includes are now primarily assembler-owned semantics, not a live exporter-side directive subsystem
 * inspection is xref- and semantic-node-focused, not a hidden parser or renderer pass
 * exporter scope is structural mapping and lowering, not low-level AsciiDoc reparsing
+* adapter rules are published in code through `assemblyStructureInvariants` and `assemblyStructureSpecification`, so contract review is not limited to prose docs
 
 When in doubt, check the operator manual’s support matrix first. It is the clearest statement of what the repository currently supports, what is partial, and what remains intentionally unsupported.
+
+The current helper split under `src/adapter/asciidoctor-structure/` also matters operationally. `inline.ts`, `xref.ts`, `block-helpers.ts`, and `blocks.ts` now carry narrower responsibilities, and recent tests explicitly pin behavior for malformed inline HTML, optional nested block accessors, sparse table rows, and xref fallback-label policy. If you change those areas, update the focused helper tests rather than hiding the drift inside only end-to-end fixtures.
 
 === Renderers Adapt Syntax, They Do Not Redefine Meaning
 
