@@ -7,10 +7,7 @@ import {
 } from "../src/index.js";
 
 type InspectionCliFormat = "github-actions" | "json";
-type InspectionAnnotationLevel = "error" | "warning";
-
 type InspectionCliOptions = {
-	failOnDiagnostics: boolean;
 	format: InspectionCliFormat;
 	inputPath: string;
 	readFromStdin: boolean;
@@ -25,7 +22,6 @@ type InspectionReportPayload = {
 
 function parseArguments(argv: string[]): InspectionCliOptions {
 	const positional: string[] = [];
-	let failOnDiagnostics = false;
 	let format: InspectionCliFormat = "json";
 	let readFromStdin = false;
 	let sourcePath: string | undefined;
@@ -33,11 +29,6 @@ function parseArguments(argv: string[]): InspectionCliOptions {
 	for (let index = 0; index < argv.length; index += 1) {
 		const argument = argv[index];
 		if (argument === undefined) {
-			continue;
-		}
-
-		if (argument === "--fail-on-diagnostics") {
-			failOnDiagnostics = true;
 			continue;
 		}
 
@@ -90,7 +81,6 @@ function parseArguments(argv: string[]): InspectionCliOptions {
 	}
 
 	return {
-		failOnDiagnostics,
 		format,
 		inputPath: readFromStdin ? "<stdin>" : resolve(inputPath),
 		readFromStdin,
@@ -100,8 +90,8 @@ function parseArguments(argv: string[]): InspectionCliOptions {
 
 function usage(): string {
 	return [
-		"Usage: bun scripts/inspection-report.ts <input.adoc> [--source-path <path>] [--format <json|github-actions>] [--fail-on-diagnostics]",
-		"   or: bun scripts/inspection-report.ts --stdin [--source-path <path>] [--format <json|github-actions>] [--fail-on-diagnostics]",
+		"Usage: bun scripts/inspection-report.ts <input.adoc> [--source-path <path>] [--format <json|github-actions>]",
+		"   or: bun scripts/inspection-report.ts --stdin [--source-path <path>] [--format <json|github-actions>]",
 		"",
 		"Emit a machine-readable JSON inspection report for one AsciiDoc source file.",
 	].join("\n");
@@ -129,17 +119,6 @@ function escapeGitHubAnnotationValue(value: string): string {
 		.replaceAll(",", "%2C");
 }
 
-function resolveIncludeDiagnosticAnnotationLevel(
-	code: string,
-): InspectionAnnotationLevel {
-	switch (code) {
-		case "empty-tag-selection":
-			return "warning";
-		default:
-			return "error";
-	}
-}
-
 function buildInspectionReportPayload(
 	options: InspectionCliOptions,
 	source: string,
@@ -155,35 +134,14 @@ function buildInspectionReportPayload(
 	};
 }
 
-function emitGitHubActionsAnnotations(
-	payload: InspectionReportPayload,
-	failOnDiagnostics: boolean,
-): void {
+function emitGitHubActionsAnnotations(payload: InspectionReportPayload): void {
 	const { report, sourcePath } = payload;
-
-	for (const entry of report.includeDiagnostics) {
-		const level = resolveIncludeDiagnosticAnnotationLevel(
-			entry.diagnostic.code,
-		);
-		const message = `${entry.diagnostic.code}: ${entry.diagnostic.message}${
-			entry.diagnostic.source === undefined
-				? ""
-				: ` (source: ${entry.diagnostic.source})`
-		}`;
-		console.log(
-			`::${level} file=${escapeGitHubAnnotationValue(sourcePath)},title=${escapeGitHubAnnotationValue(`include:${entry.target}`)}::${escapeGitHubAnnotationValue(message)}`,
-		);
-	}
 
 	console.log(
 		`::notice title=inspection-report::${escapeGitHubAnnotationValue(
-			`includeDirectives=${report.includeDirectives.length} includeDiagnostics=${report.includeDiagnostics.length} xrefs=${report.xrefs.length}`,
+			`xrefs=${report.xrefs.length} xrefTargets=${report.xrefTargets.length} sourcePath=${sourcePath}`,
 		)}`,
 	);
-
-	if (failOnDiagnostics && report.includeDiagnostics.length > 0) {
-		process.exitCode = 1;
-	}
 }
 
 async function main(): Promise<void> {
@@ -194,18 +152,11 @@ async function main(): Promise<void> {
 	const payload = buildInspectionReportPayload(options, source);
 
 	if (options.format === "github-actions") {
-		emitGitHubActionsAnnotations(payload, options.failOnDiagnostics);
+		emitGitHubActionsAnnotations(payload);
 		return;
 	}
 
 	console.log(JSON.stringify(payload, null, 2));
-
-	if (
-		options.failOnDiagnostics &&
-		payload.report.includeDiagnostics.length > 0
-	) {
-		process.exitCode = 1;
-	}
 }
 
 try {

@@ -164,56 +164,6 @@ function normalizeBlock(block: MarkdownBlock): MarkdownBlock {
 				...block,
 				aliases: block.aliases.map((alias) => alias.trim()).filter(Boolean),
 			};
-		case "includeDirective":
-			return {
-				...block,
-				target: block.target.trim(),
-				attributes: Object.fromEntries(
-					Object.entries(block.attributes).map(([key, value]) => [
-						key.trim(),
-						value.trim(),
-					]),
-				),
-				diagnostics: block.diagnostics?.map((diagnostic) => ({
-					code: diagnostic.code,
-					message: diagnostic.message.trim(),
-					source: diagnostic.source?.trim(),
-				})),
-				semantics:
-					block.semantics === undefined
-						? undefined
-						: {
-								indent: block.semantics.indent,
-								levelOffset: block.semantics.levelOffset,
-								lineRanges: block.semantics.lineRanges?.map((range) => ({
-									start: range.start,
-									end: range.end,
-									step: range.step,
-								})),
-								tagSelection:
-									block.semantics.tagSelection === undefined
-										? undefined
-										: {
-												precedence: block.semantics.tagSelection.precedence,
-												tags: block.semantics.tagSelection.tags
-													.map((tag) => tag.trim())
-													.filter(Boolean),
-											},
-							},
-				provenance:
-					block.provenance === undefined
-						? undefined
-						: {
-								depth: block.provenance.depth,
-								includeRootDir: block.provenance.includeRootDir.trim(),
-								inclusionStack: block.provenance.inclusionStack.map((path) =>
-									path.trim(),
-								),
-								includingSourcePath:
-									block.provenance.includingSourcePath.trim(),
-								resolvedPath: block.provenance.resolvedPath?.trim(),
-							},
-			};
 		case "blockquote":
 		case "admonition":
 			return {

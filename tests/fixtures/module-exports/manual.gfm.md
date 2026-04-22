@@ -124,18 +124,18 @@ Use this matrix before troubleshooting local environment failures.
 
 ## 1.4. Generate An Inspection Report
 
-Use the inspection script when you need machine-readable validation for include diagnostics and xref metadata.
+Use the inspection script when you need machine-readable validation for xref metadata.
 
 File-backed input:
 
 ```bash
-make inspect-report INPUT=tests/fixtures/includes-invalid-steps/input.adoc
+make inspect-report INPUT=tests/fixtures/xrefs/input.adoc
 ```
 
 Equivalent direct script invocation:
 
 ```bash
-bun run inspect:report -- tests/fixtures/includes-invalid-steps/input.adoc
+bun run inspect:report -- tests/fixtures/xrefs/input.adoc
 ```
 
 Read from standard input:
@@ -145,32 +145,20 @@ cat generated-page.adoc | bun run inspect:report -- --stdin \
   --source-path /workspace/modules/ROOT/pages/generated-page.adoc
 ```
 
-Fail the command when include diagnostics are present:
-
-```bash
-bun run inspect:report -- tests/fixtures/includes-invalid-steps/input.adoc \
-  --fail-on-diagnostics
-```
-
 Emit GitHub Actions annotations instead of JSON:
 
 ```bash
-bun run inspect:report -- tests/fixtures/includes-invalid-steps/input.adoc \
-  --format github-actions \
-  --fail-on-diagnostics
+bun run inspect:report -- tests/fixtures/xrefs/input.adoc \
+  --format github-actions
 ```
 
 Inputs:
 
 - one input file path, or `--stdin`
 - optional `--source-path` to preserve source identity in the output
-- optional `--format json|github-actions`
-- optional `--fail-on-diagnostics`
-
-Outputs:
-
+- optional `--format json|github-actions` Outputs:
 - JSON payload with `inputPath`, `sourcePath`, and a normalized inspection report
-- or GitHub Actions `::error`, `::warning`, and `::notice` annotations
+- or a GitHub Actions `::notice` annotation
 
 Operator rule:
 
@@ -221,7 +209,7 @@ What `scripts/release-check.mjs` verifies during that process:
 - ESM and CJS extension exports load
 - `renderGfm` and `collectMarkdownInspectionReport` are exported from the root package
 - `createMarkdownConverter` and `register` are exported from the extension package
-- inspection reports retain include diagnostics
+- inspection reports retain normalized xref metadata
 - `npm pack --dry-run --json` contains required publish artifacts and excludes forbidden bundle output
 
 Important conflict to preserve:
@@ -258,12 +246,9 @@ The inspection script accepts these supported modes:
 - stdin input
 - JSON output
 - GitHub Actions annotation output
-- non-zero exit on diagnostics with `--fail-on-diagnostics`
 
 Known behavior from the implementation and tests:
 
-- `empty-tag-selection` is emitted as a warning in GitHub Actions mode
-- other include diagnostics currently emit as errors in GitHub Actions mode
 - mixed `--stdin` plus a file path is rejected
 - missing file input is rejected
 - invalid `--format` values are rejected
@@ -312,8 +297,6 @@ The note `Inspection helpers expose normalized validation surfaces` is the opera
 
 Use:
 
-- `collectIncludeDiagnostics`
-- `collectIncludeDirectives`
 - `collectXrefs`
 - `collectXrefTargets`
 - `collectMarkdownInspectionReport`
@@ -368,7 +351,7 @@ The note `Converter coverage should be published as a support matrix` defines th
 | --- | --- | --- | --- | --- |
 | Section structure and headings | Supported | Headings, section numbering metadata, and table-of-contents render options stay semantic until rendering. | `src/adapter/asciidoctor-structure.ts`; `src/exporter/structured-to-ir.ts`; `tests/unit/asciidoctor-structure.test.ts`; `tests/integration/module-export-golden.test.ts`; `tests/integration/module-export-structure.test.ts` | `make markdown`; documentation module export review |
 | Xrefs, anchors, and page aliases | Supported | Structured xref targets, anchor identifiers, and page aliases remain inspectable until lowering or rendering. | `src/markdown/xref-resolution.ts`; `tests/unit/xref-resolution.test.ts`; `tests/unit/include-diagnostics.test.ts`; reference fixtures | Inspection report review; rendered fixture review |
-| Inspection report surfaces | Supported | Normalized inspection reports expose xrefs and any surviving diagnostics from the structured runtime path without requiring renderer-local traversal. | `src/markdown/include-diagnostics.ts`; `scripts/inspection-report.ts`; `tests/unit/include-diagnostics.test.ts`; `tests/unit/inspection-report-script.test.ts`; `tests/integration/reference-antora.test.ts` | `scripts/inspection-report.ts`; CI annotation review |
+| Inspection report surfaces | Supported | Normalized inspection reports expose xrefs and normalized targets from the structured runtime path without requiring renderer-local traversal. | `src/markdown/inspection.ts`; `scripts/inspection-report.ts`; `tests/unit/include-diagnostics.test.ts`; `tests/unit/inspection-report-script.test.ts`; `tests/integration/reference-antora.test.ts` | `scripts/inspection-report.ts`; CI annotation review |
 | Admonitions, images, and tables | Supported | These constructs map to dedicated semantic nodes instead of renderer-local string rewrites. | `src/markdown/ir.ts`; `tests/unit/asciidoctor-structure.test.ts`; `tests/integration/fixture-golden.test.ts`; `tests/integration/reference-antora.test.ts` | Fixture diff review |
 | Transparent fenced extensions such as `mermaid` | Supported | Valid fenced code blocks preserve authored language tags as semantic `codeBlock` nodes and do not enter fallback. | `tests/integration/fenced-extension-policy.test.ts`; reference manifest entries | Fixture diff review; package usage examples |
 | Raw HTML and unsupported degradation | Partial | Fallback stays explicit and deterministic, but downstream allowance depends on flavor policy instead of blanket passthrough. | `src/markdown/fallback.ts`; `tests/unit/fallback.test.ts`; `tests/integration/raw-html-policy.test.ts` | Flavor policy review; release validation |
@@ -382,7 +365,7 @@ This ledger turns the architecture story into reviewable evidence. Use it when a
 | --- | --- | --- | --- | --- |
 | Conversion semantics stay centralized | `src/adapter/asciidoctor-structure.ts`; `src/exporter/structured-to-ir.ts` | `tests/unit/asciidoctor-structure.test.ts`; `tests/unit/structured-to-ir.test.ts`; `tests/unit/ir.test.ts` | `bun run check` | Refactors should change structural extraction, lowering, and tests together. |
 | Rendered Markdown stays deterministic | `src/markdown/normalize.ts`; `src/markdown/render/**` | `tests/integration/fixture-golden.test.ts`; `tests/integration/module-export-golden.test.ts` | `make test`; `.github/workflows/ci.yml` | Golden diffs are the primary review artifact for rendering changes. |
-| Inspection and diagnostics stay machine-readable | `src/markdown/include-diagnostics.ts`; `scripts/inspection-report.ts` | `tests/unit/include-diagnostics.test.ts`; `tests/unit/inspection-report-script.test.ts` | `bun run inspect:report`; CI annotation consumers | Prefer normalized report surfaces over ad-hoc traversal. |
+| Inspection stays machine-readable | `src/markdown/inspection.ts`; `scripts/inspection-report.ts` | `tests/unit/include-diagnostics.test.ts`; `tests/unit/inspection-report-script.test.ts` | `bun run inspect:report`; CI annotation consumers | Prefer normalized report surfaces over ad-hoc traversal. |
 | Release and publication claims stay bounded | `scripts/release-check.mjs`; `scripts/release.js`; `antora-playbook.yml` | `tests/unit/repository-contract.test.ts` | `.github/workflows/release.yml`; `.github/workflows/pages.yml` | Do not describe publication behavior without linking both workflow files and the contract test. |
 
 ## 3.6. Common Failure Modes
@@ -390,7 +373,7 @@ This ledger turns the architecture story into reviewable evidence. Use it when a
 | Failure mode | What to check |
 | --- | --- |
 | Golden output changed unexpectedly | Review `tests/integration/fixture-golden.test.ts`, the affected `expected.<flavor>.md` files, normalization logic, fallback behavior, and flavor routing. |
-| Inspection report exits non-zero | Check include diagnostics in the emitted JSON or GitHub Actions output. `invalid-line-step`, `invalid-line-range`, `invalid-indent`, and similar failures come from include semantics. |
+| Inspection report looks incomplete | Check xref counts and normalized target entries in the emitted JSON or GitHub Actions output. |
 | GitHub Actions annotations look incomplete | Confirm the script is using `--format github-actions`, and that the consumer did not bypass `collectMarkdownInspectionReport`. |
 | Reference suite is noisy | Check whether the issue is a hash drift, a stale coverage assumption in `tests/reference/manifest.json`, or a real semantic regression in xrefs, includes, fallback, tables, or admonitions. |
 
@@ -421,7 +404,7 @@ Current conflict to preserve:
 | --- | --- | --- | --- |
 | Deterministic rendered Markdown | `Implemented`, `Test-enforced` | Semantic pipeline plus exact-output tests | `src/exporter/**`; `src/markdown/**`; `tests/integration/fixture-golden.test.ts`; `tests/integration/module-export-golden.test.ts` |
 | Centralized fallback policy | `Implemented`, `Test-enforced` | Fallback layer plus policy tests | `src/markdown/fallback.ts`; `tests/unit/fallback.test.ts`; `tests/integration/raw-html-policy.test.ts` |
-| Inspection surfaces for diagnostics and xrefs | `Implemented`, `Test-enforced` | Root API, inspection script, and inspection tests | `src/markdown/include-diagnostics.ts`; `scripts/inspection-report.ts`; `tests/unit/include-diagnostics.test.ts`; `tests/unit/inspection-report-script.test.ts` |
+| Inspection surfaces for xrefs | `Implemented`, `Test-enforced` | Root API, inspection script, and inspection tests | `src/markdown/inspection.ts`; `scripts/inspection-report.ts`; `tests/unit/include-diagnostics.test.ts`; `tests/unit/inspection-report-script.test.ts` |
 | Module Markdown export follows the canonical pipeline | `Implemented`, `Test-enforced` | Shared assembled module sources plus module export tests | `scripts/docs-module-sources.mjs`; `scripts/export-antora-modules.ts`; `tests/unit/export-antora-modules.test.ts`; `tests/integration/module-export-golden.test.ts` |
 | Release integrity and publish flow | `Implemented`, `CI-enforced` | Release checks plus tag-triggered workflow | `scripts/release-check.mjs`; `.github/workflows/release.yml`; `tests/unit/repository-contract.test.ts` |
 | GitHub Pages publication after successful release promotion | `CI-enforced` | Workflow handoff from `Release` to `Pages` | `.github/workflows/release.yml`; `.github/workflows/pages.yml`; `tests/unit/repository-contract.test.ts` |

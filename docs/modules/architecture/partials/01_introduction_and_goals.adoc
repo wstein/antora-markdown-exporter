@@ -40,7 +40,7 @@ The main uncertainty is no longer whether a real Antora registration path exists
 
 |3
 |Inspectable validation surfaces
-|The note `Inspection helpers expose normalized validation surfaces` requires reusable inspection results for include diagnostics and xref metadata so CI, release checks, and tooling do not reimplement recursive IR traversal.
+|The note `Inspection helpers expose normalized validation surfaces` requires reusable inspection results for xref metadata so CI, release checks, and tooling do not reimplement recursive IR traversal.
 
 |4
 |Honest public maturity signaling

@@ -56,12 +56,10 @@ export {
 	resolveMarkdownFlavor,
 } from "./markdown/flavor.js";
 export {
-	collectIncludeDiagnostics,
-	collectIncludeDirectives,
 	collectMarkdownInspectionReport,
 	collectXrefs,
 	collectXrefTargets,
-} from "./markdown/include-diagnostics.js";
+} from "./markdown/inspection.js";
 export type { MarkdownDocument } from "./markdown/ir.js";
 export { normalizeMarkdownIR } from "./markdown/normalize.js";
 export {

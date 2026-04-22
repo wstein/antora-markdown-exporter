@@ -49,4 +49,4 @@ Keep any transport used for that metadata private and isolated.
 - [[Exporter pipeline uses Assembler and a direct TypeScript converter]] - Include expansion belongs on the Assembler side of the boundary.
 - [[Preserved include metadata uses private transport details]] - Marker transport is private even when include semantics are public.
 - [[Inspection helpers expose normalized validation surfaces]] - Diagnostics and provenance should surface through normalized inspection outputs.
-- src/markdown/include-diagnostics.ts - Public inspection surface for include diagnostics.
+- src/markdown/inspection.ts - Public inspection surface for xref inspection.

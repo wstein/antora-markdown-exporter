@@ -33,7 +33,7 @@ A first-class inspection layer keeps diagnostics and family-aware xref metadata 
 
 ## How
 
-Keep the helper surface in `src/markdown/include-diagnostics.ts` or an equivalent inspection-focused module.
+Keep the helper surface in `src/markdown/inspection.ts` or an equivalent inspection-focused module.
 
 Helpers should:
 - accept a Markdown document
@@ -56,6 +56,6 @@ Do not mix inspection helpers into renderer policy or export conversion logic.
 - [[Markdown IR is the canonical render boundary]] - Inspection helpers consume normalized semantic nodes.
 - [[Testing relies on golden fixtures and deterministic snapshots]] - Fixtures and validation helpers should reinforce the same contract.
 - [[Release and package identity use scoped npm publishing]] - Release validation can use these helpers before publish.
-- src/markdown/include-diagnostics.ts - Inspection helper implementation.
+- src/markdown/inspection.ts - Inspection helper implementation.
 - scripts/inspection-report.ts - Machine-readable JSON reporting example for CI flows.
 - README.md - Public usage examples for validation and reporting.

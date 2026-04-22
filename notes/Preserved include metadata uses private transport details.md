@@ -38,4 +38,4 @@ Preserve existing include semantics, diagnostics, and provenance when refactorin
 
 - [[Exporter pipeline uses Assembler and a direct TypeScript converter]] - Include transport sits inside the converter, not outside the pipeline boundary.
 - [[Reference corpus should cover navigation xrefs includes and admonitions]] - Compatibility coverage should pin include behavior, not private marker syntax.
-- src/markdown/include-diagnostics.ts - Public inspection surface for include diagnostics and surviving include metadata.
+- src/markdown/inspection.ts - Public inspection surface for normalized xref inspection.

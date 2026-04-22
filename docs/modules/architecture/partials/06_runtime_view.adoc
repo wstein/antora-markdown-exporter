@@ -20,8 +20,7 @@ This scenario is based on the notes `Inspection helpers expose normalized valida
 
 1. A caller converts source to IR, typically with a real file-backed `sourcePath`.
 2. `collectMarkdownInspectionReport(document)` normalizes the document before traversal.
-3. The inspection layer walks nested blocks, callout lists, footnote definitions, tables, and inline containers to gather include directives, include diagnostics, xrefs, and xref targets in normalized document order.
+3. The inspection layer walks nested blocks, callout lists, footnote definitions, tables, and inline containers to gather xrefs and xref targets in normalized document order.
 4. `scripts/inspection-report.ts` serializes that report either as JSON or GitHub Actions annotations.
-5. CI or release checks fail when diagnostics are present and `--fail-on-diagnostics` is used.
 
 The notable aspect is that validation uses one maintained normalized inspection surface instead of separate ad-hoc traversals in CI scripts.

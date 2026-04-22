@@ -30,7 +30,7 @@ The main building blocks are:
 |`src/markdown/flavor.ts`, `src/markdown/fallback.ts`, and `src/markdown/render/**` define flavor capabilities, raw HTML and unsupported-node fallback policy, and the final markdown serializers.
 
 |Inspection and automation surfaces
-|`src/markdown/include-diagnostics.ts` and `scripts/inspection-report.ts` expose normalized inspection data for CI, release validation, and other tooling.
+|`src/markdown/inspection.ts` and `scripts/inspection-report.ts` expose normalized inspection data for CI, release validation, and other tooling.
 
 |Package, CLI, and release boundary
 |`src/index.ts`, `package.json`, `bin/antora-markdown-exporter.js`, and `scripts/release-check.mjs` package the library-first API, CLI entrypoint, and release validation.
@@ -66,4 +66,4 @@ The private marker transport is intentionally isolated. The main ongoing risk is
 ==== Validation And Release Surfaces
 Inspection helpers and scripts expose reusable validation outputs so downstream tooling does not walk the IR itself. Packaging and release scripts keep the repository aligned with its scoped npm package identity.
 
-These surfaces live in `src/markdown/include-diagnostics.ts`, `scripts/inspection-report.ts`, `scripts/release-check.mjs`, and `package.json`.
+These surfaces live in `src/markdown/inspection.ts`, `scripts/inspection-report.ts`, `scripts/release-check.mjs`, and `package.json`.

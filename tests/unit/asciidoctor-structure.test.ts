@@ -429,7 +429,7 @@ describe("asciidoctor structure extraction", () => {
 			[
 				"== Xrefs",
 				"",
-				"See xref:docs:ROOT:install.adoc[], xref:2.0@docs:ROOT:install.adoc#cli[], xref:2.0@docs:api:page$index.adoc#overview[], and xref:docs:ROOT:partial$nav.adoc[].",
+				"See xref:docs:ROOT:install.adoc[], xref:2.0@docs:ROOT:install.adoc#cli[], xref:2.0@docs:api:page$index.adoc#overview[], xref:docs:ROOT:guide/setup.adoc[], and xref:docs:ROOT:partial$nav.adoc[].",
 			].join("\n"),
 		);
 
@@ -446,6 +446,37 @@ describe("asciidoctor structure extraction", () => {
 					? child.children[0].value
 					: "",
 			);
-		expect(labels).toEqual(["install", "cli", "overview", "nav"]);
+		expect(labels).toEqual(["install", "cli", "overview", "setup", "nav"]);
+	});
+
+	it("extracts pass blocks and halign-driven table alignment structurally", () => {
+		const document = extractAssemblyStructure(
+			[
+				"== Raw",
+				"",
+				"++++",
+				"<aside>Preserve me</aside>",
+				"++++",
+				"",
+				"|===",
+				"| Left | Center | Right",
+				"",
+				"| One | Two | Three",
+				"|===",
+			].join("\n"),
+		);
+
+		expect(document.children).toEqual(
+			expect.arrayContaining([
+				expect.objectContaining({
+					type: "htmlBlock",
+					value: "<aside>Preserve me</aside>",
+				}),
+				expect.objectContaining({
+					type: "table",
+					align: [null, null, null],
+				}),
+			]),
+		);
 	});
 });

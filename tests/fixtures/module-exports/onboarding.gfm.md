@@ -238,7 +238,7 @@ Use this heuristic:
 - xref routing: start in `src/markdown/xref-resolution.ts`
 - fallback behavior: start in `src/markdown/fallback.ts`
 - flavor-specific emission: start in `src/markdown/render/**`
-- validation APIs and machine-readable inspection: start in `src/markdown/include-diagnostics.ts` and `scripts/inspection-report.ts`
+- validation APIs and machine-readable inspection: start in `src/markdown/inspection.ts` and `scripts/inspection-report.ts`
 
 Then find the corresponding tests before editing code.
 
@@ -265,7 +265,7 @@ At a high level, contributors can think about the repository in six layers:
 3. Assembly-to-IR conversion in `src/exporter/**`
 4. Canonical markdown kernel in `src/markdown/ir.ts` and `src/markdown/normalize.ts`
 5. Policy and lowering layers in `src/markdown/fallback.ts` and `src/markdown/xref-resolution.ts`
-6. Flavor renderers and validation surfaces in `src/markdown/render/**` and `src/markdown/include-diagnostics.ts`
+6. Flavor renderers and validation surfaces in `src/markdown/render/**` and `src/markdown/inspection.ts`
 
 Those layers are exposed through one contract family:
 

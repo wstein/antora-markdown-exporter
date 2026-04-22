@@ -296,8 +296,6 @@ function renderBlock(
 						"page alias metadata requires raw HTML support in this flavor",
 				},
 			);
-		case "includeDirective":
-			return "";
 		case "thematicBreak":
 			return "---";
 		case "codeBlock":

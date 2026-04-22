@@ -53,41 +53,10 @@ describe("normalizeMarkdownIR", () => {
 		});
 	});
 
-	it("normalizes include directive and xref target metadata", () => {
+	it("normalizes xref target metadata", () => {
 		const normalized = normalizeMarkdownIR({
 			type: "document",
 			children: [
-				{
-					type: "includeDirective",
-					target: " partial$shared.adoc ",
-					attributes: {
-						" tag ": " intro ",
-						" leveloffset ": " +1 ",
-					},
-					diagnostics: [
-						{
-							code: "invalid-line-range",
-							message: " include line ranges cannot omit both bounds ",
-							source: " .. ",
-						},
-					],
-					semantics: {
-						tagSelection: {
-							precedence: "document-order",
-							tags: [" intro ", " details "],
-						},
-						lineRanges: [{ start: 1, end: 3, step: 2 }, { start: 5 }],
-						indent: 2,
-						levelOffset: 1,
-					},
-					provenance: {
-						depth: 1,
-						includeRootDir: " /tmp/partials ",
-						inclusionStack: [" /tmp/root.adoc ", " /tmp/page.adoc "],
-						includingSourcePath: " /tmp/page.adoc ",
-						resolvedPath: " /tmp/shared.adoc ",
-					},
-				},
 				{
 					type: "paragraph",
 					children: [
@@ -108,38 +77,7 @@ describe("normalizeMarkdownIR", () => {
 			],
 		});
 
-		expect(normalized.children[0]).toEqual({
-			type: "includeDirective",
-			target: "partial$shared.adoc",
-			attributes: {
-				tag: "intro",
-				leveloffset: "+1",
-			},
-			diagnostics: [
-				{
-					code: "invalid-line-range",
-					message: "include line ranges cannot omit both bounds",
-					source: "..",
-				},
-			],
-			semantics: {
-				tagSelection: {
-					precedence: "document-order",
-					tags: ["intro", "details"],
-				},
-				lineRanges: [{ start: 1, end: 3, step: 2 }, { start: 5 }],
-				indent: 2,
-				levelOffset: 1,
-			},
-			provenance: {
-				depth: 1,
-				includeRootDir: "/tmp/partials",
-				inclusionStack: ["/tmp/root.adoc", "/tmp/page.adoc"],
-				includingSourcePath: "/tmp/page.adoc",
-				resolvedPath: "/tmp/shared.adoc",
-			},
-		});
-		expect(normalized.children[1]).toMatchObject({
+		expect(normalized.children[0]).toMatchObject({
 			type: "paragraph",
 			children: [
 				{

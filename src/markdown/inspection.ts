@@ -1,51 +1,16 @@
 import type {
 	MarkdownBlock,
 	MarkdownDocument,
-	MarkdownIncludeDiagnostic,
-	MarkdownIncludeDirective,
 	MarkdownInline,
 	MarkdownXref,
 	MarkdownXrefTarget,
 } from "./ir.js";
 import { normalizeMarkdownIR } from "./normalize.js";
 
-export type MarkdownIncludeDiagnosticEntry = {
-	diagnostic: MarkdownIncludeDiagnostic;
-	target: string;
-};
-
 export type MarkdownInspectionReport = {
-	includeDiagnostics: MarkdownIncludeDiagnosticEntry[];
-	includeDirectives: MarkdownIncludeDirective[];
 	xrefTargets: MarkdownXrefTarget[];
 	xrefs: MarkdownXref[];
 };
-
-function collectIncludeDirectivesFromBlocks(
-	blocks: MarkdownBlock[],
-): MarkdownIncludeDirective[] {
-	return blocks.flatMap((block) => {
-		switch (block.type) {
-			case "includeDirective":
-				return [block];
-			case "blockquote":
-			case "admonition":
-				return collectIncludeDirectivesFromBlocks(block.children);
-			case "list":
-				return block.items.flatMap((item) =>
-					collectIncludeDirectivesFromBlocks(item.children),
-				);
-			case "calloutList":
-				return block.items.flatMap((item) =>
-					collectIncludeDirectivesFromBlocks(item.children),
-				);
-			case "footnoteDefinition":
-				return collectIncludeDirectivesFromBlocks(block.children);
-			default:
-				return [];
-		}
-	});
-}
 
 function collectXrefsFromInlineChildren(
 	children: MarkdownInline[],
@@ -105,17 +70,9 @@ function collectXrefsFromBlocks(blocks: MarkdownBlock[]): MarkdownXref[] {
 function collectInspectionReportFromBlocks(
 	blocks: MarkdownBlock[],
 ): MarkdownInspectionReport {
-	const includeDirectives = collectIncludeDirectivesFromBlocks(blocks);
 	const xrefs = collectXrefsFromBlocks(blocks);
 
 	return {
-		includeDirectives,
-		includeDiagnostics: includeDirectives.flatMap((directive) =>
-			(directive.diagnostics ?? []).map((diagnostic) => ({
-				target: directive.target,
-				diagnostic,
-			})),
-		),
 		xrefs,
 		xrefTargets: xrefs.map((xref) => xref.target),
 	};
@@ -127,18 +84,6 @@ function collectNormalizedInspectionReport(
 	return collectInspectionReportFromBlocks(
 		normalizeMarkdownIR(document).children,
 	);
-}
-
-export function collectIncludeDirectives(
-	document: MarkdownDocument,
-): MarkdownIncludeDirective[] {
-	return collectNormalizedInspectionReport(document).includeDirectives;
-}
-
-export function collectIncludeDiagnostics(
-	document: MarkdownDocument,
-): MarkdownIncludeDiagnosticEntry[] {
-	return collectNormalizedInspectionReport(document).includeDiagnostics;
 }
 
 export function collectXrefs(document: MarkdownDocument): MarkdownXref[] {

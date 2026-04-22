@@ -204,4 +204,61 @@ describe("structured assembly to markdown ir", () => {
 			]),
 		);
 	});
+
+	it("lowers html blocks, callout lists, and unsupported nodes explicitly", () => {
+		const ir = convertAssemblyStructureToMarkdownIR(
+			defineAssemblyDocument({
+				type: "document",
+				children: [
+					{
+						type: "calloutList",
+						items: [
+							{
+								ordinal: 1,
+								children: [
+									{
+										type: "paragraph",
+										children: [{ type: "text", value: "Review output." }],
+									},
+								],
+							},
+						],
+					},
+					{
+						type: "htmlBlock",
+						value: "<aside>raw</aside>",
+					},
+					{
+						type: "unsupported",
+						reason: "not modeled",
+					},
+				],
+			}),
+		);
+
+		expect(ir.children).toEqual([
+			{
+				type: "calloutList",
+				items: [
+					{
+						ordinal: 1,
+						children: [
+							{
+								type: "paragraph",
+								children: [{ type: "text", value: "Review output." }],
+							},
+						],
+					},
+				],
+			},
+			{
+				type: "htmlBlock",
+				value: "<aside>raw</aside>",
+			},
+			{
+				type: "unsupported",
+				reason: "not modeled",
+			},
+		]);
+	});
 });

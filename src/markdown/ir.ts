@@ -129,54 +129,6 @@ export type MarkdownPageAliases = {
 	aliases: string[];
 };
 
-export type MarkdownIncludeLineRange = {
-	end?: number;
-	start?: number;
-	step?: number;
-};
-
-export type MarkdownIncludeTagSelection = {
-	precedence: "document-order";
-	tags: string[];
-};
-
-export type MarkdownIncludeDiagnosticCode =
-	| "empty-tag-selection"
-	| "invalid-indent"
-	| "invalid-leveloffset"
-	| "invalid-line-range"
-	| "invalid-line-step";
-
-export type MarkdownIncludeDiagnostic = {
-	code: MarkdownIncludeDiagnosticCode;
-	message: string;
-	source?: string;
-};
-
-export type MarkdownIncludeSemantics = {
-	indent?: number;
-	levelOffset?: number;
-	lineRanges?: MarkdownIncludeLineRange[];
-	tagSelection?: MarkdownIncludeTagSelection;
-};
-
-export type MarkdownIncludeProvenance = {
-	depth: number;
-	includeRootDir: string;
-	inclusionStack: string[];
-	includingSourcePath: string;
-	resolvedPath?: string;
-};
-
-export type MarkdownIncludeDirective = {
-	type: "includeDirective";
-	attributes: Record<string, string>;
-	diagnostics?: MarkdownIncludeDiagnostic[];
-	provenance?: MarkdownIncludeProvenance;
-	semantics?: MarkdownIncludeSemantics;
-	target: string;
-};
-
 export type MarkdownThematicBreak = {
 	type: "thematicBreak";
 };
@@ -259,7 +211,6 @@ export type MarkdownBlock =
 	| MarkdownHeading
 	| MarkdownAnchor
 	| MarkdownPageAliases
-	| MarkdownIncludeDirective
 	| MarkdownThematicBreak
 	| MarkdownCodeBlock
 	| MarkdownBlockQuote

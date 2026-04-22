@@ -82,16 +82,10 @@ describe("renderGfm", () => {
 		);
 	});
 
-	it("renders xref nodes like links and omits include metadata blocks", () => {
+	it("renders xref nodes like links without include-directive placeholders", () => {
 		const rendered = renderGfm({
 			type: "document",
 			children: [
-				{
-					type: "includeDirective",
-					target: "partial$shared.adoc",
-					attributes: { tag: "intro" },
-					resolvedPath: "/tmp/shared.adoc",
-				},
 				{
 					type: "paragraph",
 					children: [
@@ -125,6 +119,62 @@ describe("renderGfm", () => {
 
 		expect(rendered).toBe(
 			"> Unsupported: table rendering is not implemented\n",
+		);
+	});
+
+	it("renders titled example and verse blocks with explicit stable markdown shape", () => {
+		const rendered = renderGfm({
+			type: "document",
+			children: [
+				{
+					type: "labeledGroup",
+					label: [{ type: "text", value: "Worked example" }],
+					children: [
+						{
+							type: "blockquote",
+							children: [
+								{
+									type: "paragraph",
+									children: [{ type: "text", value: "Example body." }],
+								},
+							],
+						},
+					],
+				},
+				{
+					type: "labeledGroup",
+					label: [{ type: "text", value: "Release verse" }],
+					children: [
+						{
+							type: "blockquote",
+							children: [
+								{
+									type: "paragraph",
+									children: [
+										{ type: "text", value: "Ship with care" },
+										{ type: "softBreak" },
+										{ type: "text", value: "Verify each layer" },
+									],
+								},
+							],
+						},
+					],
+				},
+			],
+		});
+
+		expect(rendered).toBe(
+			[
+				"**Worked example:**",
+				"",
+				"> Example body.",
+				"",
+				"**Release verse:**",
+				"",
+				"> Ship with care",
+				"> Verify each layer",
+				"",
+			].join("\n"),
 		);
 	});
 

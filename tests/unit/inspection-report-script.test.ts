@@ -21,26 +21,24 @@ describe("inspection report script", () => {
 		const report = JSON.parse(result.stdout) as {
 			inputPath: string;
 			report: {
-				includeDiagnostics: unknown[];
-				includeDirectives: unknown[];
 				xrefTargets: Array<{ raw: string }>;
+				xrefs: Array<{ url: string }>;
 			};
 			sourcePath: string;
 		};
 
 		expect(report.inputPath).toBe(inputPath);
 		expect(report.sourcePath).toBe(inputPath);
-		expect(report.report.includeDiagnostics).toEqual([]);
-		expect(report.report.includeDirectives).toEqual([]);
 		expect(report.report.xrefTargets).toEqual(
 			expect.arrayContaining([
 				expect.objectContaining({ raw: "install.html", path: "install.adoc" }),
 				expect.objectContaining({ raw: "#overview" }),
 			]),
 		);
+		expect(report.report.xrefs).toHaveLength(2);
 	});
 
-	it("accepts stdin and can emit GitHub Actions annotations", () => {
+	it("accepts stdin and emits GitHub Actions notices", () => {
 		const sourcePath = "/virtual/project/page.adoc";
 		const result = spawnSync(
 			"bun",
@@ -51,7 +49,6 @@ describe("inspection report script", () => {
 				sourcePath,
 				"--format",
 				"github-actions",
-				"--fail-on-diagnostics",
 			],
 			{
 				cwd: root,
@@ -63,9 +60,9 @@ describe("inspection report script", () => {
 		expect(result.status).toBe(0);
 		expect(result.stderr).toBe("");
 		expect(result.stdout).toContain("::notice title=inspection-report::");
-		expect(result.stdout).toContain(
-			"includeDirectives=0 includeDiagnostics=0 xrefs=1",
-		);
+		expect(result.stdout).toContain("xrefs=1");
+		expect(result.stdout).toContain("xrefTargets=1");
+		expect(result.stdout).toContain(`sourcePath=${sourcePath}`);
 	});
 
 	it("accepts an explicit source path in the emitted report", () => {
@@ -81,15 +78,13 @@ describe("inspection report script", () => {
 		);
 		const report = JSON.parse(output) as {
 			inputPath: string;
-			report: {
-				includeDirectives: unknown[];
-			};
+			report: { xrefs: unknown[] };
 			sourcePath: string;
 		};
 
 		expect(report.inputPath).toBe(inputPath);
 		expect(report.sourcePath).toBe(sourcePath);
-		expect(report.report.includeDirectives).toEqual([]);
+		expect(report.report.xrefs).toEqual([]);
 	});
 
 	it("rejects mixed stdin and file inputs with a usage message", () => {

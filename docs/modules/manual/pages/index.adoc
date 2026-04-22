@@ -157,20 +157,20 @@ Use this matrix before troubleshooting local environment failures.
 
 === Generate An Inspection Report
 
-Use the inspection script when you need machine-readable validation for include diagnostics and xref metadata.
+Use the inspection script when you need machine-readable validation for xref metadata.
 
 File-backed input:
 
 [source,bash]
 ----
-make inspect-report INPUT=tests/fixtures/includes-invalid-steps/input.adoc
+make inspect-report INPUT=tests/fixtures/xrefs/input.adoc
 ----
 
 Equivalent direct script invocation:
 
 [source,bash]
 ----
-bun run inspect:report -- tests/fixtures/includes-invalid-steps/input.adoc
+bun run inspect:report -- tests/fixtures/xrefs/input.adoc
 ----
 
 Read from standard input:
@@ -181,21 +181,12 @@ cat generated-page.adoc | bun run inspect:report -- --stdin \
   --source-path /workspace/modules/ROOT/pages/generated-page.adoc
 ----
 
-Fail the command when include diagnostics are present:
-
-[source,bash]
-----
-bun run inspect:report -- tests/fixtures/includes-invalid-steps/input.adoc \
-  --fail-on-diagnostics
-----
-
 Emit GitHub Actions annotations instead of JSON:
 
 [source,bash]
 ----
-bun run inspect:report -- tests/fixtures/includes-invalid-steps/input.adoc \
-  --format github-actions \
-  --fail-on-diagnostics
+bun run inspect:report -- tests/fixtures/xrefs/input.adoc \
+  --format github-actions
 ----
 
 Inputs:
@@ -203,12 +194,10 @@ Inputs:
 * one input file path, or `--stdin`
 * optional `--source-path` to preserve source identity in the output
 * optional `--format json|github-actions`
-* optional `--fail-on-diagnostics`
-
 Outputs:
 
 * JSON payload with `inputPath`, `sourcePath`, and a normalized inspection report
-* or GitHub Actions `::error`, `::warning`, and `::notice` annotations
+* or a GitHub Actions `::notice` annotation
 
 Operator rule:
 
@@ -261,7 +250,7 @@ What `scripts/release-check.mjs` verifies during that process:
 * ESM and CJS extension exports load
 * `renderGfm` and `collectMarkdownInspectionReport` are exported from the root package
 * `createMarkdownConverter` and `register` are exported from the extension package
-* inspection reports retain include diagnostics
+* inspection reports retain normalized xref metadata
 * `npm pack --dry-run --json` contains required publish artifacts and excludes forbidden bundle output
 
 Important conflict to preserve:
@@ -326,12 +315,9 @@ The inspection script accepts these supported modes:
 * stdin input
 * JSON output
 * GitHub Actions annotation output
-* non-zero exit on diagnostics with `--fail-on-diagnostics`
 
 Known behavior from the implementation and tests:
 
-* `empty-tag-selection` is emitted as a warning in GitHub Actions mode
-* other include diagnostics currently emit as errors in GitHub Actions mode
 * mixed `--stdin` plus a file path is rejected
 * missing file input is rejected
 * invalid `--format` values are rejected
@@ -394,8 +380,6 @@ The note `Inspection helpers expose normalized validation surfaces` is the opera
 
 Use:
 
-* `collectIncludeDiagnostics`
-* `collectIncludeDirectives`
 * `collectXrefs`
 * `collectXrefTargets`
 * `collectMarkdownInspectionReport`
@@ -464,8 +448,8 @@ The note `Converter coverage should be published as a support matrix` defines th
 
 |Inspection report surfaces
 |Supported
-|Normalized inspection reports expose xrefs and any surviving diagnostics from the structured runtime path without requiring renderer-local traversal.
-|`src/markdown/include-diagnostics.ts`; `scripts/inspection-report.ts`; `tests/unit/include-diagnostics.test.ts`; `tests/unit/inspection-report-script.test.ts`; `tests/integration/reference-antora.test.ts`
+|Normalized inspection reports expose xrefs and normalized targets from the structured runtime path without requiring renderer-local traversal.
+|`src/markdown/inspection.ts`; `scripts/inspection-report.ts`; `tests/unit/include-diagnostics.test.ts`; `tests/unit/inspection-report-script.test.ts`; `tests/integration/reference-antora.test.ts`
 |`scripts/inspection-report.ts`; CI annotation review
 
 |Admonitions, images, and tables
@@ -513,8 +497,8 @@ This ledger turns the architecture story into reviewable evidence. Use it when a
 |`make test`; `.github/workflows/ci.yml`
 |Golden diffs are the primary review artifact for rendering changes.
 
-|Inspection and diagnostics stay machine-readable
-|`src/markdown/include-diagnostics.ts`; `scripts/inspection-report.ts`
+|Inspection stays machine-readable
+|`src/markdown/inspection.ts`; `scripts/inspection-report.ts`
 |`tests/unit/include-diagnostics.test.ts`; `tests/unit/inspection-report-script.test.ts`
 |`bun run inspect:report`; CI annotation consumers
 |Prefer normalized report surfaces over ad-hoc traversal.
@@ -535,8 +519,8 @@ This ledger turns the architecture story into reviewable evidence. Use it when a
 |Golden output changed unexpectedly
 |Review `tests/integration/fixture-golden.test.ts`, the affected `expected.<flavor>.md` files, normalization logic, fallback behavior, and flavor routing.
 
-|Inspection report exits non-zero
-|Check include diagnostics in the emitted JSON or GitHub Actions output. `invalid-line-step`, `invalid-line-range`, `invalid-indent`, and similar failures come from include semantics.
+|Inspection report looks incomplete
+|Check xref counts and normalized target entries in the emitted JSON or GitHub Actions output.
 
 |GitHub Actions annotations look incomplete
 |Confirm the script is using `--format github-actions`, and that the consumer did not bypass `collectMarkdownInspectionReport`.
@@ -582,10 +566,10 @@ Current conflict to preserve:
 |Fallback layer plus policy tests
 |`src/markdown/fallback.ts`; `tests/unit/fallback.test.ts`; `tests/integration/raw-html-policy.test.ts`
 
-|Inspection surfaces for diagnostics and xrefs
+|Inspection surfaces for xrefs
 |`Implemented`, `Test-enforced`
 |Root API, inspection script, and inspection tests
-|`src/markdown/include-diagnostics.ts`; `scripts/inspection-report.ts`; `tests/unit/include-diagnostics.test.ts`; `tests/unit/inspection-report-script.test.ts`
+|`src/markdown/inspection.ts`; `scripts/inspection-report.ts`; `tests/unit/include-diagnostics.test.ts`; `tests/unit/inspection-report-script.test.ts`
 
 |Module Markdown export follows the canonical pipeline
 |`Implemented`, `Test-enforced`

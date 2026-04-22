@@ -1,10 +1,17 @@
-import { describe, expect, it } from "vitest";
+import { mkdtemp, readFile } from "node:fs/promises";
+import { tmpdir } from "node:os";
+import { join } from "node:path";
+import { afterEach, describe, expect, it, vi } from "vitest";
 import {
 	createMarkdownConverter,
 	renderAssemblyMarkdown,
 } from "../../src/extension/index.ts";
 
 describe("markdown exporter extension", () => {
+	afterEach(() => {
+		vi.restoreAllMocks();
+	});
+
 	it("renders assembled markdown through the canonical converter pipeline", () => {
 		const markdown = renderAssemblyMarkdown(
 			[
@@ -77,5 +84,71 @@ describe("markdown exporter extension", () => {
 		expect(converter.backend).toBe("markdown");
 		expect(converter.extname).toBe(".md");
 		expect(converter.mediaType).toBe("text/markdown");
+	});
+
+	it("writes converted markdown to the requested output file", async () => {
+		const converter = createMarkdownConverter();
+		const outputRoot = await mkdtemp(join(tmpdir(), "antora-md-exporter-"));
+		const outputFile = join(outputRoot, "guide.md");
+		const attributes = {
+			docfile: "/virtual/modules/ROOT/pages/guide.adoc",
+			outdir: outputRoot,
+			outfile: outputFile,
+			outfilesuffix: ".html",
+		};
+
+		await converter.convert(
+			{
+				path: "/virtual/modules/ROOT/pages/guide.adoc",
+				contents: Buffer.from(
+					"= Guide\n\nSee xref:guide/setup.adoc[].",
+					"utf8",
+				),
+			},
+			attributes,
+			{ dir: outputRoot },
+		);
+
+		expect(attributes.outfilesuffix).toBe(".md");
+		expect(attributes.outfile).toBe(outputFile);
+		await expect(readFile(outputFile, "utf8")).resolves.toBe(
+			"# Guide\n\nSee [setup](guide/setup.adoc).\n\n",
+		);
+	});
+
+	it("registers the converter through Antora assembler configuration", async () => {
+		vi.resetModules();
+		vi.doMock("@antora/assembler", () => ({
+			configure: vi.fn(),
+		}));
+
+		const assembler = await import("@antora/assembler");
+		const { register } = await import("../../src/extension/index.ts");
+		const context = { name: "extension-context" };
+		const navigationCatalog = {
+			getNavigation: () => [],
+		};
+
+		register.call(context, {
+			config: {
+				flavor: "gitlab",
+				configSource: { playbook: true },
+				navigationCatalog,
+				configFile: "antora-playbook.yml",
+			},
+		});
+
+		expect(assembler.configure).toHaveBeenCalledWith(
+			context,
+			expect.objectContaining({
+				backend: "markdown",
+				extname: ".md",
+			}),
+			{ configFile: "antora-playbook.yml" },
+			{
+				configSource: { playbook: true },
+				navigationCatalog,
+			},
+		);
 	});
 });

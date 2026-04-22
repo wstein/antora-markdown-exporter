@@ -76,7 +76,7 @@ The main uncertainty is no longer whether a real Antora registration path exists
 | --- | --- | --- |
 | 1 | Deterministic, reviewable output | The notes `Markdown IR is the canonical render boundary`, `Flavor renderers are syntax adapters over one semantic layer`, and `Testing relies on golden fixtures and deterministic snapshots` all assume that semantic decisions are centralized and that rendered output is stable enough for golden tests and release validation. |
 | 2 | Semantic fidelity with explicit escape hatches | The notes `Transparent extensions are not fallback mechanisms`, `The architecture favors explicit extension over implicit degradation`, and `Strict architecture must be extended without weakening invariants` require the system to preserve valid author intent where safe and to degrade visibly only through explicit policy. |
-| 3 | Inspectable validation surfaces | The note `Inspection helpers expose normalized validation surfaces` requires reusable inspection results for include diagnostics and xref metadata so CI, release checks, and tooling do not reimplement recursive IR traversal. |
+| 3 | Inspectable validation surfaces | The note `Inspection helpers expose normalized validation surfaces` requires reusable inspection results for xref metadata so CI, release checks, and tooling do not reimplement recursive IR traversal. |
 | 4 | Honest public maturity signaling | The note `Antora extension entrypoints must reflect actual integration maturity` requires naming and public examples to match what the package actually ships today. |
 
 ## 1.4. Stakeholders
@@ -148,7 +148,7 @@ The main building blocks are:
 | Structured lowering | `src/exporter/structured-to-ir.ts` lowers repository-owned structured assembly into semantic Markdown IR nodes, preserving headings, xrefs, anchors, aliases, images, tables, admonitions, and other mapped structure without reparsing block syntax. |
 | Markdown kernel | `src/markdown/ir.ts`, `src/markdown/normalize.ts`, and `src/markdown/xref-resolution.ts` define the canonical IR, normalize documents, and lower xref targets before rendering. |
 | Flavor renderers and fallback policy | `src/markdown/flavor.ts`, `src/markdown/fallback.ts`, and `src/markdown/render/**` define flavor capabilities, raw HTML and unsupported-node fallback policy, and the final markdown serializers. |
-| Inspection and automation surfaces | `src/markdown/include-diagnostics.ts` and `scripts/inspection-report.ts` expose normalized inspection data for CI, release validation, and other tooling. |
+| Inspection and automation surfaces | `src/markdown/inspection.ts` and `scripts/inspection-report.ts` expose normalized inspection data for CI, release validation, and other tooling. |
 | Package, CLI, and release boundary | `src/index.ts`, `package.json`, `bin/antora-markdown-exporter.js`, and `scripts/release-check.mjs` package the library-first API, CLI entrypoint, and release validation. |
 | Test corpus | `tests/fixtures/**`, `tests/reference/**`, and `tests/**` encode golden-output, semantic-compatibility, provenance-locking, and repository-contract expectations. |
 
@@ -182,7 +182,7 @@ The private marker transport is intentionally isolated. The main ongoing risk is
 
 Inspection helpers and scripts expose reusable validation outputs so downstream tooling does not walk the IR itself. Packaging and release scripts keep the repository aligned with its scoped npm package identity.
 
-These surfaces live in `src/markdown/include-diagnostics.ts`, `scripts/inspection-report.ts`, `scripts/release-check.mjs`, and `package.json`.
+These surfaces live in `src/markdown/inspection.ts`, `scripts/inspection-report.ts`, `scripts/release-check.mjs`, and `package.json`.
 
 # Chapter 6. Runtime View
 
@@ -205,9 +205,8 @@ This scenario is based on the notes `Inspection helpers expose normalized valida
 
 1. A caller converts source to IR, typically with a real file-backed `sourcePath`.
 2. `collectMarkdownInspectionReport(document)` normalizes the document before traversal.
-3. The inspection layer walks nested blocks, callout lists, footnote definitions, tables, and inline containers to gather include directives, include diagnostics, xrefs, and xref targets in normalized document order.
+3. The inspection layer walks nested blocks, callout lists, footnote definitions, tables, and inline containers to gather xrefs and xref targets in normalized document order.
 4. `scripts/inspection-report.ts` serializes that report either as JSON or GitHub Actions annotations.
-5. CI or release checks fail when diagnostics are present and `--fail-on-diagnostics` is used.
 
 The notable aspect is that validation uses one maintained normalized inspection surface instead of separate ad-hoc traversals in CI scripts.
 
@@ -306,7 +305,7 @@ These decisions are intentionally implementation-facing. They explain why the re
 | --- | --- | --- | --- |
 | Deterministic output and stable inspection ordering | `Implemented`, `Test-enforced` | Canonical semantic pipeline and golden/reference checks | `src/exporter/**`; `src/markdown/**`; `tests/integration/fixture-golden.test.ts`; `tests/integration/module-export-golden.test.ts`; `tests/integration/reference-antora.test.ts` |
 | Centralized fallback policy | `Implemented`, `Test-enforced` | One fallback layer shared by renderers | `src/markdown/fallback.ts`; `tests/unit/fallback.test.ts`; `tests/integration/raw-html-policy.test.ts` |
-| Reusable inspection surfaces | `Implemented`, `Test-enforced` | Inspection helpers and machine-readable reporting | `src/markdown/include-diagnostics.ts`; `scripts/inspection-report.ts`; `tests/unit/include-diagnostics.test.ts`; `tests/unit/inspection-report-script.test.ts` |
+| Reusable inspection surfaces | `Implemented`, `Test-enforced` | Inspection helpers and machine-readable reporting | `src/markdown/inspection.ts`; `scripts/inspection-report.ts`; `tests/unit/include-diagnostics.test.ts`; `tests/unit/inspection-report-script.test.ts` |
 | Module export follows the package pipeline | `Implemented`, `Test-enforced` | Shared module-source assembly plus module-export tests | `scripts/docs-module-sources.mjs`; `scripts/export-antora-modules.ts`; `tests/unit/export-antora-modules.test.ts`; `tests/integration/module-export-golden.test.ts` |
 | Release promotion and Pages publication | `CI-enforced` | Tag-triggered release workflow and follow-on Pages workflow | `.github/workflows/release.yml`; `.github/workflows/pages.yml`; `tests/unit/repository-contract.test.ts` |
 | Broader converter coverage beyond the published matrix | `Intended` | Future semantic extensions and fixtures | Support matrix in the operator manual; note `Converter coverage should be published as a support matrix` |

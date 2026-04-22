@@ -135,8 +135,7 @@ for (const target of report.xrefTargets) {
 For machine-readable CI output, the repository also ships a Bun-native example script. JSON and GitHub Actions modes are alternate serializations of the same normalized inspection report.
 
 ```bash
-bun run inspect:report -- tests/fixtures/includes-invalid-steps/input.adoc \
-  --fail-on-diagnostics > inspection-report.json
+bun run inspect:report -- tests/fixtures/xrefs/input.adoc > inspection-report.json
 ```
 
 The same script can stream AsciiDoc from stdin in CI without creating a temporary file:
@@ -144,25 +143,24 @@ The same script can stream AsciiDoc from stdin in CI without creating a temporar
 ```bash
 cat generated-page.adoc | bun run inspect:report -- --stdin \
   --source-path /workspace/modules/ROOT/pages/generated-page.adoc \
-  --fail-on-diagnostics > inspection-report.json
+  > inspection-report.json
 ```
 
 When a workflow wants GitHub Actions annotations instead of JSON, use the alternate format:
 
 ```bash
-bun run inspect:report -- tests/fixtures/includes-invalid-steps/input.adoc \
-  --format github-actions \
-  --fail-on-diagnostics
+bun run inspect:report -- tests/fixtures/xrefs/input.adoc \
+  --format github-actions
 ```
 
-Current GitHub Actions mode emits one summary annotation with normalized report counts. If the structured document carries diagnostics, `--fail-on-diagnostics` still turns them into CI failures.
+Current GitHub Actions mode emits one summary annotation with normalized report counts.
 
 Example GitHub Actions step using the Makefile delegate target, artifact upload, and native annotations:
 
 ```yaml
 - name: Generate inspection report
   run: |
-    make inspect-report INPUT=tests/fixtures/includes-invalid-steps/input.adoc \
+    make inspect-report INPUT=tests/fixtures/xrefs/input.adoc \
       > inspection-report.json
 
 - name: Upload inspection report
@@ -173,7 +171,7 @@ Example GitHub Actions step using the Makefile delegate target, artifact upload,
 
 - name: Emit inspection annotations
   run: |
-    bun run inspect:report -- tests/fixtures/includes-invalid-steps/input.adoc \
+    bun run inspect:report -- tests/fixtures/xrefs/input.adoc \
       --format github-actions \
       || true
 ```
@@ -185,8 +183,6 @@ The emitted JSON contains the normalized inspection report plus the resolved inp
   "inputPath": "/abs/path/generated-page.adoc",
   "sourcePath": "/workspace/modules/ROOT/pages/generated-page.adoc",
   "report": {
-    "includeDirectives": [],
-    "includeDiagnostics": [],
     "xrefTargets": [
       {
         "raw": "install.html#cli",

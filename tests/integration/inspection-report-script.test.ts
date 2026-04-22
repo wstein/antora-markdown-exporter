@@ -18,8 +18,6 @@ describe("inspection report script integration", () => {
 		const report = JSON.parse(output) as {
 			inputPath: string;
 			report: {
-				includeDiagnostics: unknown[];
-				includeDirectives: unknown[];
 				xrefTargets: Array<{ raw: string; path: string; fragment?: string }>;
 				xrefs: Array<{ url: string }>;
 			};
@@ -34,8 +32,6 @@ describe("inspection report script integration", () => {
 			{
 			  "inputPath": "<root>/tests/fixtures/xrefs/input.adoc",
 			  "report": {
-			    "includeDiagnostics": [],
-			    "includeDirectives": [],
 			    "xrefTargets": [
 			      {
 			        "path": "install.adoc",
@@ -98,7 +94,7 @@ describe("inspection report script integration", () => {
 		expect(result.status).toBe(0);
 		expect(result.stderr).toBe("");
 		expect(result.stdout.replaceAll(root, "<root>")).toMatchInlineSnapshot(`
-			"::notice title=inspection-report::includeDirectives=0 includeDiagnostics=0 xrefs=2
+			"::notice title=inspection-report::xrefs=2 xrefTargets=2 sourcePath=<root>/tests/fixtures/xrefs/input.adoc
 			"
 		`);
 	});

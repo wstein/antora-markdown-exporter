@@ -7,7 +7,6 @@ import {
 	extractAssemblyStructure,
 } from "../../src/index.js";
 import type { MarkdownFlavorName } from "../../src/markdown/flavor.js";
-import type { MarkdownIncludeDirective } from "../../src/markdown/ir.js";
 import { normalizeMarkdownIR } from "../../src/markdown/normalize.js";
 import { renderMarkdown } from "../../src/markdown/render/index.js";
 
@@ -21,14 +20,6 @@ const fixtureNames = (await readdir(fixturesRoot, { withFileTypes: true }))
 	.map((entry) => entry.name)
 	.sort();
 
-function collectIncludeDirectives(
-	document: ReturnType<typeof normalizeMarkdownIR>,
-): MarkdownIncludeDirective[] {
-	return document.children.flatMap((block) =>
-		block.type === "includeDirective" ? [block] : [],
-	);
-}
-
 describe("fixture golden tests", () => {
 	for (const fixtureName of fixtureNames) {
 		it(`renders ${fixtureName} to each expected markdown flavor`, async () => {
@@ -38,10 +29,6 @@ describe("fixture golden tests", () => {
 			const expectedFiles = fixtureFiles
 				.filter((file) => file.startsWith("expected.") && file.endsWith(".md"))
 				.sort();
-			const diagnosticsFile = fixtureFiles.find(
-				(file) => file === "expected.diagnostics.json",
-			);
-
 			const ir = convertAssemblyStructureToMarkdownIR(
 				extractAssemblyStructure(input, {
 					sourcePath: resolve(fixtureDir, "input.adoc"),
@@ -60,19 +47,6 @@ describe("fixture golden tests", () => {
 				);
 				const rendered = renderMarkdown(normalized, flavor);
 				expect(rendered).toBe(expected);
-			}
-
-			if (diagnosticsFile !== undefined) {
-				const expectedDiagnostics = JSON.parse(
-					await readFile(resolve(fixtureDir, diagnosticsFile), "utf8"),
-				) as unknown;
-				const actualDiagnostics = collectIncludeDirectives(normalized).map(
-					(directive) => ({
-						target: directive.target,
-						diagnostics: directive.diagnostics ?? [],
-					}),
-				);
-				expect(actualDiagnostics).toEqual(expectedDiagnostics);
 			}
 		});
 	}

@@ -472,13 +472,7 @@
 		],
 		"rationale": "Exercises invalid include selectors so compatibility checks prove diagnostics remain visible in the IR while rendering still falls back to stable inlined content.",
 		"expectations": {
-			"nodeTypes": ["heading", "paragraph", "includeDirective"],
-			"includeDiagnosticCodes": [
-				"empty-tag-selection",
-				"invalid-line-range",
-				"invalid-line-range",
-				"invalid-indent"
-			],
+			"nodeTypes": ["heading", "paragraph"],
 			"renderedContains": ["First line. Second line. Third line."],
 			"renderedExcludes": ["Unsupported:"]
 		}
@@ -494,8 +488,7 @@
 		"coverage": ["includes", "diagnostics", "invalid-steps", "negative-cases"],
 		"rationale": "Exercises malformed stepped include ranges so compatibility checks prove invalid step selectors emit diagnostics while rendering falls back to stable inlined content.",
 		"expectations": {
-			"nodeTypes": ["heading", "paragraph", "includeDirective"],
-			"includeDiagnosticCodes": ["invalid-line-step", "invalid-line-range"],
+			"nodeTypes": ["heading", "paragraph"],
 			"renderedContains": [
 				"First line. Second line. Third line. Fourth line. Fifth line."
 			],
