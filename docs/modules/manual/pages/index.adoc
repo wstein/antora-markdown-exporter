@@ -298,7 +298,7 @@ Important conflict to preserve:
 |Runs the release wizard on `develop`. A new version starts a release candidate; the current untagged version finalizes by creating and pushing the release tag.
 
 |`make docs`
-|Builds the Antora docs site locally into `build/site`. Public publication is handled separately by the GitHub Pages workflow after successful tag-triggered release completion.
+|Builds the Antora site locally into `build/site`. Public publication is handled separately by the GitHub Pages workflow after successful tag-triggered release completion.
 |===
 
 === Inspection Script Behavior

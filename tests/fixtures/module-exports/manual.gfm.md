@@ -238,7 +238,7 @@ Important conflict to preserve:
 | `bun run check` | Runs Biome checks and the full coverage-enabled Vitest suite. |
 | `bun run release:check` | Runs pre-publish package integrity checks against built artifacts and `npm pack --dry-run`. |
 | `make release VERSION=vX.Y.Z` | Runs the release wizard on `develop`. A new version starts a release candidate; the current untagged version finalizes by creating and pushing the release tag. |
-| `make docs` | Builds the Antora docs site locally into `build/site`. Public publication is handled separately by the GitHub Pages workflow after successful tag-triggered release completion. |
+| `make docs` | Builds the Antora site locally into `build/site`. Public publication is handled separately by the GitHub Pages workflow after successful tag-triggered release completion. |
 
 ## 3.2. Inspection Script Behavior
 
