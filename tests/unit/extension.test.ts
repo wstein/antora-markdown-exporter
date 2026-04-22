@@ -245,4 +245,76 @@ describe("markdown exporter extension", () => {
 			},
 		);
 	});
+
+	it("derives converter defaults from object config sources", async () => {
+		vi.resetModules();
+		vi.doMock("@antora/assembler", () => ({
+			configure: vi.fn(),
+		}));
+
+		const assembler = await import("@antora/assembler");
+		const { register } = await import("../../src/extension/index.ts");
+		const context = { name: "extension-context" };
+
+		register.call(context, {
+			config: {
+				configSource: {
+					assembly: {
+						root_level: 0,
+						attributes: {
+							"markdown-exporter-flavor": "multimarkdown",
+							"markdown-exporter-xref-fallback-label-style": "fragment-or-path",
+						},
+					},
+				},
+			},
+		});
+		const converter = vi.mocked(assembler.configure).mock.calls[0]?.[1];
+		expect(converter).toBeDefined();
+
+		const outputRoot = await mkdtemp(join(tmpdir(), "antora-md-exporter-"));
+		const outputFile = join(outputRoot, "guide.md");
+
+		await converter?.convert(
+			{
+				path: "/virtual/modules/ROOT/pages/guide.adoc",
+				contents: Buffer.from(
+					"= Guide\n\nSee xref:guide/setup.adoc[].",
+					"utf8",
+				),
+			},
+			{
+				docfile: "/virtual/modules/ROOT/pages/guide.adoc",
+				outdir: outputRoot,
+				outfile: outputFile,
+				outfilesuffix: ".html",
+			},
+			{ dir: outputRoot },
+		);
+
+		expect(assembler.configure).toHaveBeenCalledWith(
+			context,
+			expect.objectContaining({
+				backend: "markdown",
+				extname: ".md",
+				convert: expect.any(Function),
+			}),
+			{},
+			{
+				configSource: {
+					assembly: {
+						root_level: 0,
+						attributes: {
+							"markdown-exporter-flavor": "multimarkdown",
+							"markdown-exporter-xref-fallback-label-style": "fragment-or-path",
+						},
+					},
+				},
+				navigationCatalog: undefined,
+			},
+		);
+		await expect(readFile(outputFile, "utf8")).resolves.toContain(
+			"See [guide/setup](guide/setup.md).",
+		);
+	});
 });

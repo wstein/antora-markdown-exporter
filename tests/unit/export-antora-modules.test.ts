@@ -6,18 +6,19 @@ import { describe, expect, it } from "vitest";
 import {
 	exportAntoraModulesToMarkdown,
 	parseArguments,
+	resolveExportAntoraModulesOptions,
 } from "../../scripts/export-antora-modules.ts";
 
 describe("export antora modules script", () => {
 	it("parses default arguments", () => {
 		const options = parseArguments([]);
 
-		expect(options.flavor).toBe("gfm");
+		expect(options.flavor).toBeUndefined();
 		expect(options.format).toBe("human");
 		expect(options.outputRoot).toBe(resolve("build/markdown"));
 		expect(options.playbookPath).toBe(resolve("antora-playbook.yml"));
-		expect(options.rootLevel).toBe(1);
-		expect(options.xrefFallbackLabelStyle).toBe("fragment-or-basename");
+		expect(options.rootLevel).toBeUndefined();
+		expect(options.xrefFallbackLabelStyle).toBeUndefined();
 	});
 
 	it("parses explicit arguments", () => {
@@ -49,16 +50,16 @@ describe("export antora modules script", () => {
 		expect(options.flavor).toBe("multimarkdown");
 	});
 
-	it("keeps gfm as the script default when flavor is not specified", () => {
+	it("keeps flavor unset until Antora-owned defaults are resolved", () => {
 		const options = parseArguments(["--output-root", "tmp/out"]);
 
-		expect(options.flavor).toBe("gfm");
+		expect(options.flavor).toBeUndefined();
 	});
 
 	it("uses multimarkdown for the dedicated package-task mode", () => {
 		const options = parseArguments(["--package-task-markdown"]);
 
-		expect(options.flavor).toBe("multimarkdown");
+		expect(options.flavor).toBeUndefined();
 		expect(options.packageTaskMarkdown).toBe(true);
 	});
 
@@ -71,6 +72,24 @@ describe("export antora modules script", () => {
 
 		expect(options.flavor).toBe("gfm");
 		expect(options.packageTaskMarkdown).toBe(true);
+	});
+
+	it("resolves exporter defaults from playbook and assembler config", async () => {
+		const options = await resolveExportAntoraModulesOptions(parseArguments([]));
+
+		expect(options.flavor).toBe("gfm");
+		expect(options.rootLevel).toBe(1);
+		expect(options.xrefFallbackLabelStyle).toBe("fragment-or-basename");
+	});
+
+	it("lets the package-task markdown mode override config-owned flavor defaults", async () => {
+		const options = await resolveExportAntoraModulesOptions(
+			parseArguments(["--package-task-markdown"]),
+		);
+
+		expect(options.flavor).toBe("multimarkdown");
+		expect(options.rootLevel).toBe(1);
+		expect(options.xrefFallbackLabelStyle).toBe("fragment-or-basename");
 	});
 
 	it("exports one assembled markdown document per Antora root-level assembly", async () => {

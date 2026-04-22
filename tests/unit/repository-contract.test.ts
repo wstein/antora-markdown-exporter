@@ -179,6 +179,10 @@ describe("repository contract", () => {
 	it("pins the repository assembler default to root_level 1", () => {
 		expect(antoraAssemblerConfig).toContain("assembly:");
 		expect(antoraAssemblerConfig).toContain("root_level: 1");
+		expect(antoraPlaybook).toContain("markdown-exporter-flavor: gfm");
+		expect(antoraPlaybook).toContain(
+			"markdown-exporter-xref-fallback-label-style: fragment-or-basename",
+		);
 		expect(extensionEntrypoint).toContain("root_level: rootLevel");
 	});
 

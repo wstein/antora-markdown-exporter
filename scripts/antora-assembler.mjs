@@ -28,6 +28,23 @@ const defaultAssemblyAttributes = {
 	"toc-title": "table of contents",
 	toclevels: "3",
 };
+const exporterFlavorAttribute = "markdown-exporter-flavor";
+const exporterXrefFallbackAttribute =
+	"markdown-exporter-xref-fallback-label-style";
+
+function parseConfiguredFlavor(value) {
+	return ["gfm", "commonmark", "gitlab", "multimarkdown", "strict"].includes(
+		value,
+	)
+		? value
+		: undefined;
+}
+
+function parseConfiguredXrefFallbackLabelStyle(value) {
+	return value === "fragment-or-basename" || value === "fragment-or-path"
+		? value
+		: undefined;
+}
 
 function createBuildConfig(buildDir, keepSource = false) {
 	return {
@@ -38,14 +55,29 @@ function createBuildConfig(buildDir, keepSource = false) {
 	};
 }
 
-function createAssemblerConfigSource(rootLevel, buildDir, keepSource = false) {
+function mergeAssemblerConfig(
+	baseConfig,
+	{ buildDir, keepSource = false, rootLevel },
+) {
+	const baseAssembly = baseConfig.assembly ?? {};
+	const baseAttributes = baseAssembly.attributes ?? {};
+	const baseBuild = baseConfig.build ?? {};
+
 	return {
+		...baseConfig,
 		assembly: {
-			attributes: defaultAssemblyAttributes,
-			doctype: "book",
-			rootLevel,
+			...baseAssembly,
+			attributes: {
+				...defaultAssemblyAttributes,
+				...baseAttributes,
+			},
+			doctype: baseAssembly.doctype ?? "book",
+			rootLevel: rootLevel ?? baseAssembly.rootLevel ?? 1,
 		},
-		build: createBuildConfig(buildDir, keepSource),
+		build: {
+			...baseBuild,
+			...createBuildConfig(buildDir, keepSource),
+		},
 	};
 }
 
@@ -146,6 +178,7 @@ async function createExportedPageUrlMap(
 
 export async function runAntoraAssembler({
 	buildDir,
+	configSource,
 	converter,
 	keepSource = false,
 	playbookPath,
@@ -161,6 +194,20 @@ export async function runAntoraAssembler({
 		["--playbook", resolvedPlaybookPath],
 		process.env,
 	);
+	const preferredQualifier = `-${
+		converter?.backend ?? converter?.extname?.slice(1) ?? "markdown"
+	}`;
+	const baseAssemblerConfig = await loadAssemblerConfig.call(
+		moduleShim,
+		playbook,
+		configSource,
+		preferredQualifier,
+	);
+	const assemblerConfig = mergeAssemblerConfig(baseAssemblerConfig, {
+		buildDir,
+		keepSource,
+		rootLevel,
+	});
 	const context = new GeneratorContext(moduleShim);
 
 	try {
@@ -182,11 +229,6 @@ export async function runAntoraAssembler({
 			vars.contentCatalog,
 			vars.siteAsciiDocConfig,
 		);
-		const configSource = createAssemblerConfigSource(
-			rootLevel,
-			buildDir,
-			keepSource,
-		);
 		if (typeof converter?.setExportedPageUrlMap === "function") {
 			converter.setExportedPageUrlMap(
 				await createExportedPageUrlMap(
@@ -194,7 +236,7 @@ export async function runAntoraAssembler({
 					playbook,
 					vars.contentCatalog,
 					converter,
-					configSource,
+					assemblerConfig,
 					navigationCatalog,
 				),
 			);
@@ -206,11 +248,46 @@ export async function runAntoraAssembler({
 			vars.contentCatalog,
 			converter,
 			{
-				configSource,
+				configSource: assemblerConfig,
 				navigationCatalog,
 			},
 		);
 	} finally {
 		await GeneratorContext.close(context);
 	}
+}
+
+export async function resolveMarkdownExportDefaults({
+	configSource,
+	playbookPath,
+}) {
+	const resolvedPlaybookPath = resolve(playbookPath);
+	const playbook = buildPlaybook(
+		["--playbook", resolvedPlaybookPath],
+		process.env,
+	);
+	const assemblerConfig = await loadAssemblerConfig.call(
+		moduleShim,
+		playbook,
+		configSource,
+		"-markdown",
+	);
+	const assemblyAttributes = assemblerConfig.assembly?.attributes ?? {};
+	const playbookAttributes = playbook.asciidoc?.attributes ?? {};
+
+	return {
+		flavor: parseConfiguredFlavor(
+			assemblyAttributes[exporterFlavorAttribute] ??
+				playbookAttributes[exporterFlavorAttribute],
+		),
+		rootLevel:
+			assemblerConfig.assembly?.rootLevel === 0 ||
+			assemblerConfig.assembly?.rootLevel === 1
+				? assemblerConfig.assembly.rootLevel
+				: undefined,
+		xrefFallbackLabelStyle: parseConfiguredXrefFallbackLabelStyle(
+			assemblyAttributes[exporterXrefFallbackAttribute] ??
+				playbookAttributes[exporterXrefFallbackAttribute],
+		),
+	};
 }

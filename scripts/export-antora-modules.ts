@@ -6,7 +6,20 @@ import {
 	type MarkdownFlavorName,
 	type XrefFallbackLabelStyle,
 } from "../src/extension/index.ts";
-import { runAntoraAssembler } from "./antora-assembler.mjs";
+import {
+	resolveMarkdownExportDefaults,
+	runAntoraAssembler,
+} from "./antora-assembler.mjs";
+
+export type ParsedExportAntoraModulesOptions = {
+	flavor?: MarkdownFlavorName;
+	format: "human" | "json";
+	outputRoot: string;
+	packageTaskMarkdown: boolean;
+	playbookPath: string;
+	rootLevel?: 0 | 1;
+	xrefFallbackLabelStyle?: XrefFallbackLabelStyle;
+};
 
 export type ExportAntoraModulesOptions = {
 	flavor: MarkdownFlavorName;
@@ -46,15 +59,17 @@ function usage(): string {
 	].join("\n");
 }
 
-export function parseArguments(argv: string[]): ExportAntoraModulesOptions {
-	let flavor: MarkdownFlavorName = "gfm";
+export function parseArguments(
+	argv: string[],
+): ParsedExportAntoraModulesOptions {
+	let flavor: MarkdownFlavorName | undefined;
 	let flavorExplicitlySet = false;
 	let format: "human" | "json" = "human";
 	let outputRoot = resolve("build/markdown");
 	let packageTaskMarkdown = false;
 	let playbookPath = resolve("antora-playbook.yml");
-	let rootLevel: 0 | 1 = 1;
-	let xrefFallbackLabelStyle: XrefFallbackLabelStyle = "fragment-or-basename";
+	let rootLevel: 0 | 1 | undefined;
+	let xrefFallbackLabelStyle: XrefFallbackLabelStyle | undefined;
 
 	for (let index = 0; index < argv.length; index += 1) {
 		const argument = argv[index];
@@ -136,7 +151,7 @@ export function parseArguments(argv: string[]): ExportAntoraModulesOptions {
 	}
 
 	if (packageTaskMarkdown && !flavorExplicitlySet) {
-		flavor = "multimarkdown";
+		flavor = undefined;
 	}
 
 	return {
@@ -147,6 +162,28 @@ export function parseArguments(argv: string[]): ExportAntoraModulesOptions {
 		playbookPath,
 		rootLevel,
 		xrefFallbackLabelStyle,
+	};
+}
+
+export async function resolveExportAntoraModulesOptions(
+	parsed: ParsedExportAntoraModulesOptions,
+): Promise<ExportAntoraModulesOptions> {
+	const defaults = await resolveMarkdownExportDefaults({
+		playbookPath: parsed.playbookPath,
+	});
+
+	return {
+		...parsed,
+		flavor:
+			parsed.flavor ??
+			(parsed.packageTaskMarkdown ? "multimarkdown" : undefined) ??
+			defaults.flavor ??
+			"gfm",
+		rootLevel: parsed.rootLevel ?? defaults.rootLevel ?? 1,
+		xrefFallbackLabelStyle:
+			parsed.xrefFallbackLabelStyle ??
+			defaults.xrefFallbackLabelStyle ??
+			"fragment-or-basename",
 	};
 }
 
@@ -221,7 +258,9 @@ export async function exportAntoraModulesToMarkdown(
 }
 
 async function main(): Promise<void> {
-	const options = parseArguments(process.argv.slice(2));
+	const options = await resolveExportAntoraModulesOptions(
+		parseArguments(process.argv.slice(2)),
+	);
 	const { exportedFiles, reviewBundleFiles, reviewBundleRoot } =
 		await exportAntoraModulesToMarkdown(options);
 

@@ -16,6 +16,9 @@ export type XrefFallbackLabelStyle =
 	| "fragment-or-basename"
 	| "fragment-or-path";
 export type AssemblerRootLevel = 0 | 1;
+const exporterFlavorAttribute = "markdown-exporter-flavor";
+const exporterXrefFallbackAttribute =
+	"markdown-exporter-xref-fallback-label-style";
 
 export interface AntoraMarkdownExporterExtensionConfig {
 	readonly flavor?: MarkdownFlavorName;
@@ -54,10 +57,96 @@ type AssemblerFile = {
 
 const defaultFlavor: MarkdownFlavorName = "gfm";
 const defaultAssemblerRootLevel: AssemblerRootLevel = 1;
+const defaultXrefFallbackLabelStyle: XrefFallbackLabelStyle =
+	"fragment-or-basename";
 
 function createDefaultAssemblerConfigSource(rootLevel: AssemblerRootLevel) {
 	return {
 		assembly: {
+			root_level: rootLevel,
+		},
+	};
+}
+
+function isRecord(value: unknown): value is Record<string, unknown> {
+	return typeof value === "object" && value !== null;
+}
+
+function parseConfiguredFlavor(value: unknown): MarkdownFlavorName | undefined {
+	return value === "gfm" ||
+		value === "commonmark" ||
+		value === "gitlab" ||
+		value === "multimarkdown" ||
+		value === "strict"
+		? value
+		: undefined;
+}
+
+function parseConfiguredXrefFallbackLabelStyle(
+	value: unknown,
+): XrefFallbackLabelStyle | undefined {
+	return value === "fragment-or-basename" || value === "fragment-or-path"
+		? value
+		: undefined;
+}
+
+function parseConfiguredRootLevel(
+	value: unknown,
+): AssemblerRootLevel | undefined {
+	return value === 0 || value === 1 ? value : undefined;
+}
+
+function resolveExporterDefaultsFromConfigSource(
+	configSource: AntoraMarkdownExporterExtensionConfig["configSource"],
+): Partial<{
+	flavor: MarkdownFlavorName;
+	rootLevel: AssemblerRootLevel;
+	xrefFallbackLabelStyle: XrefFallbackLabelStyle;
+}> {
+	if (!isRecord(configSource)) {
+		return {};
+	}
+
+	const assembly = isRecord(configSource.assembly) ? configSource.assembly : {};
+	const asciidoc = isRecord(configSource.asciidoc) ? configSource.asciidoc : {};
+	const assemblyAttributes = isRecord(assembly.attributes)
+		? assembly.attributes
+		: {};
+	const asciidocAttributes = isRecord(asciidoc.attributes)
+		? asciidoc.attributes
+		: {};
+
+	return {
+		flavor: parseConfiguredFlavor(
+			assemblyAttributes[exporterFlavorAttribute] ??
+				asciidocAttributes[exporterFlavorAttribute],
+		),
+		rootLevel: parseConfiguredRootLevel(
+			assembly.root_level ?? assembly.rootLevel,
+		),
+		xrefFallbackLabelStyle: parseConfiguredXrefFallbackLabelStyle(
+			assemblyAttributes[exporterXrefFallbackAttribute] ??
+				asciidocAttributes[exporterXrefFallbackAttribute],
+		),
+	};
+}
+
+function mergeRootLevelIntoConfigSource(
+	configSource: AntoraMarkdownExporterExtensionConfig["configSource"],
+	rootLevel: AssemblerRootLevel | undefined,
+): AntoraMarkdownExporterExtensionConfig["configSource"] {
+	if (rootLevel === undefined || typeof configSource === "string") {
+		return configSource;
+	}
+
+	if (!isRecord(configSource)) {
+		return createDefaultAssemblerConfigSource(rootLevel);
+	}
+
+	return {
+		...configSource,
+		assembly: {
+			...(isRecord(configSource.assembly) ? configSource.assembly : {}),
 			root_level: rootLevel,
 		},
 	};
@@ -341,7 +430,7 @@ export function createMarkdownConverter(
 ) {
 	const flavor = config.flavor ?? defaultFlavor;
 	const xrefFallbackLabelStyle =
-		config.xrefFallbackLabelStyle ?? "fragment-or-basename";
+		config.xrefFallbackLabelStyle ?? defaultXrefFallbackLabelStyle;
 	let exportedPageUrlMap =
 		config.exportedPageUrlMap ?? new Map<string, string>();
 
@@ -394,14 +483,23 @@ export function register(
 		xrefFallbackLabelStyle,
 		...assemblerConfig
 	} = config;
+	const configuredDefaults =
+		resolveExporterDefaultsFromConfigSource(configSource);
 	configure(
 		this,
-		createMarkdownConverter({ flavor, xrefFallbackLabelStyle }),
+		createMarkdownConverter({
+			flavor: flavor ?? configuredDefaults.flavor,
+			xrefFallbackLabelStyle:
+				xrefFallbackLabelStyle ?? configuredDefaults.xrefFallbackLabelStyle,
+		}),
 		assemblerConfig,
 		{
 			configSource:
 				typeof configSource === "string" || configSource !== undefined
-					? configSource
+					? mergeRootLevelIntoConfigSource(
+							configSource,
+							rootLevel ?? configuredDefaults.rootLevel,
+						)
 					: createDefaultAssemblerConfigSource(
 							rootLevel ?? defaultAssemblerRootLevel,
 						),
