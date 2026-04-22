@@ -165,6 +165,52 @@
 		}
 	},
 	{
+		"id": "antora-multimarkdown-rich",
+		"sourceProject": "@wsmy/antora-markdown-exporter",
+		"sourceUrl": "https://github.com/wsmy/antora-markdown-exporter",
+		"sourcePath": "tests/fixtures/multimarkdown-rich/input.adoc",
+		"sourceCapturedAt": "2026-04-22",
+		"localPath": "tests/reference/fixtures/antora-multimarkdown-rich/input.adoc",
+		"sha256": "9a3e8b7ed52bae2a2152c9f1ee11ac2248430c0792e5057742fc72737741b5d4",
+		"coverage": [
+			"multimarkdown",
+			"metadata",
+			"definition-lists",
+			"footnotes",
+			"citations",
+			"tables",
+			"images"
+		],
+		"rationale": "Locks one provenance-tracked MultiMarkdown-rich case into the reference suite so compatibility checks pressure metadata, definition lists, citations, footnotes, table captions, and image reference rendering through the real semantic pipeline.",
+		"expectations": {
+			"nodeTypes": ["heading", "labeledGroup", "table", "footnoteDefinition"],
+			"renderedContains": [
+				"A note [^1] and [cite:Doe2026].",
+				"**Apple:** Pomaceous fruit.",
+				"| Name | Value |",
+				"![Alt text](diagram.png \"Architecture figure\")"
+			],
+			"renderedExcludes": ["Unsupported:"],
+			"renderedByFlavor": {
+				"gitlab": {
+					"contains": ["A note [^1] and [@Doe2026]."]
+				},
+				"multimarkdown": {
+					"contains": [
+						"Title: Manual",
+						"Author: Doc Writer",
+						"Date: 2026-04-22",
+						"Apple\n:   Pomaceous fruit.",
+						"A note [^1] and [][#Doe2026].",
+						"[Release table]",
+						"![Alt text][image-1]",
+						"[image-1]: diagram.png \"Architecture figure\" width=320 height=240"
+					]
+				}
+			}
+		}
+	},
+	{
 		"id": "antora-images-tables",
 		"sourceProject": "antora/docs.antora.org",
 		"sourceUrl": "https://gitlab.com/antora/docs.antora.org",
