@@ -42,6 +42,7 @@ const cliEntrypoint = readFileSync(
 	resolve(root, "bin/antora-markdown-exporter.js"),
 	"utf8",
 );
+const cxConfig = readFileSync(resolve(root, "cx.toml"), "utf8");
 const readme = readFileSync(resolve(root, "README.md"), "utf8");
 const manualDoc = readFileSync(
 	resolve(root, "docs/modules/manual/pages/index.adoc"),
@@ -148,6 +149,12 @@ describe("repository contract", () => {
 			"--xref-fallback-label-style fragment-or-path",
 		);
 		expect(cliEntrypoint).toContain("only help and version output");
+	});
+
+	it("keeps packed repository evidence aligned with shipped workflow claims", () => {
+		expect(cxConfig).toContain(".github/workflows/ci.yml");
+		expect(cxConfig).toContain(".github/workflows/release.yml");
+		expect(cxConfig).toContain(".github/workflows/pages.yml");
 	});
 
 	it("keeps package metadata wording aligned with the public package description", () => {

@@ -59,7 +59,7 @@ exclude = ["**/*.{png,jpg,jpeg,gif,webp,svg,pdf}"]
 [sections.repo]
 include = [
   ".gitignore",
-  ".github/workflows/ci.yml",
+  ".github/workflows/**",
   "biome.json",
   "bin/cx",
   "cx.toml",
