@@ -42,8 +42,8 @@
 
 |Module export follows the package pipeline
 |`Implemented`, `Test-enforced`
-|Shared module-source assembly plus module-export tests
-|`scripts/docs-module-sources.mjs`; `scripts/export-antora-modules.ts`; `tests/unit/export-antora-modules.test.ts`; `tests/integration/module-export-golden.test.ts`
+|Assembler-backed partition defaults plus module-export tests
+|`antora-assembler.yml`; `src/extension/index.ts`; `scripts/export-antora-modules.ts`; `tests/unit/export-antora-modules.test.ts`; `tests/integration/module-export-golden.test.ts`
 
 |Release promotion and Pages publication
 |`CI-enforced`

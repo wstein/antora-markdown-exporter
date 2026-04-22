@@ -14,7 +14,7 @@ Antora module markdown export should use the canonical repository pipeline becau
 
 When the repository exports Markdown from documentation modules, it should:
 
-- assemble one module document per exported module through the same maintained module-source path used for the repository PDF artifacts
+- model export partitioning through Antora Assembler configuration, defaulting to `assembly.root_level: 1`
 - convert assembled AsciiDoc with the repository-owned AsciiDoc-to-IR pipeline
 - normalize the IR before rendering
 - render with one explicit Markdown flavor
@@ -38,9 +38,9 @@ One pipeline keeps exported artifacts, package behavior, and validation expectat
 
 Implement Antora module export through one maintained script in `scripts/**` that uses:
 
-- the maintained assembled module-source builder already used for PDF generation
+- Antora Assembler configuration as the source of truth for assembly partitioning
 - `createMarkdownConverter`
-- `convertAssemblyToMarkdownIR`
+- `convertAssemblyStructureToMarkdownIR`
 - `normalizeMarkdownIR`
 - `renderMarkdown`
 
@@ -50,6 +50,8 @@ Do not add a second markdown conversion path for repository exports.
 
 Do not patch rendered Markdown after the renderer has emitted it. If the output is wrong, fix the semantic conversion or the renderer.
 
+Treat any repository-local module-source helper as transitional glue, not as the intended architecture boundary.
+
 ## Links
 
 - [[Exporter pipeline uses Assembler and a direct TypeScript converter]] - The export command must remain inside the repository-owned conversion boundary.
@@ -57,5 +59,6 @@ Do not patch rendered Markdown after the renderer has emitted it. If the output 
 - [[Flavor renderers are syntax adapters over one semantic layer]] - Export output must use explicit flavor rendering rather than ad-hoc formatting.
 - [[Repository scripts and referenced files must stay in lockstep]] - The script, Make target, and documentation must stay aligned.
 - scripts/export-antora-modules.ts - Maintained export entrypoint.
-- scripts/docs-module-sources.mjs - Shared assembled module source for PDF and Markdown exports.
+- antora-assembler.yml - Repository default Assembler partitioning policy.
+- src/extension/index.ts - Extension-level Assembler default and converter registration.
 - Makefile - Operator entrypoint.

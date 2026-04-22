@@ -580,8 +580,8 @@ Current conflict to preserve:
 
 |Module Markdown export follows the canonical pipeline
 |`Implemented`, `Test-enforced`
-|Shared assembled module sources plus module export tests
-|`scripts/docs-module-sources.mjs`; `scripts/export-antora-modules.ts`; `tests/unit/export-antora-modules.test.ts`; `tests/integration/module-export-golden.test.ts`
+|Assembler-backed partition defaults plus module export tests
+|`antora-assembler.yml`; `src/extension/index.ts`; `scripts/export-antora-modules.ts`; `tests/unit/export-antora-modules.test.ts`; `tests/integration/module-export-golden.test.ts`
 
 |Release integrity and publish flow
 |`Implemented`, `CI-enforced`
