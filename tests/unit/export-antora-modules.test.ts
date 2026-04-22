@@ -45,6 +45,12 @@ describe("export antora modules script", () => {
 		expect(options.flavor).toBe("multimarkdown");
 	});
 
+	it("keeps gfm as the script default when flavor is not specified", () => {
+		const options = parseArguments(["--output-root", "tmp/out"]);
+
+		expect(options.flavor).toBe("gfm");
+	});
+
 	it("exports one assembled markdown document per documentation module", async () => {
 		const outputRoot = await mkdtemp(
 			resolve(tmpdir(), "antora-markdown-export-"),

@@ -131,6 +131,12 @@ The note `Flavor renderers are syntax adapters over one semantic layer` explains
 
 The repository currently ships explicit `gfm`, `commonmark`, `gitlab`, `multimarkdown`, and `strict` profiles. These flavors can differ in syntax and policy, but they must not reinterpret the document’s meaning independently.
 
+Operator default policy is split intentionally:
+
+- `bun run export:modules` defaults to `gfm`
+- `make markdown` defaults to `multimarkdown` unless `ARGS` already supplies `--flavor`
+- both keep `.md` as the output extension
+
 That means:
 
 - flavor capability differences live in `src/markdown/flavor.ts`

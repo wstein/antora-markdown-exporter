@@ -1,0 +1,16 @@
+= Manual
+Doc Writer
+:revdate: 2026-04-22
+
+A note footnote:[Body text] and [cite]#Doe2026#.
+
+Apple:: Pomaceous fruit.
+
+.Release table
+|===
+| Name | Value
+| Alpha | 42
+|===
+
+.Architecture figure
+image::diagram.png[Alt text,width=320,height=240]
