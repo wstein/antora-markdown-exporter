@@ -34,7 +34,7 @@ describe("inspection report script", () => {
 		expect(report.report.includeDirectives).toEqual([]);
 		expect(report.report.xrefTargets).toEqual(
 			expect.arrayContaining([
-				expect.objectContaining({ raw: "install.html" }),
+				expect.objectContaining({ raw: "install.html", path: "install.adoc" }),
 				expect.objectContaining({ raw: "#overview" }),
 			]),
 		);

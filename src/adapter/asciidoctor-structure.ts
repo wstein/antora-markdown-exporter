@@ -20,6 +20,8 @@ import {
 	type AssemblyTableRow,
 	type AssemblyUnsupported,
 	type AssemblyXref,
+	type AssemblyXrefFamily,
+	type AssemblyXrefTarget,
 	defineAssemblyDocument,
 } from "./assembly-structure.js";
 
@@ -156,6 +158,96 @@ function parseHtmlAttributes(value: string): {
 	};
 }
 
+function normalizeXrefFamilyPath(
+	family: AssemblyXrefFamily["kind"],
+	path: string,
+): string {
+	if (
+		(family === "page" || family === "example" || family === "partial") &&
+		path.endsWith(".html")
+	) {
+		return path.replace(/\.html$/u, ".adoc");
+	}
+
+	return path;
+}
+
+function parseXrefFamily(
+	name: string | undefined,
+): AssemblyXrefFamily | undefined {
+	if (name === undefined || name.length === 0) {
+		return undefined;
+	}
+
+	switch (name) {
+		case "attachment":
+		case "example":
+		case "image":
+		case "page":
+		case "partial":
+			return {
+				kind: name,
+				name,
+			};
+		default:
+			return {
+				kind: "other",
+				name,
+			};
+	}
+}
+
+function parseXrefTarget(href: string): AssemblyXrefTarget {
+	if (href.startsWith("#")) {
+		return {
+			raw: href,
+			path: "",
+			fragment: href.slice(1),
+		};
+	}
+
+	const [rawPath, fragment] = href.split("#", 2);
+	const qualifiedPattern =
+		/^(?:(?<version>[^@/#]+)@)?(?:(?<component>[^:/#]+):(?<module>[^:/#]+):)?(?:(?<family>[^$:/#]+)\$)?(?<path>.+)$/u;
+	const qualifiedMatch = rawPath?.match(qualifiedPattern);
+	const component = qualifiedMatch?.groups?.component;
+	const moduleName = qualifiedMatch?.groups?.module;
+	const version = qualifiedMatch?.groups?.version;
+	const family = parseXrefFamily(qualifiedMatch?.groups?.family);
+	const familyKind = family?.kind ?? "page";
+	const path = normalizeXrefFamilyPath(
+		familyKind,
+		qualifiedMatch?.groups?.path ?? rawPath ?? "",
+	);
+
+	return {
+		raw: href,
+		component,
+		module: moduleName,
+		version,
+		family,
+		path,
+		fragment,
+	};
+}
+
+function isStructuredXrefHref(href: string): boolean {
+	if (href.startsWith("#")) {
+		return true;
+	}
+
+	if (href.startsWith("http://") || href.startsWith("https://")) {
+		return false;
+	}
+
+	return (
+		href.includes(".html") ||
+		href.includes("$") ||
+		href.includes("@") ||
+		/^[^:/#]+:[^:/#]+:/u.test(href)
+	);
+}
+
 function parseInlineHtml(content: string): AssemblyInline[] {
 	const nodes: AssemblyInline[] = [];
 	let cursor = 0;
@@ -255,20 +347,12 @@ function parseInlineHtml(content: string): AssemblyInline[] {
 			const { attributes } = parseHtmlAttributes(openTag);
 			const href = attributes.href ?? "";
 			const children = parseInlineHtml(inner);
-			if (
-				href.startsWith("#") ||
-				(!href.startsWith("http://") &&
-					!href.startsWith("https://") &&
-					href.includes(".html"))
-			) {
+			if (isStructuredXrefHref(href)) {
+				const target = parseXrefTarget(href);
 				nodes.push(<AssemblyXref>{
 					type: "xref",
 					url: href,
-					target: {
-						raw: href,
-						path: href.split("#", 1)[0] ?? href,
-						fragment: href.includes("#") ? href.split("#", 2)[1] : undefined,
-					},
+					target,
 					children:
 						children.length === 0
 							? [{ type: "text", value: href.replace(/^#/, "") }]
@@ -590,6 +674,28 @@ function extractBlock(block: AsciidoctorBlock): AssemblyBlock[] {
 			break;
 		case "quote":
 			extracted = [extractBlockQuote(block)];
+			break;
+		case "open":
+			extracted = block.getBlocks().flatMap((child) => extractBlock(child));
+			break;
+		case "example":
+		case "sidebar":
+			extracted = [
+				<AssemblyBlockQuote>{
+					type: "blockquote",
+					location: getSourceLocation(block),
+					children:
+						block.getBlocks?.().length && block.getBlocks().length > 0
+							? block.getBlocks().flatMap((child) => extractBlock(child))
+							: [
+									{
+										type: "paragraph",
+										children: parseInlineHtml(block.getContent?.() ?? ""),
+										location: getSourceLocation(block),
+									},
+								],
+				},
+			];
 			break;
 		case "pass":
 			extracted = [

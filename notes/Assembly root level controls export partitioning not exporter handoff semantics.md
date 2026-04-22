@@ -47,6 +47,6 @@ Any such structural stage would need separate architecture, code, and proof surf
 ## Links
 
 - [[Assembler custom exporters receive assembled AsciiDoc source buffers]] - `root_level` changes scope, not the handoff type.
-- [[Structural document mapping is a desired internal adapter not the documented Assembler handoff]] - Structural mapping is a separate design decision.
+- [[Repository-owned assembly structure formalizes the exporter adapter boundary]] - Structural mapping is a separate repository-owned design decision.
 - docs/modules/manual/pages/index.adoc - Operator-facing workflow and support boundaries.
 - https://docs.antora.org/assembler/latest/configure-assembly/ - `root_level` assembly configuration reference.

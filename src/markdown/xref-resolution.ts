@@ -1,8 +1,39 @@
 import type { MarkdownFlavorSpec } from "./flavor.js";
-import type { MarkdownXref, MarkdownXrefFamily } from "./ir.js";
+import type {
+	MarkdownXref,
+	MarkdownXrefFamily,
+	MarkdownXrefTarget,
+} from "./ir.js";
 
 function stripAsciiDocExtension(value: string): string {
 	return value.replace(/\.adoc$/i, ".html");
+}
+
+function resolveSourceFamilyPath(target: MarkdownXrefTarget): string {
+	const family = target.family ?? { kind: "page", name: "page" };
+	if (family.kind === "page") {
+		return target.path;
+	}
+
+	const familySegment = family.kind === "other" ? family.name : family.kind;
+	return `${familySegment}/${target.path}`;
+}
+
+export function resolveMarkdownSourceXrefDestination(
+	target: MarkdownXrefTarget,
+	fallbackUrl: string,
+): string {
+	if (target.path.length === 0) {
+		return target.fragment === undefined ? fallbackUrl : `#${target.fragment}`;
+	}
+
+	const segments = [target.component, target.version, target.module].filter(
+		(segment): segment is string => segment !== undefined && segment.length > 0,
+	);
+	segments.push(resolveSourceFamilyPath(target));
+
+	const path = segments.join("/");
+	return target.fragment === undefined ? path : `${path}#${target.fragment}`;
 }
 
 function resolveSiteFamilyPath(
@@ -30,12 +61,12 @@ export function resolveMarkdownXrefDestination(
 	flavor: MarkdownFlavorSpec,
 ): string {
 	if (flavor.xrefStyle === "source") {
-		return node.url;
+		return resolveMarkdownSourceXrefDestination(node.target, node.url);
 	}
 
 	const { target } = node;
 	if (target.path.length === 0) {
-		return target.fragment === undefined ? node.url : `#${target.fragment}`;
+		return resolveMarkdownSourceXrefDestination(target, node.url);
 	}
 
 	const segments = [target.component, target.version].filter(
@@ -54,7 +85,7 @@ export function resolveMarkdownXrefDestination(
 	const family = target.family ?? { kind: "page", name: "page" };
 	const resolvedPath = resolveSiteFamilyPath(family, target.path, flavor);
 	if (resolvedPath === undefined) {
-		return node.url;
+		return resolveMarkdownSourceXrefDestination(target, node.url);
 	}
 	segments.push(resolvedPath);
 

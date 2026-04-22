@@ -216,12 +216,12 @@ describe("repository contract", () => {
 			readFileSync(
 				resolve(
 					root,
-					"notes/Asciidoctor structural extraction should replace legacy text parsing incrementally.md",
+					"notes/Repository-owned assembly structure formalizes the exporter adapter boundary.md",
 				),
 				"utf8",
 			),
 		).toContain(
-			"Asciidoctor structural extraction should replace legacy text parsing incrementally",
+			"Repository-owned assembly structure formalizes the exporter adapter boundary",
 		);
 	});
 
@@ -242,14 +242,29 @@ describe("repository contract", () => {
 			false,
 		);
 		expect(
-			readFileSync(
+			existsSync(
 				resolve(
 					root,
 					"notes/Structured runtime cutover means the legacy text parser is now a deletion target.md",
 				),
-				"utf8",
 			),
-		).toContain("legacy text parser is now a deletion target");
+		).toBe(false);
+		expect(
+			existsSync(
+				resolve(
+					root,
+					"notes/Asciidoctor structural extraction should replace legacy text parsing incrementally.md",
+				),
+			),
+		).toBe(false);
+		expect(
+			existsSync(
+				resolve(
+					root,
+					"notes/Structural document mapping is a desired internal adapter not the documented Assembler handoff.md",
+				),
+			),
+		).toBe(false);
 		expect(
 			readFileSync(
 				resolve(

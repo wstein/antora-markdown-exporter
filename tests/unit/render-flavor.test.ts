@@ -285,7 +285,7 @@ describe("flavor-aware markdown rendering", () => {
 		};
 
 		expect(renderCommonMark(documentWithFamilyTargets)).toContain(
-			"[diagram](docs/2.0/ROOT/image/diagram.png) [guide](docs/2.0/ROOT/attachment/guide.pdf) [overview](docs/2.0/api/page/index.adoc#overview) [example](docs/2.0/ROOT/example/example.adoc)",
+			"[diagram](docs/2.0/ROOT/image/diagram.png) [guide](docs/2.0/ROOT/attachment/guide.pdf) [overview](docs/2.0/api/index.adoc#overview) [example](docs/2.0/ROOT/example/example.adoc)",
 		);
 		expect(renderGitLab(documentWithFamilyTargets)).toContain(
 			"[diagram](docs/2.0/_images/diagram.png) [guide](docs/2.0/_attachments/guide.pdf) [overview](docs/2.0/api/index.html#overview) [example](docs/2.0/_examples/example.adoc)",

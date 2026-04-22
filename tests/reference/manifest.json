@@ -104,10 +104,18 @@
 		"expectations": {
 			"nodeTypes": ["heading", "paragraph"],
 			"renderedContains": [
-				"[Install guide](install.html)",
+				"[Install guide](install.adoc)",
 				"[Overview](#overview)"
 			],
-			"renderedExcludes": ["Unsupported:"]
+			"renderedExcludes": ["Unsupported:"],
+			"renderedByFlavor": {
+				"gitlab": {
+					"contains": ["[Install guide](install.html)"]
+				},
+				"strict": {
+					"contains": ["[Install guide](install.html)"]
+				}
+			}
 		}
 	},
 	{
@@ -190,9 +198,21 @@
 			"nodeTypes": ["heading", "admonition"],
 			"renderedContains": [
 				"> **NOTE:** Keep *docs* and **code** aligned.",
-				"> **TIP:** Review [the style guide](style-guide.html) before publishing."
+				"> **TIP:** Review [the style guide](style-guide.adoc) before publishing."
 			],
-			"renderedExcludes": ["Unsupported:"]
+			"renderedExcludes": ["Unsupported:"],
+			"renderedByFlavor": {
+				"gitlab": {
+					"contains": [
+						"> **TIP:** Review [the style guide](style-guide.html) before publishing."
+					]
+				},
+				"strict": {
+					"contains": [
+						"> **TIP:** Review [the style guide](style-guide.html) before publishing."
+					]
+				}
+			}
 		}
 	},
 	{
@@ -210,9 +230,14 @@
 			"renderedContains": [
 				"<!-- page-aliases: old-home, old-overview -->",
 				"[Overview](#overview)",
-				"[install.html](install.html)"
+				"[install.html](install.adoc)"
 			],
-			"renderedExcludes": ["Unsupported:"]
+			"renderedExcludes": ["Unsupported:"],
+			"renderedByFlavor": {
+				"gitlab": {
+					"contains": ["[install.html](install.html)"]
+				}
+			}
 		}
 	},
 	{
@@ -305,11 +330,27 @@
 		"expectations": {
 			"nodeTypes": ["heading", "paragraph"],
 			"renderedContains": [
-				"[docs:ROOT:install.html](docs:ROOT:install.html)",
-				"[2.0@docs:ROOT:install.html](2.0@docs:ROOT:install.html#cli)",
-				"[docs:ROOT:partial$nav.html](docs:ROOT:partial$nav.html)"
+				"[docs:ROOT:install.html](docs/ROOT/install.adoc)",
+				"[2.0@docs:ROOT:install.html](docs/2.0/ROOT/install.adoc#cli)",
+				"[docs:ROOT:partial$nav.html](docs/ROOT/partial/nav.adoc)"
 			],
-			"renderedExcludes": ["Unsupported:"]
+			"renderedExcludes": ["Unsupported:"],
+			"renderedByFlavor": {
+				"gitlab": {
+					"contains": [
+						"[docs:ROOT:install.html](docs/install.html)",
+						"[2.0@docs:ROOT:install.html](docs/2.0/install.html#cli)",
+						"[docs:ROOT:partial$nav.html](docs/ROOT/partial/nav.adoc)"
+					]
+				},
+				"strict": {
+					"contains": [
+						"[docs:ROOT:install.html](docs/install.html)",
+						"[2.0@docs:ROOT:install.html](docs/2.0/install.html#cli)",
+						"[docs:ROOT:partial$nav.html](docs/ROOT/partial/nav.adoc)"
+					]
+				}
+			}
 		}
 	},
 	{
@@ -480,12 +521,30 @@
 		"expectations": {
 			"nodeTypes": ["heading", "paragraph"],
 			"renderedContains": [
-				"[install](2.0@docs:ROOT:install.html#cli)",
-				"[overview](2.0@docs:api:page$index.html#overview)",
-				"[diagram](2.0@docs:ROOT:image$diagram.png)",
-				"[guide](2.0@docs:ROOT:attachment$guide.pdf)"
+				"[install](docs/2.0/ROOT/install.adoc#cli)",
+				"[overview](docs/2.0/api/index.adoc#overview)",
+				"[diagram](docs/2.0/ROOT/image/diagram.png)",
+				"[guide](docs/2.0/ROOT/attachment/guide.pdf)"
 			],
-			"renderedExcludes": ["Unsupported:"]
+			"renderedExcludes": ["Unsupported:"],
+			"renderedByFlavor": {
+				"gitlab": {
+					"contains": [
+						"[install](docs/2.0/install.html#cli)",
+						"[overview](docs/2.0/api/index.html#overview)",
+						"[diagram](docs/2.0/_images/diagram.png)",
+						"[guide](docs/2.0/_attachments/guide.pdf)"
+					]
+				},
+				"strict": {
+					"contains": [
+						"[install](docs/2.0/install.html#cli)",
+						"[overview](docs/2.0/api/index.html#overview)",
+						"[diagram](docs/2.0/_images/diagram.png)",
+						"[guide](docs/2.0/_attachments/guide.pdf)"
+					]
+				}
+			}
 		}
 	},
 	{
@@ -507,10 +566,24 @@
 		"expectations": {
 			"nodeTypes": ["heading", "paragraph"],
 			"renderedContains": [
-				"[demo](2.0@docs:ROOT:video$demo.mp4)",
-				"[overview](2.0@docs:api:page$index.html#overview)"
+				"[demo](docs/2.0/ROOT/video/demo.mp4)",
+				"[overview](docs/2.0/api/index.adoc#overview)"
 			],
-			"renderedExcludes": ["Unsupported:"]
+			"renderedExcludes": ["Unsupported:"],
+			"renderedByFlavor": {
+				"gitlab": {
+					"contains": [
+						"[demo](docs/2.0/ROOT/video/demo.mp4)",
+						"[overview](docs/2.0/api/index.html#overview)"
+					]
+				},
+				"strict": {
+					"contains": [
+						"[demo](docs/2.0/ROOT/video/demo.mp4)",
+						"[overview](docs/2.0/api/index.html#overview)"
+					]
+				}
+			}
 		}
 	},
 	{
@@ -533,14 +606,36 @@
 		"expectations": {
 			"nodeTypes": ["heading", "paragraph"],
 			"renderedContains": [
-				"[install](docs:ROOT:install.html)",
-				"[overview](2.0@docs:api:page$index.html#overview)",
-				"[diagram](2.0@docs:ROOT:image$diagram.png)",
-				"[guide](2.0@docs:ROOT:attachment$guide.pdf)",
-				"[example](2.0@docs:ROOT:example$sample.html)",
-				"[nav](2.0@docs:ROOT:partial$nav.html)"
+				"[install](docs/ROOT/install.adoc)",
+				"[overview](docs/2.0/api/index.adoc#overview)",
+				"[diagram](docs/2.0/ROOT/image/diagram.png)",
+				"[guide](docs/2.0/ROOT/attachment/guide.pdf)",
+				"[example](docs/2.0/ROOT/example/sample.adoc)",
+				"[nav](docs/2.0/ROOT/partial/nav.adoc)"
 			],
-			"renderedExcludes": ["Unsupported:"]
+			"renderedExcludes": ["Unsupported:"],
+			"renderedByFlavor": {
+				"gitlab": {
+					"contains": [
+						"[install](docs/install.html)",
+						"[overview](docs/2.0/api/index.html#overview)",
+						"[diagram](docs/2.0/_images/diagram.png)",
+						"[guide](docs/2.0/_attachments/guide.pdf)",
+						"[example](docs/2.0/_examples/sample.adoc)",
+						"[nav](docs/2.0/ROOT/partial/nav.adoc)"
+					]
+				},
+				"strict": {
+					"contains": [
+						"[install](docs/install.html)",
+						"[overview](docs/2.0/api/index.html#overview)",
+						"[diagram](docs/2.0/_images/diagram.png)",
+						"[guide](docs/2.0/_attachments/guide.pdf)",
+						"[example](docs/2.0/_examples/sample.adoc)",
+						"[nav](docs/2.0/ROOT/partial/nav.adoc)"
+					]
+				}
+			}
 		}
 	}
 ]

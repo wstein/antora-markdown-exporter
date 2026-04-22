@@ -4,18 +4,19 @@ aliases: ["Assembler direct converter pipeline", "Exporter pipeline", "Antora Ma
 tags: ["architecture", "antora", "exporter", "markdown", "typescript"]
 target: current
 ---
-The exporter pipeline uses Antora Assembler to produce assembled AsciiDoc and then hands that document to a direct TypeScript converter rather than routing through Pandoc or DocBook. This preserves deterministic control over semantics, fallbacks, and flavor-specific rendering.
+The exporter pipeline uses Antora Assembler to produce assembled AsciiDoc and then hands that document to a direct TypeScript conversion pipeline rather than routing through Pandoc or DocBook. This preserves deterministic control over semantics, fallbacks, and flavor-specific rendering.
 
 
 ## What
 
 
-The repository adopts a three-stage export pipeline:
+The repository adopts a four-stage export pipeline:
 
 
 1. Antora Assembler builds the assembled source document.
-2. The TypeScript exporter maps assembled AsciiDoc into a Markdown semantic layer.
-3. Flavor renderers serialize that semantic layer into concrete Markdown output.
+2. The repository-owned extractor turns assembled source into structured assembly data.
+3. Structured lowering maps that repository-owned structure into the Markdown semantic layer.
+4. Flavor renderers serialize that semantic layer into concrete Markdown output.
 
 
 The converter is direct by design. External document-conversion tools are excluded from the core contract.
@@ -33,10 +34,10 @@ This also keeps Antora-specific concerns near the extension boundary while prese
 ## How
 
 
-Implement the Antora integration in `src/extension/**` and the assembly conversion boundary in `src/exporter/**`.
+Implement the Antora integration in `src/extension/**`, structural extraction in `src/adapter/**`, and semantic lowering plus rendering in `src/exporter/**` and `src/markdown/**`.
 
 
-Treat the assembled AsciiDoc document as the last Antora-facing artifact. After that point, all decisions must move through the Markdown semantic layer in `src/markdown/**`, including dedicated xref target metadata, dedicated anchors, page-alias metadata, include-directive metadata, images, admonitions, aligned tables, callouts, and recursive include inlining with tagged regions, multi-tag selection, line ranges, indentation, and `leveloffset` handling when source context is available. Xref destination shaping is a separate lowering phase in `src/markdown/xref-resolution.ts`, so renderers can serialize already-resolved destinations without owning Antora routing policy. Include metadata transport is isolated behind `src/exporter/include-metadata.ts`, so the converter no longer hardcodes the HTML-comment marker format in its general parsing logic.
+Treat the assembled AsciiDoc document as the last Antora-facing artifact. After that point, all decisions must move through repository-owned structure and the Markdown semantic layer in `src/adapter/**` and `src/markdown/**`, including dedicated xref target metadata, dedicated anchors, page-alias metadata, images, admonitions, aligned tables, callouts, and recursive include inlining with tagged regions, multi-tag selection, line ranges, indentation, and `leveloffset` handling when source context is available. Xref destination shaping is a separate lowering phase in `src/markdown/xref-resolution.ts`, so renderers can serialize already-resolved destinations without owning Antora routing policy.
 
 
 Do not add Pandoc, DocBook, or HTML-to-Markdown fallback chains to the primary path.
@@ -46,8 +47,9 @@ Do not add Pandoc, DocBook, or HTML-to-Markdown fallback chains to the primary p
 
 
 - [[Markdown IR is the canonical render boundary]] - The semantic layer formalizes the direct conversion contract.
+- [[Repository-owned assembly structure formalizes the exporter adapter boundary]] - Structured extraction creates the stable handoff into semantic lowering.
 - [[Flavor renderers are syntax adapters over one semantic layer]] - Renderer implementations depend on this pipeline boundary.
-- [[Include metadata transport is an internal implementation detail]] - Include marker transport should stay isolated from general conversion logic.
 - [[Xref target resolution is a separate lowering phase]] - Xref routing is resolved before markdown link serialization.
 - src/extension/index.ts - Antora extension registration entrypoint.
-- src/exporter/convert-assembly.ts - Assembly-to-IR conversion boundary.
+- src/adapter/asciidoctor-structure.ts - Assembled-source to repository-owned structured extraction.
+- src/exporter/structured-to-ir.ts - Structured assembly to Markdown IR conversion boundary.

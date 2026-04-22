@@ -41,7 +41,7 @@ Do not treat the adapter as a hidden alias for Markdown IR or as a disguised con
 ## Links
 
 - [[Assembler custom exporters receive assembled AsciiDoc source buffers]] - The external handoff is still assembled source, not this internal adapter.
-- [[Structural document mapping is a desired internal adapter not the documented Assembler handoff]] - This note defines that desired internal stage concretely.
+- [[Exporter pipeline uses Assembler and a direct TypeScript converter]] - The adapter sits between assembled source and Markdown IR lowering.
 - [[Markdown IR is the canonical render boundary]] - The adapter lowers into IR rather than replacing it.
 - src/adapter/assembly-structure.ts - Repository-owned structured assembly contract.
 - tests/unit/assembly-structure.test.ts - Contract tests for the adapter.

@@ -1,3 +1,3 @@
 # Mixed xref routing
 
-See [install](docs:ROOT:install.html), [overview](2.0@docs:api:page$index.html#overview), [diagram](2.0@docs:ROOT:image$diagram.png), [guide](2.0@docs:ROOT:attachment$guide.pdf), [example](2.0@docs:ROOT:example$sample.html), and [nav](2.0@docs:ROOT:partial$nav.html).
+See [install](docs/install.html), [overview](docs/2.0/api/index.html#overview), [diagram](docs/2.0/_images/diagram.png), [guide](docs/2.0/_attachments/guide.pdf), [example](docs/2.0/_examples/sample.adoc), and [nav](docs/2.0/ROOT/partial/nav.adoc).

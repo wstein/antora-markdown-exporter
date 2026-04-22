@@ -190,17 +190,17 @@ The emitted JSON contains the normalized inspection report plus the resolved inp
     "xrefTargets": [
       {
         "raw": "install.html#cli",
-        "path": "install.html",
+        "path": "install.adoc",
         "fragment": "cli"
       }
     ],
     "xrefs": [
       {
         "type": "xref",
-        "url": "install.html#cli",
+        "url": "install.adoc#cli",
         "target": {
           "raw": "install.html#cli",
-          "path": "install.html",
+          "path": "install.adoc",
           "fragment": "cli"
         },
         "children": [

@@ -1,3 +1,3 @@
 # Navigation
 
-See [Install guide](install.html) and [Overview](#overview).
+See [Install guide](install.adoc) and [Overview](#overview).

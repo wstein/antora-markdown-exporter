@@ -38,7 +38,7 @@ describe("inspection report script integration", () => {
 			    "includeDirectives": [],
 			    "xrefTargets": [
 			      {
-			        "path": "install.html",
+			        "path": "install.adoc",
 			        "raw": "install.html",
 			      },
 			      {
@@ -56,11 +56,11 @@ describe("inspection report script integration", () => {
 			          },
 			        ],
 			        "target": {
-			          "path": "install.html",
+			          "path": "install.adoc",
 			          "raw": "install.html",
 			        },
 			        "type": "xref",
-			        "url": "install.html",
+			        "url": "install.adoc",
 			      },
 			      {
 			        "children": [

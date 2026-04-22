@@ -63,7 +63,7 @@ describe("asciidoctor structure extraction", () => {
 					url: "install.html#cli",
 					target: expect.objectContaining({
 						raw: "install.html#cli",
-						path: "install.html",
+						path: "install.adoc",
 						fragment: "cli",
 					}),
 				}),
@@ -89,7 +89,13 @@ describe("asciidoctor structure extraction", () => {
 					type: "paragraph",
 					children: expect.arrayContaining([
 						expect.objectContaining({ type: "strong" }),
-						expect.objectContaining({ type: "xref", url: "install.html" }),
+						expect.objectContaining({
+							type: "xref",
+							url: "install.html",
+							target: expect.objectContaining({
+								path: "install.adoc",
+							}),
+						}),
 					]),
 				},
 			],
@@ -191,29 +197,44 @@ describe("asciidoctor structure extraction", () => {
 		});
 	});
 
-	it("marks unsupported block contexts explicitly in the extracted structure", () => {
+	it("maps sidebar and open blocks into supported structured containers", () => {
 		const document = extractAssemblyStructure(
 			[
 				"== Example",
 				"",
 				"[sidebar]",
 				"****",
-				"Not yet mapped structurally.",
+				"Sidebar guidance.",
 				"****",
+				"",
+				"--",
+				"Open block body.",
+				"--",
 			].join("\n"),
 		);
 
-		expect(document.children).toEqual([
-			expect.objectContaining({
-				type: "heading",
-				depth: 1,
-				children: [{ type: "text", value: "Example" }],
-			}),
-			expect.objectContaining({
-				type: "unsupported",
-				reason: "structured extractor does not support block context: sidebar",
-			}),
-		]);
+		expect(document.children).toEqual(
+			expect.arrayContaining([
+				expect.objectContaining({
+					type: "heading",
+					depth: 1,
+					children: [{ type: "text", value: "Example" }],
+				}),
+				expect.objectContaining({
+					type: "blockquote",
+					children: [
+						expect.objectContaining({
+							type: "paragraph",
+							children: [{ type: "text", value: "Sidebar guidance." }],
+						}),
+					],
+				}),
+				expect.objectContaining({
+					type: "paragraph",
+					children: [{ type: "text", value: "Open block body." }],
+				}),
+			]),
+		);
 	});
 
 	it("maps preambles and heading inline code without falling back to unsupported blocks", () => {
@@ -247,5 +268,67 @@ describe("asciidoctor structure extraction", () => {
 				],
 			}),
 		]);
+	});
+
+	it("extracts family-qualified Antora xrefs into structured target coordinates", () => {
+		const document = extractAssemblyStructure(
+			[
+				"== Routes",
+				"",
+				"See xref:2.0@docs:api:page$index.adoc#overview[overview], xref:2.0@docs:ROOT:image$diagram.png[diagram], and xref:2.0@docs:ROOT:partial$nav.adoc[nav].",
+			].join("\n"),
+		);
+
+		const paragraph = document.children[1];
+		expect(paragraph).toMatchObject({ type: "paragraph" });
+		if (paragraph?.type !== "paragraph") {
+			throw new Error("expected paragraph");
+		}
+
+		const xrefs = paragraph.children.filter((child) => child.type === "xref");
+		expect(xrefs).toHaveLength(3);
+		expect(xrefs[0]).toMatchObject({
+			type: "xref",
+			target: {
+				raw: "2.0@docs:api:page$index.html#overview",
+				component: "docs",
+				version: "2.0",
+				module: "api",
+				family: {
+					kind: "page",
+					name: "page",
+				},
+				path: "index.adoc",
+				fragment: "overview",
+			},
+		});
+		expect(xrefs[1]).toMatchObject({
+			type: "xref",
+			target: {
+				raw: "2.0@docs:ROOT:image$diagram.png",
+				component: "docs",
+				version: "2.0",
+				module: "ROOT",
+				family: {
+					kind: "image",
+					name: "image",
+				},
+				path: "diagram.png",
+			},
+		});
+		expect(xrefs[2]).toMatchObject({
+			type: "xref",
+			target: {
+				raw: "2.0@docs:ROOT:partial$nav.html",
+				component: "docs",
+				version: "2.0",
+				module: "ROOT",
+				family: {
+					kind: "partial",
+					name: "partial",
+				},
+				path: "nav.adoc",
+			},
+		});
 	});
 });

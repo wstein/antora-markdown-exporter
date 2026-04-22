@@ -4,18 +4,18 @@ aliases: ["Include marker transport", "Include metadata boundary", "Private incl
 tags: ["include", "exporter", "architecture", "internal"]
 target: current
 ---
-Include metadata transport is an internal implementation detail because the repository’s contract is include semantics, diagnostics, and provenance, not the specific marker shape used while moving that metadata through the converter pipeline.
+Include metadata transport is an internal implementation detail because the repository’s contract is include semantics, diagnostics, and provenance, not any temporary representation used while moving that metadata through the structured conversion pipeline.
 
 ## What
 
-The converter currently uses an HTML comment transport to carry include-directive metadata through assembled content until it is rehydrated as semantic IR nodes.
+The repository may use temporary internal representations to carry include-directive metadata through extraction and lowering when include diagnostics or provenance need to survive assembly.
 
 That transport is intentionally private. The supported behavior is:
 - include directives remain inspectable in the Markdown IR
 - diagnostics survive expansion and normalization
 - provenance remains available for validation and reporting
 
-The exact wire format is isolated in `src/exporter/include-metadata.ts`.
+The exact transport shape must stay private and may change without affecting the public API.
 
 ## Why
 
@@ -28,7 +28,7 @@ Isolating the transport keeps:
 
 ## How
 
-Keep marker encode/decode logic in one internal module.
+Keep any include metadata transport logic isolated behind one internal boundary.
 
 Do not let renderer, inspection helpers, or general block parsing depend on raw marker syntax.
 
@@ -38,4 +38,4 @@ Preserve existing include semantics, diagnostics, and provenance when refactorin
 
 - [[Exporter pipeline uses Assembler and a direct TypeScript converter]] - Include transport sits inside the converter, not outside the pipeline boundary.
 - [[Reference corpus should cover navigation xrefs includes and admonitions]] - Compatibility coverage should pin include behavior, not private marker syntax.
-- src/exporter/include-metadata.ts - Private include transport implementation.
+- src/markdown/include-diagnostics.ts - Public inspection surface for include diagnostics and surviving include metadata.

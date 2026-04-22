@@ -8,10 +8,11 @@ describe("resolveMarkdownXrefDestination", () => {
 			resolveMarkdownXrefDestination(
 				{
 					type: "xref",
-					url: "docs/ROOT/install.adoc#cli",
+					url: "2.0@docs:ROOT:install.html#cli",
 					target: {
 						raw: "docs:ROOT:install.adoc#cli",
 						component: "docs",
+						version: "2.0",
 						module: "ROOT",
 						family: {
 							kind: "page",
@@ -24,7 +25,7 @@ describe("resolveMarkdownXrefDestination", () => {
 				},
 				markdownFlavorSpecs.gfm,
 			),
-		).toBe("docs/ROOT/install.adoc#cli");
+		).toBe("docs/2.0/ROOT/install.adoc#cli");
 	});
 
 	it("routes page-family targets through site-style flavors and omits ROOT when configured", () => {
@@ -123,10 +124,11 @@ describe("resolveMarkdownXrefDestination", () => {
 			resolveMarkdownXrefDestination(
 				{
 					type: "xref",
-					url: "docs/ROOT/widget/thing.bin",
+					url: "2.0@docs:ROOT:widget$thing.bin",
 					target: {
 						raw: "docs:ROOT:widget$thing.bin",
 						component: "docs",
+						version: "2.0",
 						module: "ROOT",
 						family: {
 							kind: "other",
@@ -138,7 +140,7 @@ describe("resolveMarkdownXrefDestination", () => {
 				},
 				markdownFlavorSpecs.gitlab,
 			),
-		).toBe("docs/ROOT/widget/thing.bin");
+		).toBe("docs/2.0/ROOT/widget/thing.bin");
 	});
 
 	it("falls back to fragments or original urls when the target path is empty", () => {
