@@ -1,8 +1,8 @@
 import { dirname, resolve } from "node:path";
 import { fileURLToPath } from "node:url";
-import { runAntoraSiteBuild } from "../src/index.js";
+import { runAntoraSiteBuildRuntime } from "../src/site-build-runtime.js";
 
-export { runAntoraSiteBuild as buildDocsSite };
+export { runAntoraSiteBuildRuntime as buildDocsSite };
 
 if (
 	process.argv[1] &&
@@ -10,7 +10,7 @@ if (
 ) {
 	try {
 		const rootDir = resolve(dirname(fileURLToPath(import.meta.url)), "..");
-		runAntoraSiteBuild(rootDir);
+		runAntoraSiteBuildRuntime(rootDir);
 	} catch (error) {
 		console.error(String(error instanceof Error ? error.message : error));
 		process.exit(1);
