@@ -100,7 +100,7 @@ The current helper split under `src/adapter/asciidoctor-structure/` also matters
 
 The note `Flavor renderers are syntax adapters over one semantic layer` explains how to think about flavors.
 
-The repository currently ships explicit `gfm`, `commonmark`, `gitlab`, and `strict` profiles. These flavors can differ in syntax and policy, but they must not reinterpret the document’s meaning independently.
+The repository currently ships explicit `gfm`, `commonmark`, `gitlab`, `multimarkdown`, and `strict` profiles. These flavors can differ in syntax and policy, but they must not reinterpret the document’s meaning independently.
 
 That means:
 

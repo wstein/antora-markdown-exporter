@@ -35,12 +35,13 @@ const markdownFlavors = new Set<MarkdownFlavorName>([
 	"gfm",
 	"commonmark",
 	"gitlab",
+	"multimarkdown",
 	"strict",
 ]);
 
 function usage(): string {
 	return [
-		"Usage: bun scripts/export-antora-modules.ts [--playbook <file>] [--output-root <dir>] [--flavor <gfm|commonmark|gitlab|strict>] [--xref-fallback-label-style <fragment-or-basename|fragment-or-path>] [--json]",
+		"Usage: bun scripts/export-antora-modules.ts [--playbook <file>] [--output-root <dir>] [--flavor <gfm|commonmark|gitlab|multimarkdown|strict>] [--xref-fallback-label-style <fragment-or-basename|fragment-or-path>] [--json]",
 		"",
 		"Export assembled documentation modules to Markdown using the repository's Antora Markdown converter.",
 	].join("\n");
@@ -83,6 +84,7 @@ export function parseArguments(argv: string[]): ExportAntoraModulesOptions {
 				value !== "gfm" &&
 				value !== "commonmark" &&
 				value !== "gitlab" &&
+				value !== "multimarkdown" &&
 				value !== "strict"
 			) {
 				throw new Error("Missing or invalid value for --flavor");

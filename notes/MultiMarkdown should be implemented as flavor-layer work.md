@@ -4,7 +4,7 @@ aliases: ["MultiMarkdown renderer-layer note", "Flavor-layer MultiMarkdown suppo
 tags: ["markdown", "flavors", "multimarkdown", "architecture", "renderer"]
 target: current
 ---
-If the repository adds MultiMarkdown support, it should be implemented as flavor-layer work over the existing structured pipeline instead of as extractor-local or parser-local behavior.
+MultiMarkdown support should remain flavor-layer work over the existing structured pipeline rather than regressing into extractor-local or parser-local behavior.
 
 ## What
 
@@ -20,7 +20,7 @@ The repository already treats Markdown IR as the canonical render boundary and f
 
 ## How
 
-When MultiMarkdown work starts:
+When MultiMarkdown behavior changes:
 
 - add it as a named flavor beside GFM
 - prove it with focused renderer tests and fixtures

@@ -2,7 +2,7 @@
 
 Antora Assembler based Markdown exporter with semantic IR, inspection surfaces, and explicit Markdown flavor rendering.
 
-The package exposes explicit flavor capabilities, transparent fenced extension preservation, centralized fallback policy, and renderer profiles for GitHub Flavored Markdown, CommonMark, GitLab Flavored Markdown, and a strict canonical mode. It consumes assembled Antora/Asciidoctor output and maps that already-resolved structure and metadata into the repository’s Markdown IR instead of trying to recreate the full AsciiDoc parser.
+The package exposes explicit flavor capabilities, transparent fenced extension preservation, centralized fallback policy, and renderer profiles for GitHub Flavored Markdown, CommonMark, GitLab Flavored Markdown, MultiMarkdown, and a strict canonical mode. It consumes assembled Antora/Asciidoctor output and maps that already-resolved structure and metadata into the repository’s Markdown IR instead of trying to recreate the full AsciiDoc parser.
 
 ## Status Markers
 
@@ -272,7 +272,7 @@ To export the main Antora modules to Markdown using the repository pipeline, run
 make markdown
 ```
 
-This emits flat module documents under `build/markdown/architecture.md`, `build/markdown/manual.md`, and `build/markdown/onboarding.md` using the same assembled module sources as the repository PDFs and the same conversion path as the library API: structured extraction, IR lowering, normalization, and flavor rendering. It also materializes a review bundle under `build/markdown/review-bundle/.github/workflows/` so release and Pages claims carry `release.yml` and `pages.yml` evidence with the exported docs. The default CLI output is a human-readable summary. If automation needs machine-readable output, run `bun run export:modules -- --json`. The export path does not post-process rendered Markdown. If output needs improvement, fix the converter or renderer. Use `ARGS="--flavor gitlab"` or `ARGS="--xref-fallback-label-style fragment-or-path"` or an alternate `--output-root` when you need a different target.
+This emits flat module documents under `build/markdown/architecture.md`, `build/markdown/manual.md`, and `build/markdown/onboarding.md` using the same assembled module sources as the repository PDFs and the same conversion path as the library API: structured extraction, IR lowering, normalization, and flavor rendering. It also materializes a review bundle under `build/markdown/review-bundle/.github/workflows/` so release and Pages claims carry `release.yml` and `pages.yml` evidence with the exported docs. The default CLI output is a human-readable summary. If automation needs machine-readable output, run `bun run export:modules -- --json`. The export path does not post-process rendered Markdown. If output needs improvement, fix the converter or renderer. Use `ARGS="--flavor gitlab"` or `ARGS="--flavor multimarkdown"` or `ARGS="--xref-fallback-label-style fragment-or-path"` or an alternate `--output-root` when you need a different target.
 
 To build only the assembled module PDFs without rebuilding the full Antora HTML site, run:
 

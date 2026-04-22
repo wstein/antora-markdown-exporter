@@ -39,6 +39,12 @@ describe("export antora modules script", () => {
 		expect(options.xrefFallbackLabelStyle).toBe("fragment-or-path");
 	});
 
+	it("accepts multimarkdown as an explicit export flavor", () => {
+		const options = parseArguments(["--flavor", "multimarkdown"]);
+
+		expect(options.flavor).toBe("multimarkdown");
+	});
+
 	it("exports one assembled markdown document per documentation module", async () => {
 		const outputRoot = await mkdtemp(
 			resolve(tmpdir(), "antora-markdown-export-"),

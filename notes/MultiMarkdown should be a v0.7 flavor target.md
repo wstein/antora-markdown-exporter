@@ -1,22 +1,22 @@
 ---
 id: 20260422125500
-aliases: ["MultiMarkdown flavor target", "v0.7 MultiMarkdown note"]
+aliases: ["MultiMarkdown flavor target", "v0.7 MultiMarkdown note", "Supported MultiMarkdown flavor"]
 tags: ["markdown", "flavors", "multimarkdown", "roadmap"]
 target: current
 ---
-MultiMarkdown should be tracked as a flavor target for v0.7 rather than treated as an immediate baseline change. It is a plausible downstream renderer target because it extends Markdown with additional document features such as tables, footnotes, citations, metadata, definition lists, image attributes, captions, and automatic cross references.
+MultiMarkdown is now a supported flavor profile in the repository, but it still should not be treated as a baseline replacement for GFM. It fits the exporter because it extends Markdown with additional document features such as tables, footnotes, citations, metadata, definition lists, image attributes, captions, and automatic cross references.
 
 ## What
 
-For v0.7 planning:
+For the current implementation:
 
-- treat MultiMarkdown as an additional explicit flavor target
-- add it deliberately through the existing flavor matrix
-- require support-matrix and proof updates before calling it implemented
+- treat MultiMarkdown as an additional explicit flavor target beside GFM
+- keep it inside the existing flavor matrix rather than inventing a separate conversion path
+- require support-matrix and proof updates when expanding or tightening MultiMarkdown behavior
 
 ## Why
 
-The repository already has a semantic pipeline that separates extraction, lowering, and rendering. MultiMarkdown fits that architecture as another output target rather than as a reason to change the upstream contract.
+The repository already has a semantic pipeline that separates extraction, lowering, and rendering. MultiMarkdown fits that architecture as another output target rather than as a reason to change the upstream contract or default operator expectations.
 
 ## Sources
 
