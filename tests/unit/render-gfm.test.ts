@@ -414,4 +414,29 @@ describe("renderGfm", () => {
 			].join("\n"),
 		);
 	});
+
+	it("renders labeled groups around titled code blocks explicitly", () => {
+		const rendered = renderGfm({
+			type: "document",
+			children: [
+				{
+					type: "labeledGroup",
+					label: [{ type: "text", value: "Release command" }],
+					children: [
+						{
+							type: "codeBlock",
+							language: "bash",
+							value: "make release",
+						},
+					],
+				},
+			],
+		});
+
+		expect(rendered).toBe(
+			["**Release command:**", "", "```bash", "make release", "```", ""].join(
+				"\n",
+			),
+		);
+	});
 });

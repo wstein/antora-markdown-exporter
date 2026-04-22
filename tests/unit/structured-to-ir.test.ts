@@ -173,4 +173,35 @@ describe("structured assembly to markdown ir", () => {
 			children: [{ type: "text", value: "Paragraph with anchor." }],
 		});
 	});
+
+	it("preserves titled listing blocks through lowering as labeled groups over code blocks", () => {
+		const structured = extractAssemblyStructure(
+			[
+				"= Manual",
+				"",
+				".Release command",
+				"[source,bash]",
+				"----",
+				"make release",
+				"----",
+			].join("\n"),
+		);
+		const ir = convertAssemblyStructureToMarkdownIR(structured);
+
+		expect(ir.children).toEqual(
+			expect.arrayContaining([
+				expect.objectContaining({
+					type: "labeledGroup",
+					label: [{ type: "text", value: "Release command" }],
+					children: [
+						expect.objectContaining({
+							type: "codeBlock",
+							language: "bash",
+							value: "make release",
+						}),
+					],
+				}),
+			]),
+		);
+	});
 });

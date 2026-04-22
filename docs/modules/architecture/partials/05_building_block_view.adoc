@@ -3,7 +3,7 @@
 == Building Block View
 
 === Whitebox Overall System
-The decomposition follows the notes `Exporter pipeline uses Assembler and a direct TypeScript converter`, `Markdown IR is the canonical render boundary`, `Flavor renderers are syntax adapters over one semantic layer`, `Include metadata transport is an internal implementation detail`, `Xref target resolution is a separate lowering phase`, and `Inspection helpers expose normalized validation surfaces`. The repository therefore separates the outer Antora integration boundary from the inner markdown kernel instead of blending assembly, conversion, rendering, and validation into one opaque stage.
+The decomposition follows the notes `Exporter pipeline uses Assembler and a direct TypeScript converter`, `Markdown IR is the canonical render boundary`, `Flavor renderers are syntax adapters over one semantic layer`, `Preserved include metadata uses private transport details`, `Xref target resolution is a separate lowering phase`, and `Inspection helpers expose normalized validation surfaces`. The repository therefore separates the outer Antora integration boundary from the inner markdown kernel instead of blending assembly, conversion, rendering, and validation into one opaque stage.
 
 The main building blocks are:
 

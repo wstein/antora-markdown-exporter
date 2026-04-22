@@ -148,7 +148,7 @@ For contributors, this distinction is critical:
 
 ## 2.7. Include Metadata Is Private, Include Semantics Are Public
 
-The note `Include metadata transport is an internal implementation detail` tells contributors what to preserve during refactors.
+The note `Preserved include metadata uses private transport details` tells contributors what to preserve during refactors.
 
 The converter currently moves include metadata through an HTML-comment transport until it is rehydrated as semantic IR nodes. The transport format itself is private. The public contract is the semantics: include directives remain inspectable, diagnostics survive, and provenance remains available when the exporter is asked to preserve or report on include behavior that the assembler would otherwise have already resolved.
 

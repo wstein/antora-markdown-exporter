@@ -1,10 +1,10 @@
 ---
 id: 20260422032600
-aliases: ["Assembler-resolved includes", "Includes are resolved before export", "Include metadata and diagnostics boundary"]
+aliases: ["Assembler-resolved includes", "Includes are resolved before export", "Include metadata and diagnostics boundary", "Assembler-resolved includes only need exporter handling for metadata and diagnostics"]
 tags: ["architecture", "antora", "include", "exporter", "inspection"]
 target: current
 ---
-Assembler-resolved includes only need exporter handling for metadata and diagnostics because an Antora extension normally sees included content already expanded into the assembled page. The exporter only needs include-specific logic when the repository deliberately preserves include-directive metadata or emits diagnostics about include selectors and provenance.
+Assembler-resolved includes narrow exporter responsibilities because an Antora extension normally sees included content already expanded into the assembled page. The exporter only needs include-specific logic when the repository deliberately preserves include-directive metadata or emits diagnostics about include selectors and provenance.
 
 ## What
 
@@ -16,7 +16,7 @@ At the normal Antora extension boundary:
 Exporter-specific include handling is still useful when the repository wants to preserve:
 
 - include-directive metadata
-- selector semantics such as tags or line ranges
+- any selector semantics that are intentionally retained for inspection
 - diagnostics about malformed selectors
 - provenance for validation or inspection output
 
@@ -47,6 +47,6 @@ Keep any transport used for that metadata private and isolated.
 ## Links
 
 - [[Exporter pipeline uses Assembler and a direct TypeScript converter]] - Include expansion belongs on the Assembler side of the boundary.
-- [[Include metadata transport is an internal implementation detail]] - Marker transport is private even when include semantics are public.
+- [[Preserved include metadata uses private transport details]] - Marker transport is private even when include semantics are public.
 - [[Inspection helpers expose normalized validation surfaces]] - Diagnostics and provenance should surface through normalized inspection outputs.
 - src/markdown/include-diagnostics.ts - Public inspection surface for include diagnostics.

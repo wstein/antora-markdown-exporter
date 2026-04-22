@@ -1,14 +1,14 @@
 ---
 id: 20260421061000
-aliases: ["Include marker transport", "Include metadata boundary", "Private include transport"]
+aliases: ["Include marker transport", "Include metadata boundary", "Private include transport", "Include metadata transport is an internal implementation detail"]
 tags: ["include", "exporter", "architecture", "internal"]
 target: current
 ---
-Include metadata transport is an internal implementation detail because the repository’s contract is include semantics, diagnostics, and provenance, not any temporary representation used while moving that metadata through the structured conversion pipeline.
+Preserved include metadata uses private transport details because the repository’s contract is include semantics, diagnostics, and provenance only when those surfaces are intentionally preserved for inspection, not any temporary representation used while moving that data through the structured conversion pipeline.
 
 ## What
 
-The repository may use temporary internal representations to carry include-directive metadata through extraction and lowering when include diagnostics or provenance need to survive assembly.
+The repository may use temporary internal representations to carry preserved include metadata through extraction and lowering when include diagnostics or provenance need to survive assembly.
 
 That transport is intentionally private. The supported behavior is:
 - include directives remain inspectable in the Markdown IR

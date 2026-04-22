@@ -37,6 +37,6 @@ Refresh the coverage plan when a new renderer feature or regression class appear
 
 - [[Reference fixtures are curated and provenance locked]] - Curation policy keeps the corpus reproducible.
 - [[Reference tests check semantic invariants not exact bytes]] - Coverage themes guide compatibility assertions.
-- [[Include metadata transport is an internal implementation detail]] - Reference cases should pin include semantics, not the private marker transport.
+- [[Preserved include metadata uses private transport details]] - Reference cases should pin include semantics, not the private marker transport.
 - tests/reference/manifest.json - Coverage tags and provenance.
 - tests/fixtures - Local exact-output fixtures for reduced cases.
