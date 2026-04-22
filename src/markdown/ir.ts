@@ -1,3 +1,9 @@
+export type MarkdownSourceLocation = {
+	column?: number;
+	line?: number;
+	path?: string;
+};
+
 export type MarkdownText = {
 	type: "text";
 	value: string;
@@ -55,6 +61,7 @@ export type MarkdownXref = {
 	url: string;
 	title?: string;
 	children: MarkdownInline[];
+	location?: MarkdownSourceLocation;
 };
 
 export type MarkdownImage = {
@@ -119,16 +126,19 @@ export type MarkdownHeading = {
 	depth: number;
 	identifier?: string;
 	children: MarkdownInline[];
+	location?: MarkdownSourceLocation;
 };
 
 export type MarkdownAnchor = {
 	type: "anchor";
 	identifier: string;
+	location?: MarkdownSourceLocation;
 };
 
 export type MarkdownPageAliases = {
 	type: "pageAliases";
 	aliases: string[];
+	location?: MarkdownSourceLocation;
 };
 
 export type MarkdownThematicBreak = {

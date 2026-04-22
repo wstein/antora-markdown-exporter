@@ -100,13 +100,26 @@ describe("inspection report script", () => {
 		const payload = JSON.parse(output) as {
 			inputPath: string;
 			rag: {
+				anchors: Array<{ identifier: string; index: number }>;
+				document: { relativeSrcPath?: string };
 				entries: Array<{
 					destination: string;
+					family: string;
+					fragment?: string;
 					index: number;
 					label: string;
+					location?: { line?: number; path?: string };
 					path: string;
 					rawTarget: string;
 				}>;
+				headings: Array<{
+					depth: number;
+					identifier?: string;
+					index: number;
+					location?: { line?: number; path?: string };
+					text: string;
+				}>;
+				pageAliases: Array<{ aliases: string[]; index: number }>;
 				xrefCount: number;
 				xrefTargetCount: number;
 			};
@@ -115,6 +128,21 @@ describe("inspection report script", () => {
 
 		expect(payload.inputPath).toBe(inputPath);
 		expect(payload.sourcePath).toBe(inputPath);
+		expect(payload.rag.document).toEqual({});
+		expect(payload.rag.headings).toEqual([
+			{
+				index: 0,
+				depth: 1,
+				identifier: "_navigation",
+				location: {
+					line: 1,
+					path: "<stdin>",
+				},
+				text: "Navigation",
+			},
+		]);
+		expect(payload.rag.anchors).toEqual([]);
+		expect(payload.rag.pageAliases).toEqual([]);
 		expect(payload.rag.xrefCount).toBe(2);
 		expect(payload.rag.xrefTargetCount).toBe(2);
 		expect(payload.rag.entries).toEqual([

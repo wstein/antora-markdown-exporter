@@ -103,6 +103,7 @@ export function extractAssemblyStructure(
 		safe: "safe",
 		sourcemap: true,
 		attributes: options.attributes,
+		docfile: options.sourcePath,
 	});
 	const pageAliases = document.getAttribute("page-aliases");
 	const hasDocumentTitle = document.hasHeader?.() === true;

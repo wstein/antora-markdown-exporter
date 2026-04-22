@@ -2,6 +2,7 @@ import type {
 	MarkdownBlock,
 	MarkdownDocument,
 	MarkdownInline,
+	MarkdownSourceLocation,
 	MarkdownXref,
 	MarkdownXrefTarget,
 } from "./ir.js";
@@ -19,14 +20,45 @@ export type MarkdownInspectionRagEntry = {
 	fragment?: string;
 	index: number;
 	label: string;
+	location?: MarkdownSourceLocation;
 	module?: string;
 	path: string;
 	rawTarget: string;
 	version?: string;
 };
 
+export type MarkdownInspectionRagHeading = {
+	depth: number;
+	identifier?: string;
+	index: number;
+	location?: MarkdownSourceLocation;
+	text: string;
+};
+
+export type MarkdownInspectionRagAnchor = {
+	identifier: string;
+	index: number;
+	location?: MarkdownSourceLocation;
+};
+
+export type MarkdownInspectionRagPageAliases = {
+	aliases: string[];
+	index: number;
+	location?: MarkdownSourceLocation;
+};
+
 export type MarkdownInspectionRagDocument = {
+	anchors: MarkdownInspectionRagAnchor[];
+	document: {
+		component?: string;
+		module?: string;
+		pageId?: string;
+		relativeSrcPath?: string;
+		version?: string;
+	};
 	entries: MarkdownInspectionRagEntry[];
+	headings: MarkdownInspectionRagHeading[];
+	pageAliases: MarkdownInspectionRagPageAliases[];
 	xrefCount: number;
 	xrefTargetCount: number;
 };
@@ -128,6 +160,69 @@ function collectInspectionReportFromBlocks(
 	};
 }
 
+function collectRagStructuralMetadata(
+	blocks: MarkdownBlock[],
+): Pick<MarkdownInspectionRagDocument, "anchors" | "headings" | "pageAliases"> {
+	const headings: MarkdownInspectionRagHeading[] = [];
+	const anchors: MarkdownInspectionRagAnchor[] = [];
+	const pageAliases: MarkdownInspectionRagPageAliases[] = [];
+
+	function visit(children: MarkdownBlock[]): void {
+		for (const block of children) {
+			switch (block.type) {
+				case "heading":
+					headings.push({
+						index: headings.length,
+						depth: block.depth,
+						identifier: block.identifier,
+						location: block.location,
+						text: joinInlineText(block.children),
+					});
+					continue;
+				case "anchor":
+					anchors.push({
+						index: anchors.length,
+						identifier: block.identifier,
+						location: block.location,
+					});
+					continue;
+				case "pageAliases":
+					pageAliases.push({
+						index: pageAliases.length,
+						aliases: [...block.aliases],
+						location: block.location,
+					});
+					continue;
+				case "blockquote":
+				case "admonition":
+					visit(block.children);
+					continue;
+				case "list":
+					for (const item of block.items) {
+						visit(item.children);
+					}
+					continue;
+				case "calloutList":
+					for (const item of block.items) {
+						visit(item.children);
+					}
+					continue;
+				case "footnoteDefinition":
+					visit(block.children);
+					continue;
+				case "labeledGroup":
+					visit(block.children);
+					continue;
+				default:
+					continue;
+			}
+		}
+	}
+
+	visit(blocks);
+	return { anchors, headings, pageAliases };
+}
+
 function collectNormalizedInspectionReport(
 	document: MarkdownDocument,
 ): MarkdownInspectionReport {
@@ -155,8 +250,22 @@ export function collectMarkdownInspectionReport(
 export function collectMarkdownInspectionRagDocument(
 	document: MarkdownDocument,
 ): MarkdownInspectionRagDocument {
-	const report = collectNormalizedInspectionReport(document);
+	const normalizedDocument = normalizeMarkdownIR(document);
+	const report = collectInspectionReportFromBlocks(normalizedDocument.children);
+	const structuralMetadata = collectRagStructuralMetadata(
+		normalizedDocument.children,
+	);
 	return {
+		document: {
+			component: normalizedDocument.metadata?.component,
+			module: normalizedDocument.metadata?.module,
+			pageId: normalizedDocument.metadata?.pageId,
+			relativeSrcPath: normalizedDocument.metadata?.relativeSrcPath,
+			version: normalizedDocument.metadata?.version,
+		},
+		headings: structuralMetadata.headings,
+		anchors: structuralMetadata.anchors,
+		pageAliases: structuralMetadata.pageAliases,
 		xrefCount: report.xrefs.length,
 		xrefTargetCount: report.xrefTargets.length,
 		entries: report.xrefs.map((xref, index) => ({
@@ -167,6 +276,7 @@ export function collectMarkdownInspectionRagDocument(
 			path: xref.target.path,
 			family: xref.target.family?.kind ?? "page",
 			component: xref.target.component,
+			location: xref.location,
 			module: xref.target.module,
 			version: xref.target.version,
 			fragment: xref.target.fragment,

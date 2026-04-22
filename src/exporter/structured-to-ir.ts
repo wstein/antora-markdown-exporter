@@ -63,6 +63,7 @@ function convertInline(node: AssemblyInline): MarkdownInline {
 				title: node.title,
 				target: node.target,
 				children: node.children.map(convertInline),
+				location: node.location,
 			};
 		case "image":
 			return <MarkdownImage>{
@@ -193,16 +194,19 @@ function convertBlock(node: AssemblyBlock): MarkdownBlock {
 				depth: node.depth,
 				identifier: node.identifier,
 				children: node.children.map(convertInline),
+				location: node.location,
 			};
 		case "anchor":
 			return {
 				type: "anchor",
 				identifier: node.identifier,
+				location: node.location,
 			};
 		case "pageAliases":
 			return {
 				type: "pageAliases",
 				aliases: [...node.aliases],
+				location: node.location,
 			};
 		case "thematicBreak":
 			return { type: "thematicBreak" };

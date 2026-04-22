@@ -280,10 +280,34 @@ describe("inspection helpers", () => {
 		]);
 	});
 
-	it("builds a deterministic rag-oriented inspection document from normalized xrefs", () => {
+	it("builds a deterministic rag-oriented inspection document with structure and source metadata", () => {
 		const rag = collectMarkdownInspectionRagDocument({
 			type: "document",
+			metadata: {
+				component: "docs",
+				module: "ROOT",
+				pageId: "guide",
+				relativeSrcPath: "modules/ROOT/pages/guide.adoc",
+				version: "current",
+			},
 			children: [
+				{
+					type: "pageAliases",
+					aliases: ["legacy-guide"],
+					location: { path: "guide.adoc", line: 1 },
+				},
+				{
+					type: "heading",
+					depth: 1,
+					identifier: "guide",
+					location: { path: "guide.adoc", line: 3 },
+					children: [{ type: "text", value: "Guide" }],
+				},
+				{
+					type: "anchor",
+					identifier: "intro",
+					location: { path: "guide.adoc", line: 5 },
+				},
 				{
 					type: "paragraph",
 					children: [
@@ -301,6 +325,7 @@ describe("inspection helpers", () => {
 								},
 								path: "install.adoc",
 							},
+							location: { path: "guide.adoc", line: 6 },
 							children: [
 								{
 									type: "strong",
@@ -323,6 +348,7 @@ describe("inspection helpers", () => {
 								path: "index.adoc",
 								fragment: "overview",
 							},
+							location: { path: "guide.adoc", line: 6 },
 							children: [{ type: "text", value: "overview" }],
 						},
 					],
@@ -331,6 +357,36 @@ describe("inspection helpers", () => {
 		});
 
 		expect(rag).toEqual({
+			document: {
+				component: "docs",
+				module: "ROOT",
+				pageId: "guide",
+				relativeSrcPath: "modules/ROOT/pages/guide.adoc",
+				version: "current",
+			},
+			headings: [
+				{
+					index: 0,
+					depth: 1,
+					identifier: "guide",
+					location: { path: "guide.adoc", line: 3 },
+					text: "Guide",
+				},
+			],
+			anchors: [
+				{
+					index: 0,
+					identifier: "intro",
+					location: { path: "guide.adoc", line: 5 },
+				},
+			],
+			pageAliases: [
+				{
+					index: 0,
+					aliases: ["legacy-guide"],
+					location: { path: "guide.adoc", line: 1 },
+				},
+			],
 			xrefCount: 2,
 			xrefTargetCount: 2,
 			entries: [
@@ -342,6 +398,7 @@ describe("inspection helpers", () => {
 					path: "install.adoc",
 					family: "page",
 					component: "docs",
+					location: { path: "guide.adoc", line: 6 },
 					module: "ROOT",
 				},
 				{
@@ -352,6 +409,7 @@ describe("inspection helpers", () => {
 					path: "index.adoc",
 					family: "page",
 					component: "docs",
+					location: { path: "guide.adoc", line: 6 },
 					module: "api",
 					fragment: "overview",
 				},
