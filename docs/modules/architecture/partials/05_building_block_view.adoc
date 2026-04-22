@@ -17,6 +17,9 @@ The main building blocks are:
 |Structured assembly adapter
 |`src/adapter/assembly-structure.ts` defines the repository-owned structural handoff between assembled Antora input and future Markdown IR lowering. It is the rewrite boundary that must outlive any one extractor implementation.
 
+|Asciidoctor structural extractor
+|`src/adapter/asciidoctor-structure.ts` loads assembled source through Asciidoctor and maps supported document structure into the repository-owned assembly adapter. Unsupported structural contexts remain explicit.
+
 |Assembly converter
 |`src/exporter/convert-assembly.ts` maps assembled Antora/Asciidoctor output into semantic markdown nodes, honoring assembler-provided structure and preserved metadata such as xrefs, anchors, aliases, images, tables, admonitions, and include diagnostics when present.
 
@@ -41,6 +44,7 @@ The main building blocks are:
 
 The most important interfaces are:
 * `defineAssemblyDocument(document)` pins the repository-owned adapter contract for structured assembly input.
+* `extractAssemblyStructure(source, options)` extracts supported document structure into the repository-owned assembly adapter.
 * `convertAssemblyToMarkdownIR(source, options)` is the main converter entrypoint.
 * `normalizeMarkdownIR(document)` freezes the semantic shape expected by renderers and inspection helpers.
 * `renderMarkdown(document, flavor)` and flavor-specific helpers serialize the normalized IR.

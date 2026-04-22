@@ -8,6 +8,7 @@ const packageJson = JSON.parse(
 	readFileSync(resolve(root, "package.json"), "utf8"),
 ) as {
 	bin: Record<string, string>;
+	dependencies?: Record<string, string>;
 	files: string[];
 	scripts: Record<string, string>;
 };
@@ -178,8 +179,15 @@ describe("repository contract", () => {
 		expect(existsSync(resolve(root, "src/adapter/assembly-structure.ts"))).toBe(
 			true,
 		);
+		expect(
+			existsSync(resolve(root, "src/adapter/asciidoctor-structure.ts")),
+		).toBe(true);
+		expect(packageJson.dependencies?.["@asciidoctor/core"]).toBe("~2.2.8");
 		expect(readme).toContain("semantic IR");
 		expect(packageJson.description).toContain("semantic IR");
+		expect(readFileSync(resolve(root, "src/index.ts"), "utf8")).toContain(
+			"./adapter/asciidoctor-structure.js",
+		);
 		expect(readFileSync(resolve(root, "src/index.ts"), "utf8")).toContain(
 			"./adapter/assembly-structure.js",
 		);
@@ -203,6 +211,17 @@ describe("repository contract", () => {
 				"utf8",
 			),
 		).toContain("Structured assembly adapter");
+		expect(
+			readFileSync(
+				resolve(
+					root,
+					"notes/Asciidoctor structural extraction should replace legacy text parsing incrementally.md",
+				),
+				"utf8",
+			),
+		).toContain(
+			"Asciidoctor structural extraction should replace legacy text parsing incrementally",
+		);
 	});
 
 	it("keeps CI and release workflows aligned with the develop/tag operating model", () => {

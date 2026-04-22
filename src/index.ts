@@ -1,4 +1,8 @@
 export {
+	type ExtractAssemblyStructureOptions,
+	extractAssemblyStructure,
+} from "./adapter/asciidoctor-structure.js";
+export {
 	type AssemblyAdmonition,
 	type AssemblyAdmonitionKind,
 	type AssemblyAnchor,

@@ -6,6 +6,7 @@
       "name": "antora-markdown-exporter",
       "dependencies": {
         "@antora/assembler": "^1.0.0-beta.20",
+        "@asciidoctor/core": "~2.2.8",
       },
       "devDependencies": {
         "@antora/cli": "^3.1.14",

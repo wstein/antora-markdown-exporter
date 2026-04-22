@@ -144,6 +144,7 @@ The main building blocks are:
 | --- | --- |
 | Extension entrypoint | `src/extension/index.ts` exposes `register()` and `createMarkdownConverter()`. `register()` delegates to `@antora/assembler.configure()` and makes the package usable as a real Antora exporter extension. |
 | Structured assembly adapter | `src/adapter/assembly-structure.ts` defines the repository-owned structural handoff between assembled Antora input and future Markdown IR lowering. It is the rewrite boundary that must outlive any one extractor implementation. |
+| Asciidoctor structural extractor | `src/adapter/asciidoctor-structure.ts` loads assembled source through Asciidoctor and maps supported document structure into the repository-owned assembly adapter. Unsupported structural contexts remain explicit. |
 | Assembly converter | `src/exporter/convert-assembly.ts` maps assembled Antora/Asciidoctor output into semantic markdown nodes, honoring assembler-provided structure and preserved metadata such as xrefs, anchors, aliases, images, tables, admonitions, and include diagnostics when present. |
 | Include metadata transport | `src/exporter/include-metadata.ts` isolates the private HTML-comment marker transport used while rehydrating include-directive metadata through the conversion pipeline. |
 | Markdown kernel | `src/markdown/ir.ts`, `src/markdown/normalize.ts`, and `src/markdown/xref-resolution.ts` define the canonical IR, normalize documents, and lower xref targets before rendering. |
@@ -155,6 +156,7 @@ The main building blocks are:
 The most important interfaces are:
 
 - `defineAssemblyDocument(document)` pins the repository-owned adapter contract for structured assembly input.
+- `extractAssemblyStructure(source, options)` extracts supported document structure into the repository-owned assembly adapter.
 - `convertAssemblyToMarkdownIR(source, options)` is the main converter entrypoint.
 - `normalizeMarkdownIR(document)` freezes the semantic shape expected by renderers and inspection helpers.
 - `renderMarkdown(document, flavor)` and flavor-specific helpers serialize the normalized IR.
