@@ -2,6 +2,7 @@ import { execFileSync } from "node:child_process";
 import { mkdtempSync, readFileSync, rmSync, writeFileSync } from "node:fs";
 import os from "node:os";
 import { join, resolve } from "node:path";
+import { ExitPromptError } from "@inquirer/core";
 import { afterEach, describe, expect, it } from "vitest";
 import {
 	assertReleasePreconditions,
@@ -126,6 +127,36 @@ describe("release wizard", () => {
 		expect(git(repo.root, ["tag", "--list", "v0.1.0"])).toBe("");
 	});
 
+	it("uses the prompt adapter for interactive release selection and version entry", async () => {
+		const repo = createRepo("0.1.0-dev");
+		cleanupPaths.push(repo.root, repo.remote);
+
+		await runReleaseWizard({
+			cwd: repo.root,
+			log: () => {},
+			promptAdapter: {
+				async confirm() {
+					return true;
+				},
+				async input() {
+					return "v0.1.0";
+				},
+				async select() {
+					return "start";
+				},
+			},
+		});
+
+		const pkg = JSON.parse(
+			readFileSync(resolve(repo.root, "package.json"), "utf8"),
+		) as { version: string };
+
+		expect(pkg.version).toBe("0.1.0");
+		expect(git(repo.root, ["log", "-1", "--pretty=%s"])).toBe(
+			"chore(release): start v0.1.0",
+		);
+	});
+
 	it("finalizes the current release candidate by pushing a tag only", async () => {
 		const repo = createRepo("0.1.0");
 		cleanupPaths.push(repo.root, repo.remote);
@@ -185,5 +216,64 @@ describe("release wizard", () => {
 				log: () => {},
 			}),
 		).rejects.toThrow("development baseline");
+	});
+
+	it("cancels cleanly when the confirmation prompt returns false", async () => {
+		const repo = createRepo("0.1.0-dev");
+		cleanupPaths.push(repo.root, repo.remote);
+		const logs: string[] = [];
+
+		await runReleaseWizard({
+			cwd: repo.root,
+			env: {
+				VERSION: "0.1.0",
+			},
+			log: (value?: unknown) => {
+				logs.push(String(value ?? ""));
+			},
+			promptAdapter: {
+				async confirm() {
+					return false;
+				},
+			},
+		});
+
+		const pkg = JSON.parse(
+			readFileSync(resolve(repo.root, "package.json"), "utf8"),
+		) as { version: string };
+
+		expect(pkg.version).toBe("0.1.0-dev");
+		expect(git(repo.root, ["log", "-1", "--pretty=%s"])).toBe(
+			"chore: initialize release fixture",
+		);
+		expect(
+			logs.some((entry) => entry.includes("Release wizard cancelled.")),
+		).toBe(true);
+	});
+
+	it("treats prompt exit as a cancellation instead of a failure", async () => {
+		const repo = createRepo("0.1.0-dev");
+		cleanupPaths.push(repo.root, repo.remote);
+		const logs: string[] = [];
+
+		await runReleaseWizard({
+			cwd: repo.root,
+			env: {
+				VERSION: "0.1.0",
+			},
+			log: (value?: unknown) => {
+				logs.push(String(value ?? ""));
+			},
+			promptAdapter: {
+				async confirm() {
+					throw new ExitPromptError();
+				},
+			},
+		});
+
+		expect(git(repo.root, ["log", "-1", "--pretty=%s"])).toBe(
+			"chore: initialize release fixture",
+		);
+		expect(logs.at(-1)).toContain("Release wizard cancelled.");
 	});
 });

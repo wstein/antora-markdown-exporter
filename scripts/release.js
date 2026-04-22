@@ -2,14 +2,16 @@ import { spawnSync } from "node:child_process";
 import { existsSync, readFileSync, writeFileSync } from "node:fs";
 import { resolve } from "node:path";
 import { stdin, stdout } from "node:process";
-import { createInterface } from "node:readline/promises";
 import { pathToFileURL } from "node:url";
+import { CancelPromptError, ExitPromptError } from "@inquirer/core";
+import {
+	confirm as promptConfirm,
+	input as promptInput,
+	select as promptSelect,
+} from "@inquirer/prompts";
+import kleur from "kleur";
 
 export const SEMVER = /^\d+\.\d+\.\d+(?:[-+].+)?$/;
-
-function normalizePromptResponse(value) {
-	return typeof value === "string" ? value.trim() : "";
-}
 
 export function isSemver(version) {
 	return SEMVER.test(version);
@@ -180,8 +182,6 @@ function createPromptAdapter(options = {}) {
 		return options.promptAdapter;
 	}
 
-	const readline = createInterface({ input: stdin, output: stdout });
-
 	function ensureInteractive() {
 		if (!stdin.isTTY || !stdout.isTTY) {
 			throw new Error(
@@ -193,78 +193,100 @@ function createPromptAdapter(options = {}) {
 	return {
 		async confirm(message, defaultValue) {
 			ensureInteractive();
-			const suffix = defaultValue ? " [Y/n] " : " [y/N] ";
-			const response = normalizePromptResponse(
-				await readline.question(`${message}${suffix}`),
-			);
-			if (response.length === 0) {
-				return defaultValue;
-			}
-			if (["y", "yes"].includes(response.toLowerCase())) {
-				return true;
-			}
-			if (["n", "no"].includes(response.toLowerCase())) {
-				return false;
-			}
-			throw new Error(`Unrecognized confirmation response: ${response}`);
+			return promptConfirm({
+				default: defaultValue,
+				message,
+			});
 		},
-		close() {
-			readline.close();
-		},
+		close() {},
 		async input(message, defaultValue) {
 			ensureInteractive();
-			const suffix = defaultValue.length > 0 ? ` (${defaultValue}) ` : " ";
-			const response = normalizePromptResponse(
-				await readline.question(`${message}${suffix}`),
-			);
-			return response.length > 0 ? response : defaultValue;
+			return promptInput({
+				default: defaultValue,
+				message,
+				prefill: "editable",
+				required: true,
+				validate(value) {
+					return isSemver(normalizeVersionInput(value))
+						? true
+						: "Enter a semantic version such as 0.7.1 or v0.7.1.";
+				},
+			}).then((value) => normalizeVersionInput(value));
 		},
 		async select(message, choices) {
 			ensureInteractive();
-			for (const [index, choice] of choices.entries()) {
-				console.log(`  ${index + 1}. ${choice.label}`);
-			}
-			const response = normalizePromptResponse(
-				await readline.question(`${message} `),
-			);
-			const selectedIndex = Number(response);
-			if (
-				!Number.isInteger(selectedIndex) ||
-				selectedIndex < 1 ||
-				selectedIndex > choices.length
-			) {
-				throw new Error(`Invalid selection: ${response}`);
-			}
-			return choices[selectedIndex - 1]?.value;
+			return promptSelect({
+				choices: choices.map((choice) => ({
+					description: choice.description,
+					name: choice.label,
+					short: choice.label,
+					value: choice.value,
+				})),
+				loop: false,
+				message,
+				theme: {
+					icon: {
+						cursor: kleur.cyan("›"),
+					},
+					indexMode: "number",
+					style: {
+						description: kleur.dim,
+						highlight: kleur.cyan().bold,
+						keysHelpTip(keys) {
+							return kleur.dim(
+								keys
+									.map(([key, action]) => `${kleur.bold(key)} ${action}`)
+									.join(kleur.dim(" | ")),
+							);
+						},
+					},
+				},
+			});
 		},
 	};
 }
 
+function formatWorktreeState(state) {
+	return state.worktreeClean ? kleur.green("clean") : kleur.red("dirty");
+}
+
+function formatStateValue(label, value) {
+	return `${kleur.dim(`${label}:`)} ${kleur.bold(value)}`;
+}
+
+function isPromptCancellationError(error) {
+	return error instanceof CancelPromptError || error instanceof ExitPromptError;
+}
+
 function printHeader(log) {
-	log("\n== Release Wizard ==\n");
+	log(`\n${kleur.bold().cyan("== Release Wizard ==")}\n`);
 }
 
 function printStateSummary(state, log) {
 	log(
-		`Current version: ${state.currentVersion} | Branch: ${state.branch || "(detached HEAD)"} | Worktree: ${state.worktreeClean ? "clean" : "dirty"}`,
+		[
+			formatStateValue("Version", `v${state.currentVersion}`),
+			formatStateValue("Branch", state.branch || "(detached HEAD)"),
+			formatStateValue("Worktree", formatWorktreeState(state)),
+		].join(kleur.dim(" | ")),
 	);
 
 	if (isDevelopmentVersion(state.currentVersion)) {
 		log(
-			`Current version v${state.currentVersion} is a development baseline. Start a release candidate such as v${state.suggestedVersion} before finalizing a tag.\n`,
+			`${kleur.yellow("Current version is a development baseline.")} Start a release candidate such as ${kleur.bold(`v${state.suggestedVersion}`)} before finalizing a tag.\n`,
 		);
 		return;
 	}
 
 	if (state.currentVersionTagExists) {
 		log(
-			`Tag v${state.currentVersion} already exists, so the current version can only start a newer candidate.\n`,
+			`${kleur.yellow(`Tag v${state.currentVersion} already exists.`)} The current version can only start a newer candidate.\n`,
 		);
 		return;
 	}
 
 	log(
-		`Current version v${state.currentVersion} is untagged, so it can be finalized if CI already certified the commit.\n`,
+		`${kleur.green(`Current version v${state.currentVersion} is untagged.`)} It can be finalized if CI already certified the commit.\n`,
 	);
 }
 
@@ -333,18 +355,18 @@ export function runReleaseAction({ action, cwd, log, version }) {
 		git(cwd, ["add", ...getVersionFiles(cwd)]);
 		git(cwd, ["commit", "-m", `chore(release): start ${tagName}`]);
 		git(cwd, ["push", "origin", "develop"]);
-		log(`Release candidate ${tagName} started.`);
+		log(kleur.green(`Release candidate ${tagName} started.`));
 		log(
-			`Next: wait for CI to certify develop, then rerun make release VERSION=${tagName} to create and push the tag.`,
+			`${kleur.cyan("Next:")} wait for CI to certify develop, then rerun ${kleur.bold(`make release VERSION=${tagName}`)} to create and push the tag.`,
 		);
 		return;
 	}
 
 	git(cwd, ["tag", "-a", tagName, "-m", `Release ${tagName}`]);
 	git(cwd, ["push", "origin", tagName]);
-	log(`Release tag ${tagName} pushed.`);
+	log(kleur.green(`Release tag ${tagName} pushed.`));
 	log(
-		"Next: watch the tag-triggered release workflow publish the package and promote main to the released commit.",
+		`${kleur.cyan("Next:")} watch the tag-triggered release workflow publish the package and promote main to the released commit.`,
 	);
 }
 
@@ -381,11 +403,17 @@ export async function runReleaseWizard(options = {}) {
 			? true
 			: await confirmPlan({ action, promptAdapter, version });
 		if (!proceed) {
-			log("Release wizard cancelled.");
+			log(kleur.yellow("Release wizard cancelled."));
 			return;
 		}
 
 		runReleaseAction({ action, cwd, log, version });
+	} catch (error) {
+		if (isPromptCancellationError(error)) {
+			log(kleur.yellow("Release wizard cancelled."));
+			return;
+		}
+		throw error;
 	} finally {
 		promptAdapter.close?.();
 	}
