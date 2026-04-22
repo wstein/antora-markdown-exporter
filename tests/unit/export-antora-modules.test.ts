@@ -16,6 +16,7 @@ describe("export antora modules script", () => {
 		expect(options.format).toBe("human");
 		expect(options.outputRoot).toBe(resolve("build/markdown"));
 		expect(options.playbookPath).toBe(resolve("antora-playbook.yml"));
+		expect(options.xrefFallbackLabelStyle).toBe("fragment-or-basename");
 	});
 
 	it("parses explicit arguments", () => {
@@ -26,6 +27,8 @@ describe("export antora modules script", () => {
 			"tmp/out",
 			"--flavor",
 			"gitlab",
+			"--xref-fallback-label-style",
+			"fragment-or-path",
 			"--json",
 		]);
 
@@ -33,6 +36,7 @@ describe("export antora modules script", () => {
 		expect(options.outputRoot).toBe(resolve("tmp/out"));
 		expect(options.flavor).toBe("gitlab");
 		expect(options.format).toBe("json");
+		expect(options.xrefFallbackLabelStyle).toBe("fragment-or-path");
 	});
 
 	it("exports one assembled markdown document per documentation module", async () => {
@@ -43,6 +47,7 @@ describe("export antora modules script", () => {
 			flavor: "gfm",
 			outputRoot,
 			playbookPath: resolve("antora-playbook.yml"),
+			xrefFallbackLabelStyle: "fragment-or-basename",
 		});
 
 		expect(exportedFiles.map((entry) => entry.relativeOutputPath)).toEqual([
@@ -106,6 +111,7 @@ describe("export antora modules script", () => {
 		expect(output).toContain(
 			"Exported 3 documentation modules as gfm Markdown.",
 		);
+		expect(output).toContain("Xref fallback labels: fragment-or-basename");
 		expect(output).toContain("- architecture: architecture.md");
 		expect(output).toContain("- manual: manual.md");
 		expect(output).toContain("- onboarding: onboarding.md");
@@ -130,14 +136,34 @@ describe("export antora modules script", () => {
 			count: number;
 			flavor: string;
 			files: { moduleName: string; outputPath: string }[];
+			xrefFallbackLabelStyle: string;
 		};
 
 		expect(result.count).toBe(3);
 		expect(result.flavor).toBe("gfm");
+		expect(result.xrefFallbackLabelStyle).toBe("fragment-or-basename");
 		expect(result.files).toEqual([
 			{ moduleName: "architecture", outputPath: "architecture.md" },
 			{ moduleName: "manual", outputPath: "manual.md" },
 			{ moduleName: "onboarding", outputPath: "onboarding.md" },
+		]);
+	});
+
+	it("accepts path-style xref fallback labels for module export runs", async () => {
+		const outputRoot = await mkdtemp(
+			resolve(tmpdir(), "antora-markdown-export-"),
+		);
+		const exportedFiles = await exportAntoraModulesToMarkdown({
+			flavor: "gfm",
+			outputRoot,
+			playbookPath: resolve("antora-playbook.yml"),
+			xrefFallbackLabelStyle: "fragment-or-path",
+		});
+
+		expect(exportedFiles.map((entry) => entry.relativeOutputPath)).toEqual([
+			"architecture.md",
+			"manual.md",
+			"onboarding.md",
 		]);
 	});
 });

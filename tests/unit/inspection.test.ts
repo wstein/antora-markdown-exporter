@@ -200,4 +200,82 @@ describe("inspection helpers", () => {
 			],
 		});
 	});
+
+	it("collects xrefs through footnotes and table body rows while ignoring unsupported leaf blocks", () => {
+		const report = collectMarkdownInspectionReport({
+			type: "document",
+			children: [
+				{
+					type: "footnoteDefinition",
+					identifier: "note-1",
+					children: [
+						{
+							type: "paragraph",
+							children: [
+								{
+									type: "xref",
+									url: "docs/ROOT/footnotes.adoc",
+									target: {
+										raw: "docs:ROOT:footnotes.adoc",
+										component: "docs",
+										module: "ROOT",
+										family: {
+											kind: "page" as const,
+											name: "page",
+										},
+										path: "footnotes.adoc",
+									},
+									children: [{ type: "text", value: "footnotes" }],
+								},
+							],
+						},
+					],
+				},
+				{
+					type: "table",
+					header: {
+						cells: [{ children: [{ type: "text", value: "Header" }] }],
+					},
+					rows: [
+						{
+							cells: [
+								{
+									children: [
+										{
+											type: "xref",
+											url: "docs/ROOT/rows.adoc",
+											target: {
+												raw: "docs:ROOT:rows.adoc",
+												component: "docs",
+												module: "ROOT",
+												family: {
+													kind: "page" as const,
+													name: "page",
+												},
+												path: "rows.adoc",
+											},
+											children: [{ type: "text", value: "rows" }],
+										},
+									],
+								},
+							],
+						},
+					],
+				},
+				{
+					type: "unsupported",
+					reason: "ignored",
+				},
+			],
+		});
+
+		expect(report.xrefs.map((xref) => xref.target.raw)).toEqual([
+			"docs:ROOT:footnotes.adoc",
+			"docs:ROOT:rows.adoc",
+		]);
+		expect(report.xrefTargets).toEqual([
+			expect.objectContaining({ path: "footnotes.adoc" }),
+			expect.objectContaining({ path: "rows.adoc" }),
+		]);
+	});
 });

@@ -4,6 +4,7 @@ import { pathToFileURL } from "node:url";
 import {
 	createMarkdownConverter,
 	type MarkdownFlavorName,
+	type XrefFallbackLabelStyle,
 } from "../src/extension/index.ts";
 import {
 	createDocumentationModuleSource,
@@ -15,6 +16,7 @@ export type ExportAntoraModulesOptions = {
 	format: "human" | "json";
 	outputRoot: string;
 	playbookPath: string;
+	xrefFallbackLabelStyle: XrefFallbackLabelStyle;
 };
 
 export type ExportedMarkdownFile = {
@@ -32,7 +34,7 @@ const markdownFlavors = new Set<MarkdownFlavorName>([
 
 function usage(): string {
 	return [
-		"Usage: bun scripts/export-antora-modules.ts [--playbook <file>] [--output-root <dir>] [--flavor <gfm|commonmark|gitlab|strict>] [--json]",
+		"Usage: bun scripts/export-antora-modules.ts [--playbook <file>] [--output-root <dir>] [--flavor <gfm|commonmark|gitlab|strict>] [--xref-fallback-label-style <fragment-or-basename|fragment-or-path>] [--json]",
 		"",
 		"Export assembled documentation modules to Markdown using the repository's Antora Markdown converter.",
 	].join("\n");
@@ -43,6 +45,7 @@ export function parseArguments(argv: string[]): ExportAntoraModulesOptions {
 	let format: "human" | "json" = "human";
 	let outputRoot = resolve("build/markdown");
 	let playbookPath = resolve("antora-playbook.yml");
+	let xrefFallbackLabelStyle: XrefFallbackLabelStyle = "fragment-or-basename";
 
 	for (let index = 0; index < argv.length; index += 1) {
 		const argument = argv[index];
@@ -84,6 +87,19 @@ export function parseArguments(argv: string[]): ExportAntoraModulesOptions {
 			continue;
 		}
 
+		if (argument === "--xref-fallback-label-style") {
+			const value = argv[index + 1];
+			if (value !== "fragment-or-basename" && value !== "fragment-or-path") {
+				throw new Error(
+					"Missing or invalid value for --xref-fallback-label-style",
+				);
+			}
+
+			xrefFallbackLabelStyle = value;
+			index += 1;
+			continue;
+		}
+
 		if (argument === "--json") {
 			format = "json";
 			continue;
@@ -92,7 +108,13 @@ export function parseArguments(argv: string[]): ExportAntoraModulesOptions {
 		throw new Error(`Unknown option: ${argument}`);
 	}
 
-	return { flavor, format, outputRoot, playbookPath };
+	return {
+		flavor,
+		format,
+		outputRoot,
+		playbookPath,
+		xrefFallbackLabelStyle,
+	};
 }
 
 export async function exportAntoraModulesToMarkdown(
@@ -108,7 +130,10 @@ export async function exportAntoraModulesToMarkdown(
 	}
 
 	const rootDir = dirname(options.playbookPath);
-	const converter = createMarkdownConverter({ flavor: options.flavor });
+	const converter = createMarkdownConverter({
+		flavor: options.flavor,
+		xrefFallbackLabelStyle: options.xrefFallbackLabelStyle,
+	});
 	const exportedFiles: ExportedMarkdownFile[] = [];
 
 	await rm(options.outputRoot, { force: true, recursive: true });
@@ -162,6 +187,7 @@ async function main(): Promise<void> {
 					flavor: options.flavor,
 					outputRoot: options.outputRoot,
 					playbookPath: options.playbookPath,
+					xrefFallbackLabelStyle: options.xrefFallbackLabelStyle,
 					files: exportedFiles.map((entry) => ({
 						moduleName: entry.moduleName,
 						outputPath: entry.relativeOutputPath,
@@ -178,6 +204,7 @@ async function main(): Promise<void> {
 		[
 			`Exported ${exportedFiles.length} documentation modules as ${options.flavor} Markdown.`,
 			`Output root: ${options.outputRoot}`,
+			`Xref fallback labels: ${options.xrefFallbackLabelStyle}`,
 			...exportedFiles.map(
 				(entry) => `- ${entry.moduleName}: ${entry.relativeOutputPath}`,
 			),
