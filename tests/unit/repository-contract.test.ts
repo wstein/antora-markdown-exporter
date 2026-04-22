@@ -203,7 +203,7 @@ describe("repository contract", () => {
 		expect(
 			existsSync(resolve(root, "src/adapter/asciidoctor-structure.ts")),
 		).toBe(true);
-		expect(packageJson.dependencies?.["@asciidoctor/core"]).toBe("~2.2.8");
+		expect(packageJson.dependencies?.["@asciidoctor/core"]).toBe("~3.0.4");
 		expect(readme).toContain("semantic IR");
 		expect(packageJson.description).toContain("semantic IR");
 		expect(packageIndex).toContain("./adapter/asciidoctor-structure.js");
