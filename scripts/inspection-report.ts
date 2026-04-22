@@ -2,7 +2,8 @@ import { readFile } from "node:fs/promises";
 import { resolve } from "node:path";
 import {
 	collectMarkdownInspectionReport,
-	convertAssemblyToMarkdownIR,
+	convertAssemblyStructureToMarkdownIR,
+	extractAssemblyStructure,
 } from "../src/index.js";
 
 type InspectionCliFormat = "github-actions" | "json";
@@ -143,9 +144,10 @@ function buildInspectionReportPayload(
 	options: InspectionCliOptions,
 	source: string,
 ): InspectionReportPayload {
-	const document = convertAssemblyToMarkdownIR(source, {
+	const structured = extractAssemblyStructure(source, {
 		sourcePath: options.sourcePath,
 	});
+	const document = convertAssemblyStructureToMarkdownIR(structured);
 	return {
 		inputPath: options.inputPath,
 		sourcePath: options.sourcePath,

@@ -229,10 +229,17 @@ describe("repository contract", () => {
 		expect(extensionEntrypoint).toContain("./adapter/asciidoctor-structure.js");
 		expect(extensionEntrypoint).toContain("./exporter/structured-to-ir.js");
 		expect(extensionEntrypoint).not.toContain("./exporter/convert-assembly.js");
+		expect(packageIndex).not.toContain("./exporter/convert-assembly.js");
 		expect(extensionEntrypoint).toContain("renderAssemblyMarkdown");
 		expect(extensionEntrypoint).toContain("extractAssemblyStructure");
 		expect(extensionEntrypoint).toContain(
 			"convertAssemblyStructureToMarkdownIR",
+		);
+		expect(existsSync(resolve(root, "src/exporter/convert-assembly.ts"))).toBe(
+			false,
+		);
+		expect(existsSync(resolve(root, "src/exporter/include-metadata.ts"))).toBe(
+			false,
 		);
 		expect(
 			readFileSync(

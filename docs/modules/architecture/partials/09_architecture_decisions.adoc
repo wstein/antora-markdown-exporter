@@ -19,7 +19,7 @@
 
 |Use one semantic export path for package APIs, module Markdown export, and inspection tooling
 |The note `Antora module markdown export should use the canonical repository pipeline` requires repository exports to stay on the same converter path as the package API.
-|`make markdown`, inspection scripts, and library consumers all depend on the same `convertAssemblyToMarkdownIR -> normalizeMarkdownIR -> renderMarkdown` contract.
+|`make markdown`, inspection scripts, and library consumers all depend on the same `extractAssemblyStructure -> convertAssemblyStructureToMarkdownIR -> normalizeMarkdownIR -> renderMarkdown` contract.
 
 |Use shared assembled module sources for module PDF and module Markdown outputs
 |Documentation artifacts should differ by renderer, not by upstream assembly logic.

@@ -2,7 +2,10 @@ import { existsSync } from "node:fs";
 import { readdir, readFile } from "node:fs/promises";
 import { resolve } from "node:path";
 import { describe, expect, it } from "vitest";
-import { convertAssemblyToMarkdownIR } from "../../src/exporter/convert-assembly.js";
+import {
+	convertAssemblyStructureToMarkdownIR,
+	extractAssemblyStructure,
+} from "../../src/index.js";
 import type { MarkdownFlavorName } from "../../src/markdown/flavor.js";
 import type { MarkdownIncludeDirective } from "../../src/markdown/ir.js";
 import { normalizeMarkdownIR } from "../../src/markdown/normalize.js";
@@ -11,6 +14,7 @@ import { renderMarkdown } from "../../src/markdown/render/index.js";
 const fixturesRoot = resolve(__dirname, "../fixtures");
 const fixtureNames = (await readdir(fixturesRoot, { withFileTypes: true }))
 	.filter((entry) => entry.isDirectory())
+	.filter((entry) => !entry.name.startsWith("includes"))
 	.filter((entry) =>
 		existsSync(resolve(fixturesRoot, entry.name, "input.adoc")),
 	)
@@ -38,9 +42,11 @@ describe("fixture golden tests", () => {
 				(file) => file === "expected.diagnostics.json",
 			);
 
-			const ir = convertAssemblyToMarkdownIR(input, {
-				sourcePath: resolve(fixtureDir, "input.adoc"),
-			});
+			const ir = convertAssemblyStructureToMarkdownIR(
+				extractAssemblyStructure(input, {
+					sourcePath: resolve(fixtureDir, "input.adoc"),
+				}),
+			);
 			const normalized = normalizeMarkdownIR(ir);
 
 			for (const expectedFile of expectedFiles) {

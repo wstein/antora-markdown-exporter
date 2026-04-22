@@ -1,12 +1,19 @@
 import { describe, expect, it } from "vitest";
-import { convertAssemblyToMarkdownIR } from "../../src/exporter/convert-assembly.js";
+import {
+	convertAssemblyStructureToMarkdownIR,
+	extractAssemblyStructure,
+} from "../../src/index.js";
 import { normalizeMarkdownIR } from "../../src/markdown/normalize.js";
 
+function toIr(source: string, sourcePath = "/virtual/project/input.adoc") {
+	return convertAssemblyStructureToMarkdownIR(
+		extractAssemblyStructure(source, { sourcePath }),
+	);
+}
+
 describe("Markdown IR boundary", () => {
-	it("converts assembled AsciiDoc into a document IR", () => {
-		const assembled = "== Sample\nHello world.";
-		const ir = convertAssemblyToMarkdownIR(assembled);
-		const normalized = normalizeMarkdownIR(ir);
+	it("converts structured assembled content into a document IR", () => {
+		const normalized = normalizeMarkdownIR(toIr("== Sample\nHello world."));
 
 		expect(normalized.type).toBe("document");
 		expect(normalized.children[0]).toMatchObject({ type: "heading", depth: 1 });
@@ -16,129 +23,42 @@ describe("Markdown IR boundary", () => {
 		]);
 	});
 
-	it("maps richer AsciiDoc structures into the IR", () => {
-		const assembled = [
-			"== Rich sample",
-			"",
-			"Read https://example.com[the docs], xref:install.adoc[install guide], and image::diagram.png[Diagram,title=Architecture].",
-			"",
-			". Prepare release",
-			".. Review changelog",
-			".. Notify https://example.com[stakeholders]",
-			". Publish package",
-			"",
-			"* Capture follow-up",
-			"** Gather feedback",
-			"",
-			"'''",
-			"",
-			"NOTE: Keep _docs_ and *code* aligned.",
-			"",
-			"[source,ts]",
-			"----",
-			"const answer = 42; <1>",
-			"----",
-			"<1> Verify the result",
-			"",
-			"[quote]",
-			"____",
-			"Stay focused.",
-			"____",
-			"",
-			"|===",
-			"| Name | Value",
-			"| Alpha | 42",
-			"|===",
-			"",
-			"include::partial$shared.adoc[]",
-		].join("\n");
-		const ir = convertAssemblyToMarkdownIR(assembled, {
-			sourcePath: "/virtual/project/input.adoc",
-			includeResolver: (includeTarget) => {
-				if (includeTarget === "partial$shared.adoc") {
-					return "Included paragraph.";
-				}
-
-				return undefined;
-			},
-		});
-
-		expect(ir.children).toEqual(
-			expect.arrayContaining([
-				expect.objectContaining({ type: "heading", depth: 1 }),
-				expect.objectContaining({ type: "paragraph" }),
-				expect.objectContaining({ type: "list", ordered: true }),
-				expect.objectContaining({ type: "list", ordered: false }),
-				expect.objectContaining({ type: "thematicBreak" }),
-				expect.objectContaining({ type: "codeBlock", language: "ts" }),
-				expect.objectContaining({ type: "blockquote" }),
-				expect.objectContaining({ type: "admonition", kind: "note" }),
-				expect.objectContaining({ type: "table" }),
-			]),
+	it("maps richer supported structures into the IR", () => {
+		const ir = toIr(
+			[
+				":page-aliases: legacy-home, legacy-overview",
+				"",
+				"[[overview]]",
+				"== Overview",
+				"",
+				"See xref:install.adoc#cli[install], https://example.com[docs], and image:diagram.png[Diagram,title=Architecture].",
+				"",
+				". Prepare release",
+				".. Review changelog",
+				". Publish package",
+				"",
+				"'''",
+				"",
+				"NOTE: Keep _docs_ and *code* aligned.",
+				"",
+				"[source,ts]",
+				"----",
+				"const answer = 42; <1>",
+				"----",
+				"<1> Verify the result",
+				"",
+				"[quote]",
+				"____",
+				"Stay focused.",
+				"____",
+				"",
+				'[cols="<,^,>"]',
+				"|===",
+				"| Name | Status | Value",
+				"| *Alpha* | _Ready_ | `42`",
+				"|===",
+			].join("\n"),
 		);
-		expect(ir.children[1]).toMatchObject({
-			type: "paragraph",
-			children: expect.arrayContaining([
-				expect.objectContaining({
-					type: "xref",
-					url: "install.adoc",
-					target: expect.objectContaining({
-						raw: "install.adoc",
-						family: {
-							kind: "page",
-							name: "page",
-						},
-						path: "install.adoc",
-					}),
-				}),
-				expect.objectContaining({ type: "image", url: "diagram.png" }),
-			]),
-		});
-		expect(ir.children).toEqual(
-			expect.arrayContaining([
-				expect.objectContaining({
-					type: "includeDirective",
-					target: "partial$shared.adoc",
-					provenance: expect.objectContaining({
-						includingSourcePath: "/virtual/project/input.adoc",
-					}),
-				}),
-				expect.objectContaining({
-					type: "codeBlock",
-					callouts: [1],
-				}),
-				expect.objectContaining({
-					type: "calloutList",
-					items: [
-						expect.objectContaining({
-							ordinal: 1,
-						}),
-					],
-				}),
-				expect.objectContaining({
-					type: "paragraph",
-					children: [{ type: "text", value: "Included paragraph." }],
-				}),
-			]),
-		);
-	});
-
-	it("maps anchors, page aliases, aligned tables, and implicit xref labels", () => {
-		const assembled = [
-			":page-aliases: legacy-home, legacy-overview",
-			"",
-			"[[overview]]",
-			"== Overview",
-			"",
-			"See xref:#overview[] and xref:guide/setup.adoc#details[].",
-			"",
-			'[cols="<,^,>"]',
-			"|===",
-			"| Name | Status | Value",
-			"| *Alpha* | _Ready_ | `42`",
-			"|===",
-		].join("\n");
-		const ir = convertAssemblyToMarkdownIR(assembled);
 
 		expect(ir.children).toEqual(
 			expect.arrayContaining([
@@ -151,407 +71,99 @@ describe("Markdown IR boundary", () => {
 					depth: 1,
 					identifier: "overview",
 				}),
+				expect.objectContaining({ type: "paragraph" }),
+				expect.objectContaining({ type: "list", ordered: true }),
+				expect.objectContaining({ type: "thematicBreak" }),
+				expect.objectContaining({ type: "admonition", kind: "note" }),
+				expect.objectContaining({ type: "codeBlock", language: "ts" }),
+				expect.objectContaining({ type: "calloutList" }),
+				expect.objectContaining({ type: "blockquote" }),
 				expect.objectContaining({
 					type: "table",
 					align: ["left", "center", "right"],
 				}),
 			]),
 		);
-		expect(ir.children[2]).toMatchObject({
-			type: "paragraph",
-			children: expect.arrayContaining([
-				expect.objectContaining({
-					type: "xref",
-					url: "#overview",
-					target: expect.objectContaining({
-						raw: "#overview",
-						fragment: "overview",
-					}),
-					children: [{ type: "text", value: "overview" }],
-				}),
-				expect.objectContaining({
-					type: "xref",
-					url: "guide/setup.adoc#details",
-					target: expect.objectContaining({
-						raw: "guide/setup.adoc#details",
-						family: {
-							kind: "page",
-							name: "page",
-						},
-						path: "guide/setup.adoc",
-						fragment: "details",
-					}),
-					children: [{ type: "text", value: "details" }],
-				}),
-			]),
-		});
 	});
 
-	it("applies include tag selection and level offsets before conversion", () => {
-		const assembled = [
-			"== Include features",
-			"",
-			"include::partials/snippet.adoc[tag=intro]",
-			"",
-			"include::partials/section.adoc[leveloffset=+1]",
-		].join("\n");
-		const ir = convertAssemblyToMarkdownIR(assembled, {
-			sourcePath: "/virtual/project/input.adoc",
-			includeResolver: (includeTarget) => {
-				if (includeTarget === "partials/snippet.adoc") {
-					return [
-						"// tag::intro[]",
-						"Selected introduction.",
-						"// end::intro[]",
-						"",
-						"// tag::details[]",
-						"Hidden details.",
-						"// end::details[]",
-					].join("\n");
-				}
-
-				if (includeTarget === "partials/section.adoc") {
-					return ["== Nested section", "", "Shifted body."].join("\n");
-				}
-
-				return undefined;
-			},
-		});
-
-		expect(ir.children).toEqual(
-			expect.arrayContaining([
-				expect.objectContaining({
-					type: "paragraph",
-					children: [{ type: "text", value: "Selected introduction." }],
-				}),
-				expect.objectContaining({
-					type: "heading",
-					depth: 2,
-				}),
-			]),
+	it("keeps xref targets structured until render-time lowering", () => {
+		const ir = toIr(
+			[
+				"== Xref coordinates",
+				"",
+				"See xref:install.adoc[], xref:install.adoc#cli[], and xref:#local[].",
+				"",
+				"[[local]]",
+				"Paragraph.",
+			].join("\n"),
 		);
-		expect(ir.children).not.toEqual(
-			expect.arrayContaining([
-				expect.objectContaining({
-					type: "paragraph",
-					children: [{ type: "text", value: "Hidden details." }],
-				}),
-			]),
-		);
-	});
-
-	it("applies include line selection, indent, and multi-tag extraction", () => {
-		const assembled = [
-			"== Include slices",
-			"",
-			"include::partials/snippet.adoc[lines=2..3]",
-			"",
-			"include::partials/indented.adoc[indent=2]",
-			"",
-			"include::partials/tagged.adoc[tags=intro;details]",
-		].join("\n");
-		const ir = convertAssemblyToMarkdownIR(assembled, {
-			sourcePath: "/virtual/project/input.adoc",
-			includeResolver: (includeTarget) => {
-				if (includeTarget === "partials/snippet.adoc") {
-					return [
-						"First line.",
-						"Second line.",
-						"Third line.",
-						"Fourth line.",
-					].join("\n");
-				}
-				if (includeTarget === "partials/indented.adoc") {
-					return "Indented paragraph.";
-				}
-				if (includeTarget === "partials/tagged.adoc") {
-					return [
-						"// tag::intro[]",
-						"Selected introduction.",
-						"// end::intro[]",
-						"",
-						"// tag::details[]",
-						"Selected details.",
-						"// end::details[]",
-					].join("\n");
-				}
-
-				return undefined;
-			},
-		});
-
-		expect(ir.children).toEqual(
-			expect.arrayContaining([
-				expect.objectContaining({
-					type: "includeDirective",
-					attributes: { lines: "2..3" },
-					semantics: {
-						lineRanges: [{ start: 2, end: 3 }],
-					},
-				}),
-				expect.objectContaining({
-					type: "includeDirective",
-					attributes: { indent: "2" },
-					semantics: {
-						indent: 2,
-					},
-				}),
-				expect.objectContaining({
-					type: "includeDirective",
-					attributes: { tags: "intro;details" },
-					semantics: {
-						tagSelection: {
-							precedence: "document-order",
-							tags: ["intro", "details"],
-						},
-					},
-					provenance: expect.objectContaining({
-						depth: 0,
-						inclusionStack: ["/virtual/project/input.adoc"],
-					}),
-				}),
-				expect.objectContaining({
-					type: "paragraph",
-					children: [{ type: "text", value: "Second line. Third line." }],
-				}),
-				expect.objectContaining({
-					type: "paragraph",
-					children: [{ type: "text", value: "Indented paragraph." }],
-				}),
-			]),
-		);
-		expect(ir.children).toEqual(
-			expect.arrayContaining([
-				expect.objectContaining({
-					type: "paragraph",
-					children: [
-						{
-							type: "text",
-							value: "Selected introduction. Selected details.",
-						},
-					],
-				}),
-			]),
-		);
-	});
-
-	it("captures open-ended line unions, overlapping tags, and include provenance", () => {
-		const assembled = [
-			"== Include edge cases",
-			"",
-			"include::partials/ranges.adoc[lines=..2;4..]",
-			"",
-			"include::partials/overlap.adoc[tags=intro;details]",
-		].join("\n");
-		const ir = convertAssemblyToMarkdownIR(assembled, {
-			sourcePath: "/virtual/project/input.adoc",
-			includeResolver: (includeTarget) => {
-				if (includeTarget === "partials/ranges.adoc") {
-					return [
-						"First line.",
-						"Second line.",
-						"Third line.",
-						"Fourth line.",
-					].join("\n");
-				}
-
-				if (includeTarget === "partials/overlap.adoc") {
-					return [
-						"// tag::intro[]",
-						"Selected introduction.",
-						"// tag::details[]",
-						"Shared detail.",
-						"// end::details[]",
-						"Closing intro.",
-						"// end::intro[]",
-					].join("\n");
-				}
-
-				return undefined;
-			},
-		});
-
-		expect(ir.children).toEqual(
-			expect.arrayContaining([
-				expect.objectContaining({
-					type: "includeDirective",
-					target: "partials/ranges.adoc",
-					semantics: {
-						lineRanges: [{ end: 2 }, { start: 4 }],
-					},
-					provenance: {
-						depth: 0,
-						includeRootDir: "/virtual/project",
-						inclusionStack: ["/virtual/project/input.adoc"],
-						includingSourcePath: "/virtual/project/input.adoc",
-						resolvedPath: "/virtual/project/partials/ranges.adoc",
-					},
-				}),
-				expect.objectContaining({
-					type: "includeDirective",
-					target: "partials/overlap.adoc",
-					semantics: {
-						tagSelection: {
-							precedence: "document-order",
-							tags: ["intro", "details"],
-						},
-					},
-				}),
-				expect.objectContaining({
-					type: "paragraph",
-					children: [
-						{
-							type: "text",
-							value: "First line. Second line. Fourth line.",
-						},
-					],
-				}),
-				expect.objectContaining({
-					type: "paragraph",
-					children: [
-						{
-							type: "text",
-							value: "Selected introduction. Shared detail. Closing intro.",
-						},
-					],
-				}),
-			]),
-		);
-	});
-
-	it("records stepped ranges and include diagnostics for invalid selectors", () => {
-		const assembled = [
-			"== Include diagnostics",
-			"",
-			"include::partials/steps.adoc[lines=1..5..2]",
-			"",
-			"include::partials/invalid.adoc[lines=-2;..,indent=-1,tags=]",
-		].join("\n");
-		const ir = convertAssemblyToMarkdownIR(assembled, {
-			sourcePath: "/virtual/project/input.adoc",
-			includeResolver: (includeTarget) => {
-				if (includeTarget === "partials/steps.adoc") {
-					return [
-						"First line.",
-						"Second line.",
-						"Third line.",
-						"Fourth line.",
-						"Fifth line.",
-					].join("\n");
-				}
-				if (includeTarget === "partials/invalid.adoc") {
-					return "Ignored line.";
-				}
-
-				return undefined;
-			},
-		});
-
-		expect(ir.children).toEqual(
-			expect.arrayContaining([
-				expect.objectContaining({
-					type: "includeDirective",
-					target: "partials/steps.adoc",
-					semantics: {
-						lineRanges: [{ start: 1, end: 5, step: 2 }],
-					},
-				}),
-				expect.objectContaining({
-					type: "includeDirective",
-					target: "partials/invalid.adoc",
-					diagnostics: expect.arrayContaining([
-						expect.objectContaining({
-							code: "invalid-line-range",
-							source: "-2",
-						}),
-						expect.objectContaining({
-							code: "invalid-indent",
-							source: "-1",
-						}),
-						expect.objectContaining({
-							code: "empty-tag-selection",
-							source: "",
-						}),
-					]),
-				}),
-				expect.objectContaining({
-					type: "paragraph",
-					children: [
-						{
-							type: "text",
-							value: "First line. Third line. Fifth line.",
-						},
-					],
-				}),
-			]),
-		);
-	});
-
-	it("normalizes richer Antora xref coordinates into markdown link targets", () => {
-		const assembled = [
-			"== Xref coordinates",
-			"",
-			"See xref:docs:ROOT:install.adoc[], xref:2.0@docs:ROOT:install.adoc#cli[], xref:docs:ROOT:partial$nav.adoc[], and xref:docs:ROOT:example$snippet.adoc[].",
-		].join("\n");
-		const ir = convertAssemblyToMarkdownIR(assembled);
 
 		expect(ir.children[1]).toMatchObject({
 			type: "paragraph",
 			children: expect.arrayContaining([
 				expect.objectContaining({
 					type: "xref",
-					url: "docs/ROOT/install.adoc",
+					url: "install.html",
 					target: expect.objectContaining({
-						component: "docs",
-						module: "ROOT",
-						family: {
-							kind: "page",
-							name: "page",
-						},
-						path: "install.adoc",
+						raw: "install.html",
+						path: "install.html",
 					}),
-					children: [{ type: "text", value: "install" }],
 				}),
 				expect.objectContaining({
 					type: "xref",
-					url: "docs/2.0/ROOT/install.adoc#cli",
+					url: "install.html#cli",
 					target: expect.objectContaining({
-						component: "docs",
-						version: "2.0",
-						module: "ROOT",
-						family: {
-							kind: "page",
-							name: "page",
-						},
-						path: "install.adoc",
+						raw: "install.html#cli",
+						path: "install.html",
 						fragment: "cli",
 					}),
-					children: [{ type: "text", value: "cli" }],
 				}),
 				expect.objectContaining({
 					type: "xref",
-					url: "docs/ROOT/partial/nav.adoc",
+					url: "#local",
 					target: expect.objectContaining({
-						component: "docs",
-						module: "ROOT",
-						family: {
-							kind: "partial",
-							name: "partial",
-						},
-						path: "nav.adoc",
-					}),
-					children: [{ type: "text", value: "nav" }],
-				}),
-				expect.objectContaining({
-					type: "xref",
-					target: expect.objectContaining({
-						family: {
-							kind: "example",
-							name: "example",
-						},
+						raw: "#local",
+						path: "",
+						fragment: "local",
 					}),
 				}),
 			]),
 		});
+	});
+
+	it("normalizes structured inline and block semantics without the legacy parser", () => {
+		const normalized = normalizeMarkdownIR(
+			toIr(
+				[
+					"= Manual",
+					"",
+					"== Core Workflows",
+					"",
+					"Motivation::",
+					"",
+					"The converter should emit final Markdown.",
+				].join("\n"),
+			),
+		);
+
+		expect(normalized.children).toEqual(
+			expect.arrayContaining([
+				expect.objectContaining({
+					type: "labeledGroup",
+					label: [{ type: "text", value: "Motivation" }],
+					children: [
+						{
+							type: "paragraph",
+							children: [
+								{
+									type: "text",
+									value: "The converter should emit final Markdown.",
+								},
+							],
+						},
+					],
+				}),
+			]),
+		);
 	});
 });

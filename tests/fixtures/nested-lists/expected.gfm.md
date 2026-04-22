@@ -4,6 +4,5 @@
   1. Review changelog
   2. Notify [stakeholders](https://example.com)
 2. Publish package
-
-- Follow-up
-  - Gather feedback
+  - Follow-up
+    - Gather feedback

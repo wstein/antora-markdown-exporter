@@ -2,6 +2,7 @@ import type {
 	AssemblyAdmonition,
 	AssemblyBlock,
 	AssemblyBlockQuote,
+	AssemblyCalloutList,
 	AssemblyCodeBlock,
 	AssemblyDocument,
 	AssemblyHtmlBlock,
@@ -132,6 +133,16 @@ function convertTable(node: AssemblyTable): MarkdownTable {
 	};
 }
 
+function convertCalloutList(node: AssemblyCalloutList): MarkdownBlock {
+	return {
+		type: "calloutList",
+		items: node.items.map((item) => ({
+			ordinal: item.ordinal,
+			children: item.children.map(convertBlock),
+		})),
+	};
+}
+
 function convertCodeBlock(node: AssemblyCodeBlock): MarkdownBlock {
 	return {
 		type: "codeBlock",
@@ -191,6 +202,8 @@ function convertBlock(node: AssemblyBlock): MarkdownBlock {
 			return convertLabeledGroup(node);
 		case "table":
 			return convertTable(node);
+		case "calloutList":
+			return convertCalloutList(node);
 		case "htmlBlock":
 			return convertHtmlBlock(node);
 		case "unsupported":

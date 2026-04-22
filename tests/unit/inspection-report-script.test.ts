@@ -5,59 +5,39 @@ import { describe, expect, it } from "vitest";
 const root = resolve(__dirname, "../..");
 
 describe("inspection report script", () => {
-	it("emits machine-readable JSON for CI validation", () => {
-		const inputPath = resolve(
-			root,
-			"tests/fixtures/includes-invalid-steps/input.adoc",
-		);
+	it("emits machine-readable JSON for structured inspection flows", () => {
+		const inputPath = resolve(root, "tests/fixtures/xrefs/input.adoc");
 		const result = spawnSync(
 			"bun",
-			["scripts/inspection-report.ts", inputPath, "--fail-on-diagnostics"],
+			["scripts/inspection-report.ts", inputPath],
 			{
 				cwd: root,
 				encoding: "utf8",
 			},
 		);
 
-		expect(result.status).toBe(1);
+		expect(result.status).toBe(0);
 		expect(result.stderr).toBe("");
 		const report = JSON.parse(result.stdout) as {
 			inputPath: string;
 			report: {
-				includeDiagnostics: Array<{
-					diagnostic: {
-						code: string;
-						message: string;
-						source: string;
-					};
-					target: string;
-				}>;
-				xrefTargets: unknown[];
+				includeDiagnostics: unknown[];
+				includeDirectives: unknown[];
+				xrefTargets: Array<{ raw: string }>;
 			};
 			sourcePath: string;
 		};
 
 		expect(report.inputPath).toBe(inputPath);
 		expect(report.sourcePath).toBe(inputPath);
-		expect(report.report.includeDiagnostics).toEqual([
-			{
-				target: "partials/snippet.adoc",
-				diagnostic: {
-					code: "invalid-line-step",
-					message: "include line steps must be positive integers",
-					source: "1..5..0",
-				},
-			},
-			{
-				target: "partials/snippet.adoc",
-				diagnostic: {
-					code: "invalid-line-range",
-					message: "include line selectors must be positive integers or ranges",
-					source: "1..5..bad",
-				},
-			},
-		]);
-		expect(report.report.xrefTargets).toEqual([]);
+		expect(report.report.includeDiagnostics).toEqual([]);
+		expect(report.report.includeDirectives).toEqual([]);
+		expect(report.report.xrefTargets).toEqual(
+			expect.arrayContaining([
+				expect.objectContaining({ raw: "install.html" }),
+				expect.objectContaining({ raw: "#overview" }),
+			]),
+		);
 	});
 
 	it("accepts stdin and can emit GitHub Actions annotations", () => {
@@ -76,39 +56,15 @@ describe("inspection report script", () => {
 			{
 				cwd: root,
 				encoding: "utf8",
-				input:
-					"== Validation\n\ninclude::partials/snippet.adoc[lines=1..5..0,indent=-1]\n",
-			},
-		);
-
-		expect(result.status).toBe(1);
-		expect(result.stderr).toBe("");
-		expect(result.stdout).toContain("::error file=/virtual/project/page.adoc");
-		expect(result.stdout).toContain("title=include%3Apartials/snippet.adoc");
-		expect(result.stdout).toContain(
-			"invalid-line-step%3A include line steps must be positive integers",
-		);
-		expect(result.stdout).toContain(
-			"invalid-indent%3A include indent must be a positive integer",
-		);
-		expect(result.stdout).toContain("::notice title=inspection-report::");
-	});
-
-	it("emits warnings for lower-severity diagnostics in GitHub Actions mode", () => {
-		const result = spawnSync(
-			"bun",
-			["scripts/inspection-report.ts", "--stdin", "--format", "github-actions"],
-			{
-				cwd: root,
-				encoding: "utf8",
-				input: "== Validation\n\ninclude::partials/snippet.adoc[tags=]\n",
+				input: "== Validation\n\nSee xref:install.adoc#cli[install].\n",
 			},
 		);
 
 		expect(result.status).toBe(0);
-		expect(result.stdout).toContain("::warning file=<stdin>");
+		expect(result.stderr).toBe("");
+		expect(result.stdout).toContain("::notice title=inspection-report::");
 		expect(result.stdout).toContain(
-			"empty-tag-selection%3A include tag selection must contain at least one tag",
+			"includeDirectives=0 includeDiagnostics=0 xrefs=1",
 		);
 	});
 

@@ -28,22 +28,21 @@ npm install @wsmy/antora-markdown-exporter
 ```ts
 import {
   collectMarkdownInspectionReport,
-  convertAssemblyToMarkdownIR,
-  collectIncludeDiagnostics,
+  convertAssemblyStructureToMarkdownIR,
   collectXrefTargets,
+  extractAssemblyStructure,
   normalizeMarkdownIR,
   renderMarkdown,
   renderGfm,
 } from "@wsmy/antora-markdown-exporter";
 
-const ir = convertAssemblyToMarkdownIR("== Sample document\n\nHello world.");
+const structured = extractAssemblyStructure("== Sample document\n\nHello world.");
+const ir = convertAssemblyStructureToMarkdownIR(structured);
 const normalized = normalizeMarkdownIR(ir);
-const includeDiagnostics = collectIncludeDiagnostics(normalized);
 const xrefTargets = collectXrefTargets(normalized);
 
 console.log(renderGfm(normalized));
 console.log(renderMarkdown(normalized, "commonmark"));
-console.log(includeDiagnostics);
 console.log(xrefTargets);
 console.log(collectMarkdownInspectionReport(normalized));
 ```
@@ -90,22 +89,17 @@ This keeps valid author intent separate from fallback. A preserved ` ```mermaid 
 
 ```ts
 import {
-  collectIncludeDiagnostics,
   collectMarkdownInspectionReport,
   collectXrefTargets,
-  convertAssemblyToMarkdownIR,
+  convertAssemblyStructureToMarkdownIR,
+  extractAssemblyStructure,
 } from "@wsmy/antora-markdown-exporter";
 
-const document = convertAssemblyToMarkdownIR(
-  "== Sample\n\ninclude::partials/snippet.adoc[lines=1..5..0]",
+const structured = extractAssemblyStructure(
+  "== Sample\n\nSee xref:install.adoc#cli[install].",
   { sourcePath: "/virtual/project/page.adoc" },
 );
-
-for (const entry of collectIncludeDiagnostics(document)) {
-  console.error(
-    `[include:${entry.target}] ${entry.diagnostic.code}: ${entry.diagnostic.message}`,
-  );
-}
+const document = convertAssemblyStructureToMarkdownIR(structured);
 
 for (const target of collectXrefTargets(document)) {
   console.log(
@@ -114,7 +108,7 @@ for (const target of collectXrefTargets(document)) {
 }
 
 const report = collectMarkdownInspectionReport(document);
-console.log(report.includeDirectives.length, report.xrefs.length);
+console.log(report.xrefs.length, report.xrefTargets.length);
 ```
 
 Inspection helpers normalize before traversal and return entries in document order, so the combined report is stable enough for CI, release validation, and snapshot-style contract tests.
@@ -124,20 +118,14 @@ Inspection helpers normalize before traversal and return entries in document ord
 ```ts
 import {
   collectMarkdownInspectionReport,
-  convertAssemblyToMarkdownIR,
+  convertAssemblyStructureToMarkdownIR,
+  extractAssemblyStructure,
 } from "@wsmy/antora-markdown-exporter";
 
-const document = convertAssemblyToMarkdownIR(source, { sourcePath });
+const document = convertAssemblyStructureToMarkdownIR(
+  extractAssemblyStructure(source, { sourcePath }),
+);
 const report = collectMarkdownInspectionReport(document);
-
-if (report.includeDiagnostics.length > 0) {
-  for (const entry of report.includeDiagnostics) {
-    console.error(
-      `[validation:${entry.target}] ${entry.diagnostic.code}: ${entry.diagnostic.message}`,
-    );
-  }
-  process.exitCode = 1;
-}
 
 for (const target of report.xrefTargets) {
   console.log(`[xref:${target.family?.kind ?? "page"}] ${target.raw}`);
@@ -167,7 +155,7 @@ bun run inspect:report -- tests/fixtures/includes-invalid-steps/input.adoc \
   --fail-on-diagnostics
 ```
 
-Current GitHub Actions mode emits `::error` annotations for hard include diagnostics and `::warning` for degradations that still preserve usable output, such as an empty tag selection.
+Current GitHub Actions mode emits one summary annotation with normalized report counts. If the structured document carries diagnostics, `--fail-on-diagnostics` still turns them into CI failures.
 
 Example GitHub Actions step using the Makefile delegate target, artifact upload, and native annotations:
 
@@ -194,43 +182,40 @@ The emitted JSON contains the normalized inspection report plus the resolved inp
 
 ```json
 {
-  "inputPath": "/abs/path/tests/fixtures/includes-invalid-steps/input.adoc",
-  "sourcePath": "/abs/path/tests/fixtures/includes-invalid-steps/input.adoc",
+  "inputPath": "/abs/path/generated-page.adoc",
+  "sourcePath": "/workspace/modules/ROOT/pages/generated-page.adoc",
   "report": {
-    "includeDirectives": [
+    "includeDirectives": [],
+    "includeDiagnostics": [],
+    "xrefTargets": [
       {
-        "type": "includeDirective",
-        "target": "partials/snippet.adoc",
-        "attributes": {
-          "lines": "1..5..0;1..5..bad"
-        }
+        "raw": "install.html#cli",
+        "path": "install.html",
+        "fragment": "cli"
       }
     ],
-    "includeDiagnostics": [
+    "xrefs": [
       {
-        "target": "partials/snippet.adoc",
-        "diagnostic": {
-          "code": "invalid-line-step",
-          "message": "include line steps must be positive integers",
-          "source": "1..5..0"
-        }
-      },
-      {
-        "target": "partials/snippet.adoc",
-        "diagnostic": {
-          "code": "invalid-line-range",
-          "message": "include line selectors must be positive integers or ranges",
-          "source": "1..5..bad"
-        }
+        "type": "xref",
+        "url": "install.html#cli",
+        "target": {
+          "raw": "install.html#cli",
+          "path": "install.html",
+          "fragment": "cli"
+        },
+        "children": [
+          {
+            "type": "text",
+            "value": "install"
+          }
+        ]
       }
-    ],
-    "xrefTargets": [],
-    "xrefs": []
+    ]
   }
 }
 ```
 
-Current converter coverage includes headings, paragraphs, inline links, dedicated xref nodes with inspectable Antora target metadata and first-class family kinds, dedicated anchor and page-alias nodes, images, ordered and unordered lists, nested lists, thematic breaks, aligned tables, policy-gated raw HTML fallback nodes, footnote placeholders, fenced code blocks with dedicated callout-list nodes and verbatim language-tag preservation for transparent extensions such as `mermaid`, block quotes, dedicated admonition nodes, and recursive include inlining with dedicated include-directive metadata, for both `partial$` and relative include paths, including tagged-region selection, multi-tag extraction, overlapping-tag precedence, open-ended and stepped line-range unions, invalid-selector diagnostics, indentation, and `leveloffset`, when source-path context is available. Flavor policies can now render page-family xrefs either as source-shaped `.adoc` destinations or as site-shaped Antora-style routes, including `_images`, `_attachments`, and `_examples` asset families where configured.
+Current structured converter coverage includes headings, paragraphs, inline links, dedicated xref nodes, dedicated anchor and page-alias nodes, images, ordered and unordered lists, thematic breaks, aligned tables, policy-gated raw HTML fallback nodes, fenced code blocks, block quotes, and dedicated admonition nodes. The extension/runtime path now goes through structured extraction and lowering rather than the removed text parser.
 
 ### Extension
 

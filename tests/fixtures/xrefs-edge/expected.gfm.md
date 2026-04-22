@@ -1,3 +1,3 @@
 # Cross references
 
-See [install](install.adoc) and [details](guide/setup.adoc#details).
+See [install.html](install.html) and [guide/setup.html](guide/setup.html#details).

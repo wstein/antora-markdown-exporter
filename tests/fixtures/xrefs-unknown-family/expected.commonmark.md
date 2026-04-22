@@ -1,3 +1,3 @@
 # Unknown family xrefs
 
-See [demo](docs/2.0/ROOT/video/demo.mp4) and [overview](docs/2.0/api/page/index.adoc#overview).
+See [demo](2.0@docs:ROOT:video$demo.mp4) and [overview](2.0@docs:api:page$index.html#overview).

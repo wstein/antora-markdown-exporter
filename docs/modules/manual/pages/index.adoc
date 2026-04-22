@@ -453,7 +453,7 @@ The note `Converter coverage should be published as a support matrix` defines th
 |Section structure and headings
 |Supported
 |Headings, section numbering metadata, and table-of-contents render options stay semantic until rendering.
-|`src/exporter/convert-assembly.ts`; `tests/unit/convert-assembly.test.ts`; `tests/integration/module-export-golden.test.ts`; `tests/integration/module-export-structure.test.ts`
+|`src/adapter/asciidoctor-structure.ts`; `src/exporter/structured-to-ir.ts`; `tests/unit/asciidoctor-structure.test.ts`; `tests/integration/module-export-golden.test.ts`; `tests/integration/module-export-structure.test.ts`
 |`make markdown`; documentation module export review
 
 |Xrefs, anchors, and page aliases
@@ -462,16 +462,16 @@ The note `Converter coverage should be published as a support matrix` defines th
 |`src/markdown/xref-resolution.ts`; `tests/unit/xref-resolution.test.ts`; `tests/unit/include-diagnostics.test.ts`; reference fixtures
 |Inspection report review; rendered fixture review
 
-|Include directives and diagnostics
+|Inspection report surfaces
 |Supported
-|Recursive include expansion, tagged-region selection, line ranges, diagnostics, and provenance stay visible in IR and reports.
-|`src/exporter/include-metadata.ts`; `src/markdown/include-diagnostics.ts`; `tests/unit/include-metadata.test.ts`; `tests/unit/include-diagnostics.test.ts`; `tests/integration/reference-antora.test.ts`
+|Normalized inspection reports expose xrefs and any surviving diagnostics from the structured runtime path without requiring renderer-local traversal.
+|`src/markdown/include-diagnostics.ts`; `scripts/inspection-report.ts`; `tests/unit/include-diagnostics.test.ts`; `tests/unit/inspection-report-script.test.ts`; `tests/integration/reference-antora.test.ts`
 |`scripts/inspection-report.ts`; CI annotation review
 
 |Admonitions, images, and tables
 |Supported
 |These constructs map to dedicated semantic nodes instead of renderer-local string rewrites.
-|`src/markdown/ir.ts`; `tests/unit/convert-assembly.test.ts`; `tests/integration/fixture-golden.test.ts`; `tests/integration/reference-antora.test.ts`
+|`src/markdown/ir.ts`; `tests/unit/asciidoctor-structure.test.ts`; `tests/integration/fixture-golden.test.ts`; `tests/integration/reference-antora.test.ts`
 |Fixture diff review
 
 |Transparent fenced extensions such as `mermaid`
@@ -502,10 +502,10 @@ This ledger turns the architecture story into reviewable evidence. Use it when a
 |Claim family |Implementation evidence |Test evidence |Workflow evidence |Review note
 
 |Conversion semantics stay centralized
-|`src/exporter/convert-assembly.ts`; `src/exporter/include-metadata.ts`
-|`tests/unit/convert-assembly.test.ts`; `tests/unit/ir.test.ts`
+|`src/adapter/asciidoctor-structure.ts`; `src/exporter/structured-to-ir.ts`
+|`tests/unit/asciidoctor-structure.test.ts`; `tests/unit/structured-to-ir.test.ts`; `tests/unit/ir.test.ts`
 |`bun run check`
-|Refactors should change parser modules and parser tests together.
+|Refactors should change structural extraction, lowering, and tests together.
 
 |Rendered Markdown stays deterministic
 |`src/markdown/normalize.ts`; `src/markdown/render/**`

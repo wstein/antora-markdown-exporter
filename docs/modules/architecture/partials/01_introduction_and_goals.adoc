@@ -2,7 +2,7 @@
 == Introduction and Goals
 
 === Requirements Overview
-`@wsmy/antora-markdown-exporter` is a library-first TypeScript package that converts assembled AsciiDoc into a normalized Markdown intermediate representation (IR), normalizes that IR, and renders it into explicit Markdown flavors. The current public API centers on `convertAssemblyToMarkdownIR`, `normalizeMarkdownIR`, `renderMarkdown` and flavor helpers, plus inspection helpers for include diagnostics and xref targets.
+`@wsmy/antora-markdown-exporter` is a library-first TypeScript package that converts assembled AsciiDoc into a repository-owned structured document, lowers that structure into a normalized Markdown intermediate representation (IR), normalizes that IR, and renders it into explicit Markdown flavors. The current public API centers on `extractAssemblyStructure`, `convertAssemblyStructureToMarkdownIR`, `normalizeMarkdownIR`, `renderMarkdown` and flavor helpers, plus inspection helpers for xref targets and normalized report collection.
 
 === Claim Status Grammar
 

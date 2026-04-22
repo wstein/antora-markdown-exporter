@@ -63,10 +63,10 @@
 |Claim family |Implementation evidence |Test evidence |Workflow evidence |Boundary note
 
 |Semantic conversion stays explicit
-|`src/exporter/convert-assembly.ts`; `src/markdown/ir.ts`
-|`tests/unit/convert-assembly.test.ts`; `tests/unit/ir.test.ts`
+|`src/adapter/asciidoctor-structure.ts`; `src/exporter/structured-to-ir.ts`; `src/markdown/ir.ts`
+|`tests/unit/asciidoctor-structure.test.ts`; `tests/unit/structured-to-ir.test.ts`; `tests/unit/ir.test.ts`
 |`bun run check`
-|Semantic extensions should land in IR-aware code, not renderer-local rewrites.
+|Semantic extensions should land in structured extraction and IR-aware lowering, not renderer-local rewrites.
 
 |Workflow claims stay auditable
 |`scripts/release-check.mjs`; `scripts/export-antora-modules.ts`
@@ -106,7 +106,7 @@ Notes cited: `Reference testing uses official Antora documentation as a compatib
 
 Context/Background:: A source document contains a fenced code block with an authored language tag such as `mermaid`.
 Source/Stimulus:: The exporter encounters a semantically valid but flavor-specific construct.
-Artifact:: `src/exporter/convert-assembly.ts`, `src/markdown/fallback.ts`, renderer modules
+Artifact:: `src/adapter/asciidoctor-structure.ts`, `src/exporter/structured-to-ir.ts`, `src/markdown/fallback.ts`, renderer modules
 Response:: The converter emits a semantic `codeBlock`, renderers preserve the language tag verbatim, and fallback is not invoked merely because the downstream tool may interpret that language specially.
 Response Measure:: Rendered output retains the original fence language and contains no `Unsupported` fallback marker for that block.
 

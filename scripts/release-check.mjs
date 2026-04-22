@@ -65,20 +65,19 @@ try {
 		);
 	}
 
-	const sampleDocument = esmEntry.convertAssemblyToMarkdownIR(
-		"== Release Check\n\ninclude::partials/snippet.adoc[lines=1..5..0]\n",
+	const sampleStructure = esmEntry.extractAssemblyStructure(
+		"== Release Check\n\nSee xref:install.adoc#cli[install].\n",
 		{
-			sourcePath: resolve(
-				root,
-				"tests/fixtures/includes-invalid-steps/input.adoc",
-			),
+			sourcePath: resolve(root, "tests/fixtures/sample/input.adoc"),
 		},
 	);
+	const sampleDocument =
+		esmEntry.convertAssemblyStructureToMarkdownIR(sampleStructure);
 	const sampleReport = esmEntry.collectMarkdownInspectionReport(sampleDocument);
 
-	if (sampleReport.includeDiagnostics.length === 0) {
+	if (sampleReport.xrefTargets.length === 0) {
 		throw new Error(
-			"Inspection report release checks must retain include diagnostics",
+			"Inspection report release checks must retain structured xref targets",
 		);
 	}
 

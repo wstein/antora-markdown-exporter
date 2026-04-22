@@ -20,11 +20,8 @@ The main building blocks are:
 |Asciidoctor structural extractor
 |`src/adapter/asciidoctor-structure.ts` loads assembled source through Asciidoctor and maps supported document structure into the repository-owned assembly adapter. Unsupported structural contexts remain explicit.
 
-|Assembly converter
-|`src/exporter/convert-assembly.ts` maps assembled Antora/Asciidoctor output into semantic markdown nodes, honoring assembler-provided structure and preserved metadata such as xrefs, anchors, aliases, images, tables, admonitions, and include diagnostics when present.
-
-|Include metadata transport
-|`src/exporter/include-metadata.ts` isolates the private HTML-comment marker transport used while rehydrating include-directive metadata through the conversion pipeline.
+|Structured lowering
+|`src/exporter/structured-to-ir.ts` lowers repository-owned structured assembly into semantic Markdown IR nodes, preserving headings, xrefs, anchors, aliases, images, tables, admonitions, and other mapped structure without reparsing block syntax.
 
 |Markdown kernel
 |`src/markdown/ir.ts`, `src/markdown/normalize.ts`, and `src/markdown/xref-resolution.ts` define the canonical IR, normalize documents, and lower xref targets before rendering.
@@ -62,7 +59,7 @@ The remaining risk is not the absence of an outer Antora integration boundary. I
 ==== Conversion And Include Handling
 The exporter converts assembled content into IR and keeps include semantics, provenance, and diagnostics available when they are intentionally preserved, without making the private marker format part of the public contract.
 
-Its shipped structured runtime lives in `src/extension/index.ts`, `src/adapter/asciidoctor-structure.ts`, `src/exporter/structured-to-ir.ts`, and `src/markdown/**`. Legacy text-parsing code in `src/exporter/convert-assembly.ts` remains a removal target, not the preferred runtime path.
+Its shipped structured runtime lives in `src/extension/index.ts`, `src/adapter/asciidoctor-structure.ts`, `src/exporter/structured-to-ir.ts`, and `src/markdown/**`. Structured extraction and lowering are now the maintained runtime path.
 
 The private marker transport is intentionally isolated. The main ongoing risk is conversion coverage for richer assembled AsciiDoc constructs, not missing registration itself.
 

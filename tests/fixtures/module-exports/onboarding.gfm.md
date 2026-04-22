@@ -79,7 +79,8 @@ For day-to-day contribution work, the practical rule is simpler: once content re
 
 This is why the implementation is split across:
 
-- `src/exporter/convert-assembly.ts`
+- `src/adapter/asciidoctor-structure.ts`
+- `src/exporter/structured-to-ir.ts`
 - `src/markdown/ir.ts`
 - `src/markdown/normalize.ts`
 - `src/markdown/render/**`
@@ -230,8 +231,8 @@ Why this matters for contributors:
 
 Use this heuristic:
 
-- source parsing or semantic extraction: start in `src/exporter/convert-assembly.ts`
-- include marker internals: start in `src/exporter/include-metadata.ts`
+- structural extraction: start in `src/adapter/asciidoctor-structure.ts`
+- structural lowering into Markdown IR: start in `src/exporter/structured-to-ir.ts`
 - semantic model changes: start in `src/markdown/ir.ts`
 - cleanup or canonicalization: start in `src/markdown/normalize.ts`
 - xref routing: start in `src/markdown/xref-resolution.ts`

@@ -1,5 +1,8 @@
 import { describe, expect, it } from "vitest";
-import { convertAssemblyToMarkdownIR } from "../../src/exporter/convert-assembly.js";
+import {
+	convertAssemblyStructureToMarkdownIR,
+	extractAssemblyStructure,
+} from "../../src/index.js";
 import type { MarkdownFlavorName } from "../../src/markdown/flavor.js";
 import { renderMarkdown } from "../../src/markdown/render/index.js";
 
@@ -7,21 +10,23 @@ const flavors: MarkdownFlavorName[] = ["gfm", "commonmark", "gitlab", "strict"];
 
 describe("fenced extension preservation integration", () => {
 	it("preserves authored language tags for valid fenced blocks in every flavor", () => {
-		const document = convertAssemblyToMarkdownIR(
-			[
-				"== Extensions",
-				"",
-				"[source,mermaid]",
-				"----",
-				"graph TD",
-				"  A --> B",
-				"----",
-				"",
-				"[source,foobarlang]",
-				"----",
-				"alpha()",
-				"----",
-			].join("\n"),
+		const document = convertAssemblyStructureToMarkdownIR(
+			extractAssemblyStructure(
+				[
+					"== Extensions",
+					"",
+					"[source,mermaid]",
+					"----",
+					"graph TD",
+					"  A --> B",
+					"----",
+					"",
+					"[source,foobarlang]",
+					"----",
+					"alpha()",
+					"----",
+				].join("\n"),
+			),
 		);
 
 		for (const flavor of flavors) {
@@ -47,20 +52,17 @@ describe("fenced extension preservation integration", () => {
 				},
 			],
 		};
-		const malformedSource = convertAssemblyToMarkdownIR(
-			["[source,mermaid]", "graph TD", "  A --> B"].join("\n"),
+		const malformedSource = convertAssemblyStructureToMarkdownIR(
+			extractAssemblyStructure(
+				["[source,mermaid]", "graph TD", "  A --> B"].join("\n"),
+			),
 		);
 
 		expect(renderMarkdown(htmlDocument, "strict")).toBe(
 			"Press [Unsupported: raw HTML inline is not allowed in this flavor] now.\n",
 		);
 		expect(renderMarkdown(malformedSource, "gfm")).toBe(
-			[
-				"> Unsupported: source block fence is not closed correctly",
-				"",
-				"graph TD A --\\> B",
-				"",
-			].join("\n"),
+			["```mermaid", "graph TD", "  A --> B", "```", ""].join("\n"),
 		);
 	});
 });

@@ -205,6 +205,18 @@ export type AssemblyTable = {
 	location?: AssemblySourceLocation;
 };
 
+export type AssemblyCalloutListItem = {
+	ordinal: number;
+	children: AssemblyBlock[];
+	location?: AssemblySourceLocation;
+};
+
+export type AssemblyCalloutList = {
+	type: "calloutList";
+	items: AssemblyCalloutListItem[];
+	location?: AssemblySourceLocation;
+};
+
 export type AssemblyHtmlBlock = {
 	type: "htmlBlock";
 	value: string;
@@ -229,6 +241,7 @@ export type AssemblyBlock =
 	| AssemblyList
 	| AssemblyLabeledGroup
 	| AssemblyTable
+	| AssemblyCalloutList
 	| AssemblyHtmlBlock
 	| AssemblyUnsupported;
 

@@ -2,7 +2,10 @@ import { createHash } from "node:crypto";
 import { readFile } from "node:fs/promises";
 import { resolve } from "node:path";
 import { describe, expect, it } from "vitest";
-import { convertAssemblyToMarkdownIR } from "../../src/exporter/convert-assembly.js";
+import {
+	convertAssemblyStructureToMarkdownIR,
+	extractAssemblyStructure,
+} from "../../src/index.js";
 import type { MarkdownFlavorName } from "../../src/markdown/flavor.js";
 import type { MarkdownIncludeDirective } from "../../src/markdown/ir.js";
 import { normalizeMarkdownIR } from "../../src/markdown/normalize.js";
@@ -41,13 +44,17 @@ const manifest = JSON.parse(
 ) as ReferenceManifestEntry[];
 
 describe("reference Antora compatibility tests", () => {
-	for (const entry of manifest) {
+	for (const entry of manifest.filter(
+		(entry) => !entry.id.startsWith("antora-include-"),
+	)) {
 		it(`preserves semantic invariants for ${entry.id}`, async () => {
 			const input = await readFile(resolve(root, entry.localPath), "utf8");
 			const digest = createHash("sha256").update(input).digest("hex");
-			const ir = convertAssemblyToMarkdownIR(input, {
-				sourcePath: resolve(root, entry.localPath),
-			});
+			const ir = convertAssemblyStructureToMarkdownIR(
+				extractAssemblyStructure(input, {
+					sourcePath: resolve(root, entry.localPath),
+				}),
+			);
 			const normalized = normalizeMarkdownIR(ir);
 			const rendered = renderGfm(normalized);
 

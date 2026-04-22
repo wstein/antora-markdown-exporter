@@ -4,6 +4,7 @@ import {
 	type AssemblyAnchor,
 	type AssemblyBlock,
 	type AssemblyBlockQuote,
+	type AssemblyCalloutList,
 	type AssemblyCodeBlock,
 	type AssemblyDocument,
 	type AssemblyHeading,
@@ -406,6 +407,26 @@ function extractAdmonition(block: AsciidoctorBlock): AssemblyAdmonition {
 	};
 }
 
+function extractImageBlock(block: AsciidoctorBlock): AssemblyParagraph {
+	return {
+		type: "paragraph",
+		location: getSourceLocation(block),
+		children: [
+			{
+				type: "image",
+				url: block.getAttribute("target") ?? "",
+				title: block.getTitle?.(),
+				alt: [
+					{
+						type: "text",
+						value: block.getAttribute("alt") ?? "",
+					},
+				],
+			},
+		],
+	};
+}
+
 function extractAlignment(block: AsciidoctorBlock): AssemblyTable["align"] {
 	const columnSpec = block
 		.getAttribute("cols")
@@ -455,6 +476,24 @@ function extractTable(block: AsciidoctorBlock): AssemblyTable {
 			(headRows[0] ?? bodyRows[0] ?? []) as AsciidoctorTableCell[],
 		),
 		rows: rows.map((row) => extractRow(row as AsciidoctorTableCell[])),
+	};
+}
+
+function extractCalloutList(block: AsciidoctorBlock): AssemblyCalloutList {
+	const items = (block.getItems?.() ?? []) as AsciidoctorListItem[];
+	return {
+		type: "calloutList",
+		location: getSourceLocation(block),
+		items: items.map((item, index) => ({
+			ordinal: index + 1,
+			location: getSourceLocation(item),
+			children: [
+				{
+					type: "paragraph",
+					children: parseInlineHtml(item.getText()),
+				},
+			],
+		})),
 	};
 }
 
@@ -531,8 +570,19 @@ function extractBlock(block: AsciidoctorBlock): AssemblyBlock[] {
 		case "admonition":
 			extracted = [extractAdmonition(block)];
 			break;
+		case "image":
+			extracted = [extractImageBlock(block)];
+			break;
+		case "thematic_break":
+			extracted = [
+				{ type: "thematicBreak", location: getSourceLocation(block) },
+			];
+			break;
 		case "table":
 			extracted = [extractTable(block)];
+			break;
+		case "colist":
+			extracted = [extractCalloutList(block)];
 			break;
 		case "listing":
 		case "literal":

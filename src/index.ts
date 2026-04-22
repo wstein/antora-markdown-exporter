@@ -41,7 +41,6 @@ export {
 	type AssemblyXrefTarget,
 	defineAssemblyDocument,
 } from "./adapter/assembly-structure.js";
-export { convertAssemblyToMarkdownIR } from "./exporter/convert-assembly.js";
 export { convertAssemblyStructureToMarkdownIR } from "./exporter/structured-to-ir.js";
 export {
 	createMarkdownConverter,
