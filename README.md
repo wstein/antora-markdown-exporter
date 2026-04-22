@@ -4,17 +4,6 @@ Antora Assembler based Markdown exporter with semantic IR, inspection surfaces, 
 
 The package exposes explicit flavor capabilities, transparent fenced extension preservation, centralized fallback policy, and renderer profiles for GitHub Flavored Markdown, CommonMark, GitLab Flavored Markdown, MultiMarkdown, and a strict canonical mode. It consumes assembled Antora/Asciidoctor output and maps that already-resolved structure and metadata into the repository’s Markdown IR instead of trying to recreate the full AsciiDoc parser.
 
-## Status Markers
-
-This repository uses a small claim-status grammar in its docs:
-
-- `Implemented`: present in repository code
-- `Test-enforced`: pinned by automated tests
-- `CI-enforced`: executed or guarded by repository workflows
-- `Intended`: documented design direction that is not yet fully enforced
-
-The operator manual publishes the fuller proof matrix, support matrix, evidence ledger, and prerequisites matrix.
-
 ## Install
 
 ```bash
@@ -216,7 +205,7 @@ The emitted JSON contains the normalized inspection report plus the resolved inp
 }
 ```
 
-Current structured converter coverage includes headings, paragraphs, inline links, dedicated xref nodes, dedicated anchor and page-alias nodes, images, ordered and unordered lists, thematic breaks, aligned tables, policy-gated raw HTML fallback nodes, fenced code blocks, block quotes, and dedicated admonition nodes. The extension/runtime path now goes through structured extraction and lowering rather than the removed text parser. The repository also publishes both `assemblyStructureInvariants` and `assemblyStructureSpecification` from the root package so adapter-boundary rules are visible as code, not just prose. For the authoritative statement of what is supported, partial, or intentionally unsupported, use the operator manual’s support matrix instead of prose summaries.
+The extension/runtime path goes through structured extraction and lowering rather than a text parser. The root package also publishes `assemblyStructureInvariants` and `assemblyStructureSpecification` so adapter-boundary rules are visible as code. For the detailed support matrix, workflow proof, and evidence surfaces, use the operator manual and architecture docs.
 
 ### Extension
 
@@ -264,7 +253,7 @@ Documentation publication follows the same operating model. `make docs` builds t
 
 Each target is a thin delegate to the matching package-manager script.
 
-`make integration` runs the broader integration suite. `make reference` runs only the provenance-locked compatibility cases, including recursive include inlining, stepped and open-ended include slicing, anchor and alias preservation, component/module/version-aware xrefs, family-aware site routing, aligned tables, admonitions, mixed block sequences, and visible unsupported fallbacks where support is still intentionally deferred.
+`make integration` runs the broader integration suite. `make reference` runs the curated compatibility cases for realistic Antora content.
 
 To export the main Antora modules to Markdown using the repository pipeline, run:
 
@@ -272,7 +261,7 @@ To export the main Antora modules to Markdown using the repository pipeline, run
 make markdown
 ```
 
-This emits flat module documents under `build/markdown/architecture.md`, `build/markdown/manual.md`, and `build/markdown/onboarding.md` using the same assembled module sources as the repository PDFs and the same conversion path as the library API: structured extraction, IR lowering, normalization, and flavor rendering. It also materializes a review bundle under `build/markdown/review-bundle/.github/workflows/` so release and Pages claims carry `release.yml` and `pages.yml` evidence with the exported docs. The direct `bun run export:modules` script still defaults to `gfm`, while `make markdown` delegates to the dedicated `bun run markdown:build` package task, which runs the same exporter in explicit `--package-task-markdown` mode so it emits `multimarkdown`. Both flavors still write `.md` files. The default CLI output is a human-readable summary. If automation needs machine-readable output, run `bun run export:modules -- --json`. The export path does not post-process rendered Markdown. If output needs improvement, fix the converter or renderer. Use `bun run export:modules -- --flavor gitlab`, `bun run export:modules -- --flavor gfm`, `bun run export:modules -- --xref-fallback-label-style fragment-or-path`, or an alternate `--output-root` when you need a different target.
+This emits flat module documents under `build/markdown/architecture.md`, `build/markdown/manual.md`, and `build/markdown/onboarding.md` using the same assembled module sources as the repository PDFs and the same conversion path as the library API: structured extraction, IR lowering, normalization, and flavor rendering. It also materializes a review bundle under `build/markdown/review-bundle/.github/workflows/` so exported docs ship with `release.yml` and `pages.yml`. The direct `bun run export:modules` script defaults to `gfm`, while `make markdown` delegates to the dedicated `bun run markdown:build` package task, which emits `multimarkdown`. Both flavors still write `.md` files. The default CLI output is a human-readable summary. If automation needs machine-readable output, run `bun run export:modules -- --json`. Use `bun run export:modules -- --flavor gitlab`, `bun run export:modules -- --flavor gfm`, `bun run export:modules -- --xref-fallback-label-style fragment-or-path`, or an alternate `--output-root` when you need a different target.
 
 To build only the assembled module PDFs without rebuilding the full Antora HTML site, run:
 

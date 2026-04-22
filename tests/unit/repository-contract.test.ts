@@ -170,12 +170,9 @@ describe("repository contract", () => {
 	});
 
 	it("documents claim status, evidence, and support boundaries explicitly", () => {
-		expect(readme).toContain("## Status Markers");
-		expect(readme).toContain("evidence ledger");
-		expect(readme).toContain("`Implemented`");
-		expect(readme).toContain("`Test-enforced`");
-		expect(readme).toContain("`CI-enforced`");
-		expect(readme).toContain("`Intended`");
+		expect(readme).not.toContain("## Status Markers");
+		expect(readme).toContain("For the detailed support matrix, workflow proof");
+		expect(readme).toContain("operator manual and architecture docs");
 
 		expect(onboardingDoc).toContain("== Start Here");
 		expect(onboardingDoc).toContain("day-one contributors");
@@ -185,6 +182,7 @@ describe("repository contract", () => {
 		expect(onboardingDoc).toContain("== Core Workflows");
 		expect(onboardingDoc).toContain("=== Day One");
 		expect(onboardingDoc).toContain("=== First Task");
+		expect(onboardingDoc).toContain("=== First Successful Change Checklist");
 		expect(onboardingDoc).toContain(".github/workflows/release.yml");
 		expect(onboardingDoc).toContain(".github/workflows/pages.yml");
 		expect(onboardingDoc).toContain(

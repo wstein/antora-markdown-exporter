@@ -5,8 +5,6 @@ This section collects concepts that shape multiple architectural areas at once r
 
 === Deterministic Contract Testing
 
-The cross-cutting concept is the testing model described by the note `Testing relies on golden fixtures and deterministic snapshots`.
-
 The repository validates architecture boundaries at multiple levels:
 
 * unit tests pin IR, normalization, fallback, xref resolution, and repository-contract behavior

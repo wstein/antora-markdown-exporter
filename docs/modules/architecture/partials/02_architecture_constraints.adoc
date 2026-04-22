@@ -6,10 +6,10 @@
 |Constraint |Source |Implication
 
 |Reference fixtures are curated and provenance locked
-|Note `Reference fixtures are curated and provenance locked`; `tests/reference/manifest.json`
+|`tests/reference/manifest.json`; curated reference-fixture policy
 |Reference tests must run against local snapshots with locked hashes and recorded provenance. The architecture must not depend on live upstream fetches for correctness or CI reproducibility.
 
 |Repository scripts and referenced files must stay in lockstep
-|Note `Repository scripts and referenced files must stay in lockstep`; `tests/unit/repository-contract.test.ts`; `package.json`
+|`tests/unit/repository-contract.test.ts`; `package.json`
 |Build, test, release, README examples, and package metadata may only reference files that actually exist. Cleanup of stale scaffolding is a correctness constraint, not optional polish.
 |===

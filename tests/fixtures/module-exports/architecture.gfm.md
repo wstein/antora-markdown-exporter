@@ -92,8 +92,8 @@ The main uncertainty is no longer whether a real Antora registration path exists
 
 | Constraint | Source | Implication |
 | --- | --- | --- |
-| Reference fixtures are curated and provenance locked | Note `Reference fixtures are curated and provenance locked`; `tests/reference/manifest.json` | Reference tests must run against local snapshots with locked hashes and recorded provenance. The architecture must not depend on live upstream fetches for correctness or CI reproducibility. |
-| Repository scripts and referenced files must stay in lockstep | Note `Repository scripts and referenced files must stay in lockstep`; `tests/unit/repository-contract.test.ts`; `package.json` | Build, test, release, README examples, and package metadata may only reference files that actually exist. Cleanup of stale scaffolding is a correctness constraint, not optional polish. |
+| Reference fixtures are curated and provenance locked | `tests/reference/manifest.json`; curated reference-fixture policy | Reference tests must run against local snapshots with locked hashes and recorded provenance. The architecture must not depend on live upstream fetches for correctness or CI reproducibility. |
+| Repository scripts and referenced files must stay in lockstep | `tests/unit/repository-contract.test.ts`; `package.json` | Build, test, release, README examples, and package metadata may only reference files that actually exist. Cleanup of stale scaffolding is a correctness constraint, not optional polish. |
 
 # Chapter 3. Context and Scope
 
@@ -189,8 +189,6 @@ These surfaces live in `src/markdown/inspection.ts`, `scripts/inspection-report.
 
 ## 6.1. Convert Assembled Content To Flavor-Specific Markdown
 
-This scenario is based on the notes `Exporter pipeline uses Assembler and a direct TypeScript converter` and `Release and package identity use scoped npm publishing`.
-
 1. An upstream caller provides assembled AsciiDoc content to `renderAssemblyMarkdown(source, flavor, sourcePath)` or explicitly invokes `extractAssemblyStructure(source, { sourcePath })`.
 2. `src/adapter/asciidoctor-structure.ts` loads the assembled content through Asciidoctor and maps supported structure into the repository-owned assembly adapter.
 3. `convertAssemblyStructureToMarkdownIR(document)` lowers that structured assembly document into Markdown IR nodes.
@@ -201,8 +199,6 @@ This scenario is based on the notes `Exporter pipeline uses Assembler and a dire
 The notable aspect is that the shipped runtime now spans both the Assembler-backed extension entrypoint and the repository-owned structured conversion boundary. The remaining work is to keep coverage, docs, and CLI-facing policy controls aligned with that structured runtime rather than letting legacy wording creep back in.
 
 ## 6.2. Collect Inspection Data For CI Or Release Validation
-
-This scenario is based on the notes `Inspection helpers expose normalized validation surfaces` and `Release and package identity use scoped npm publishing`.
 
 1. A caller converts source to IR, typically with a real file-backed `sourcePath`.
 2. `collectMarkdownInspectionReport(document)` normalizes the document before traversal.
@@ -264,8 +260,6 @@ This level exists to make publication trustworthy:
 This section collects concepts that shape multiple architectural areas at once rather than belonging to a single converter or workflow component.
 
 ## 8.1. Deterministic Contract Testing
-
-The cross-cutting concept is the testing model described by the note `Testing relies on golden fixtures and deterministic snapshots`.
 
 The repository validates architecture boundaries at multiple levels:
 
@@ -379,11 +373,11 @@ These decisions are intentionally implementation-facing. They explain why the re
 
 # Chapter 11. Risks and Technical Debts
 
-The main currently documented risk is the one described by the note `Scaffold leftovers must be removed before contract expansion`.
+The main current risk is no longer a missing extension boundary. It is drift between the real extension entrypoint, the converter’s actual coverage, and the way docs or package examples describe that coverage.
 
 | Priority | Risk and mitigation |
 | --- | --- |
-| 1 | The repository now ships a real extension entrypoint as well as the markdown kernel. The risk is no longer a missing registration path. It is drift between the extension entrypoint, the converter’s real coverage, and the way docs or package examples describe that coverage. Mitigation: \* keep the real extension entrypoint, README examples, and release checks aligned \* remove dead scaffolding artifacts when they linger in docs or tests \* treat repository self-consistency checks as release gates \* extend converter coverage and tests together whenever richer assembled AsciiDoc constructs are supported |
+| 1 | The repository now ships a real extension entrypoint as well as the markdown kernel. The main risk is drift between the extension entrypoint, the converter’s real coverage, and the way docs or package examples describe that coverage. Mitigation: \* keep the real extension entrypoint, README examples, and release checks aligned \* remove dead scaffolding artifacts when they linger in docs or tests \* treat repository self-consistency checks as release gates \* extend converter coverage and tests together whenever richer assembled AsciiDoc constructs are supported |
 
 # Chapter 12. Reference Notes
 

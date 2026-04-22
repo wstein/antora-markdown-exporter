@@ -194,6 +194,17 @@ Start here when you need to make a code change:
 
 Then update the nearest focused tests before relying on end-to-end fixtures alone.
 
+=== First Successful Change Checklist
+
+Use this quick checklist after your first code edit:
+
+* run the nearest focused test first
+* run `make test` before considering the change done
+* update golden fixtures only when the rendered change is intentional
+* update docs if the operator path, contributor path, or package behavior changed
+* if you changed semantic mapping or lowering, make sure the helper tests or IR tests changed with it
+* if you changed rendered syntax only, keep the change inside `src/markdown/render/**`
+
 === Release Flow Uses `develop`, `main`, And Semver Tags
 
 In practical terms:
