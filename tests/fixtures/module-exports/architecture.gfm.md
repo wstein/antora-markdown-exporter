@@ -120,13 +120,13 @@ The business boundary is intentionally narrow. The repository does not claim to 
 | GitHub Actions | Runs CI, release publication, and Pages deployment workflows against certified repository states. |
 | npm registry and GitHub Pages | Receive the published package and static documentation outputs after successful release automation. |
 
-The technical context reflects two important constraints. First, the repository’s canonical contract begins at assembled AsciiDoc, not at raw Antora source traversal. Second, documentation exports, release checks, and operator scripts must use the same conversion path instead of maintaining sidecar implementations.
+The technical context follows two rules. The canonical contract begins at assembled AsciiDoc, not at raw Antora source traversal. Documentation exports, release checks, and operator scripts also use the same conversion path instead of maintaining sidecar implementations.
 
 # Chapter 4. Solution Strategy
 
 The repository follows one explicit toolchain policy: development commands are delegated through the `Makefile`, which defaults to `PM ?= bun`, while npm remains the explicit publish transport and alternate package-manager path. This keeps command behavior predictable and avoids lockfile-based branching.
 
-That toolchain strategy supports the broader architectural strategy:
+The broader architectural strategy is:
 
 - keep the core contract inside repository-owned TypeScript modules instead of delegating semantics to external document-conversion chains
 - keep development and CI entrypoints narrow and explicit through `make`, `package.json` scripts, and release-check automation
@@ -381,7 +381,7 @@ The main current risk is no longer a missing extension boundary. It is drift bet
 
 # Chapter 12. Reference Notes
 
-This section is a reference index for the canonical notes cited by the architecture document.
+This section is the reference index for canonical notes cited by the architecture document.
 
 | Section | Referenced notes |
 | --- | --- |

@@ -18,8 +18,9 @@
   - [3.1. Day One](#31-day-one)
   - [3.2. First Task](#32-first-task)
   - [3.3. First Successful Change Checklist](#33-first-successful-change-checklist)
-  - [3.4. Release Flow Uses develop, main, And Semver Tags](#34-release-flow-uses-develop-main-and-semver-tags)
-  - [3.5. How To Reason About Documentation](#35-how-to-reason-about-documentation)
+  - [3.4. Worked Example](#34-worked-example)
+  - [3.5. Release Flow Uses develop, main, And Semver Tags](#35-release-flow-uses-develop-main-and-semver-tags)
+  - [3.6. How To Reason About Documentation](#36-how-to-reason-about-documentation)
 - [Chapter 4. Core Architecture](#chapter-4-core-architecture)
 - [Chapter 5. Quality And Guardrails](#chapter-5-quality-and-guardrails)
   - [5.1. Exact Output Matters](#51-exact-output-matters)
@@ -232,7 +233,23 @@ Use this quick checklist after your first code edit:
 - if you changed semantic mapping or lowering, make sure the helper tests or IR tests changed with it
 - if you changed rendered syntax only, keep the change inside `src/markdown/render/**`
 
-## 3.4. Release Flow Uses develop, main, And Semver Tags
+## 3.4. Worked Example
+
+One small structural change usually touches three places:
+
+1. Update adapter code in `src/adapter/asciidoctor-structure.ts` or one of the helper modules under `src/adapter/asciidoctor-structure/`.
+2. Update the nearest focused test such as `tests/unit/asciidoctor-inline.test.ts`, `tests/unit/asciidoctor-block-helpers.test.ts`, or `tests/unit/asciidoctor-structure.test.ts`.
+3. Update a golden fixture only if the rendered markdown output changed intentionally.
+
+Example path:
+
+- you add or adjust a table-mapping rule in `src/adapter/asciidoctor-structure/block-helpers.ts`
+- you first pin that behavior in `tests/unit/asciidoctor-block-helpers.test.ts`
+- if the final markdown changes, you then review the relevant `tests/fixtures/**/expected.<flavor>.md` file or module-export golden snapshot
+
+That order matters. Start with the narrowest proof surface, then widen to end-to-end fixtures only when the semantic or rendered result really changed.
+
+## 3.5. Release Flow Uses develop, main, And Semver Tags
 
 In practical terms:
 
@@ -240,7 +257,7 @@ In practical terms:
 - it keeps release publication tied to one immutable tag input
 - it means `main` is not the branch for normal feature integration anymore
 
-## 3.5. How To Reason About Documentation
+## 3.6. How To Reason About Documentation
 
 These docs have different jobs:
 

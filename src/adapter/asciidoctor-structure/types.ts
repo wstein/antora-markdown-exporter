@@ -1,4 +1,5 @@
 export type AsciidoctorBlock = {
+	convert?: () => unknown;
 	findBy: (filter: unknown) => unknown[];
 	getAttribute: (name: string) => string | undefined;
 	getAttributes: () => Record<string, string>;
@@ -10,6 +11,10 @@ export type AsciidoctorBlock = {
 	getContent?: () => string;
 	getContext: () => string;
 	getDocumentTitle?: () => string;
+	getFootnotes?: () => Array<{
+		getIndex?: () => number | string;
+		getText?: () => string;
+	}>;
 	getHeadRows?: () => AsciidoctorTableCell[][];
 	getId?: () => string | undefined;
 	getItems?: () => AsciidoctorListItem[];

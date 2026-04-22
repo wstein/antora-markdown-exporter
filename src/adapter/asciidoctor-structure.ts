@@ -133,7 +133,7 @@ export function extractAssemblyStructure(
 		children.push(...extractBlock(block, options));
 	}
 
-	document.convert();
+	document.convert?.();
 	const referencedFootnotes = collectReferencedFootnoteIdentifiers(children);
 
 	for (const footnote of document.getFootnotes?.() ?? []) {

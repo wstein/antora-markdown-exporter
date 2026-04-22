@@ -205,6 +205,22 @@ Use this quick checklist after your first code edit:
 * if you changed semantic mapping or lowering, make sure the helper tests or IR tests changed with it
 * if you changed rendered syntax only, keep the change inside `src/markdown/render/**`
 
+=== Worked Example
+
+One small structural change usually touches three places:
+
+. Update adapter code in `src/adapter/asciidoctor-structure.ts` or one of the helper modules under `src/adapter/asciidoctor-structure/`.
+. Update the nearest focused test such as `tests/unit/asciidoctor-inline.test.ts`, `tests/unit/asciidoctor-block-helpers.test.ts`, or `tests/unit/asciidoctor-structure.test.ts`.
+. Update a golden fixture only if the rendered markdown output changed intentionally.
+
+Example path:
+
+* you add or adjust a table-mapping rule in `src/adapter/asciidoctor-structure/block-helpers.ts`
+* you first pin that behavior in `tests/unit/asciidoctor-block-helpers.test.ts`
+* if the final markdown changes, you then review the relevant `tests/fixtures/**/expected.<flavor>.md` file or module-export golden snapshot
+
+That order matters. Start with the narrowest proof surface, then widen to end-to-end fixtures only when the semantic or rendered result really changed.
+
 === Release Flow Uses `develop`, `main`, And Semver Tags
 
 In practical terms:

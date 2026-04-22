@@ -1,6 +1,5 @@
 import { mkdir, writeFile } from "node:fs/promises";
 import { basename, dirname, resolve } from "node:path";
-import { pathToFileURL } from "node:url";
 import { configure } from "@antora/assembler";
 import { extractAssemblyStructure } from "../adapter/asciidoctor-structure.js";
 import { convertAssemblyStructureToMarkdownIR } from "../exporter/structured-to-ir.js";
@@ -122,20 +121,4 @@ export function register(
 			navigationCatalog,
 		},
 	);
-}
-
-function isDirectExecution(): boolean {
-	const entry = process.argv[1];
-	if (!entry) {
-		return false;
-	}
-
-	return import.meta.url === pathToFileURL(resolve(entry)).href;
-}
-
-if (isDirectExecution()) {
-	console.error(
-		"This module is an Antora extension entrypoint and should be loaded by Antora, not executed directly.",
-	);
-	process.exit(1);
 }

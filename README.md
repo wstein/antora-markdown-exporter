@@ -2,7 +2,7 @@
 
 Antora Assembler based Markdown exporter with semantic IR, inspection surfaces, and explicit Markdown flavor rendering.
 
-The package exposes explicit flavor capabilities, transparent fenced extension preservation, centralized fallback policy, and renderer profiles for GitHub Flavored Markdown, CommonMark, GitLab Flavored Markdown, MultiMarkdown, and a strict canonical mode. It consumes assembled Antora/Asciidoctor output and maps that already-resolved structure and metadata into the repository’s Markdown IR instead of trying to recreate the full AsciiDoc parser.
+The package consumes assembled Antora/Asciidoctor output, maps that structure into a semantic Markdown IR, and renders explicit Markdown flavors without trying to recreate a full AsciiDoc parser.
 
 ## Install
 
@@ -10,9 +10,24 @@ The package exposes explicit flavor capabilities, transparent fenced extension p
 npm install @wsmy/antora-markdown-exporter
 ```
 
-## Usage
+## Quick Start
 
-### Library
+```ts
+import {
+  convertAssemblyStructureToMarkdownIR,
+  extractAssemblyStructure,
+  normalizeMarkdownIR,
+  renderGfm,
+} from "@wsmy/antora-markdown-exporter";
+
+const structured = extractAssemblyStructure("== Sample document\n\nHello world.");
+const ir = convertAssemblyStructureToMarkdownIR(structured);
+const normalized = normalizeMarkdownIR(ir);
+
+console.log(renderGfm(normalized));
+```
+
+## Library
 
 ```ts
 import {
@@ -36,7 +51,7 @@ console.log(xrefTargets);
 console.log(collectMarkdownInspectionReport(normalized));
 ```
 
-The semantic IR remains the canonical render boundary. Valid fenced code blocks stay valid semantic `codeBlock` nodes even when their language tag is an extension such as `mermaid` or an unknown downstream language. That preservation path is not fallback.
+The semantic IR remains the canonical render boundary. Valid fenced code blocks stay valid semantic `codeBlock` nodes even when their language tag is an extension such as `mermaid` or an unknown downstream language.
 
 For example, this AsciiDoc:
 
@@ -63,7 +78,7 @@ graph TD
 
 This differs from controlled fallback behavior. Raw HTML and unsupported constructs still flow through explicit policy decisions, while valid fenced blocks preserve their authored language tag verbatim.
 
-### Render Contract
+## Render Contract
 
 The renderer works with four explicit categories:
 
@@ -74,7 +89,7 @@ The renderer works with four explicit categories:
 
 This keeps valid author intent separate from fallback. A preserved ` ```mermaid ` fence is not raw HTML passthrough, and it is not an unsupported block.
 
-### Validation Helpers
+## Validation Helpers
 
 ```ts
 import {
@@ -107,7 +122,7 @@ Inspection helpers normalize before traversal and return entries in document ord
 
 When unlabeled xrefs need a different display form, the structured extractor and extension runtime also accept `xrefFallbackLabelStyle`. Use `fragment-or-basename` for labels like `setup`, or `fragment-or-path` for labels like `guide/setup`.
 
-### CI And Release Validation
+## CI And Release Validation
 
 ```ts
 import {
@@ -207,7 +222,7 @@ The emitted JSON contains the normalized inspection report plus the resolved inp
 
 The extension/runtime path goes through structured extraction and lowering rather than a text parser. The root package also publishes `assemblyStructureInvariants` and `assemblyStructureSpecification` so adapter-boundary rules are visible as code. For the detailed support matrix, workflow proof, and evidence surfaces, use the operator manual and architecture docs.
 
-### Extension
+## Extension
 
 ```ts
 import { register } from "@wsmy/antora-markdown-exporter/extension";
@@ -217,7 +232,7 @@ export { register };
 
 The extension entrypoint delegates to `@antora/assembler.configure()` using the repository’s Markdown converter, matching the Antora Assembler custom exporter contract.
 
-### CLI
+## CLI
 
 ```bash
 npx antora-markdown-exporter --help
@@ -296,3 +311,5 @@ After a tag-triggered `Release` workflow completes successfully, the separate Pa
 ## Package
 
 This repository is shaped as a library-first package with a small CLI entrypoint. The published package exposes the core markdown pipeline API and a real Antora extension entrypoint under `./extension`.
+
+For contributor-first guidance, use the onboarding guide. For operator workflows, support boundaries, and workflow evidence, use the manual and architecture docs in `docs/modules/**`.

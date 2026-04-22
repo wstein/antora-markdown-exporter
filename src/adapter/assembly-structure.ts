@@ -32,6 +32,7 @@ export type AssemblyLink = {
 	type: "link";
 	url: string;
 	title?: string;
+	attributes?: Record<string, string>;
 	children: AssemblyInline[];
 	location?: AssemblySourceLocation;
 };

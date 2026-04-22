@@ -60,9 +60,13 @@ function normalizeInline(node: MarkdownInline): MarkdownInline {
 					node.attributes === undefined
 						? undefined
 						: Object.fromEntries(
-								Object.entries(node.attributes)
-									.map(([key, value]) => [key.trim(), value.trim()])
-									.filter(([key, value]) => key.length > 0 && value.length > 0),
+								Object.entries(node.attributes).flatMap(([key, value]) => {
+									const normalizedKey = key.trim();
+									const normalizedValue = value.trim();
+									return normalizedKey.length > 0 && normalizedValue.length > 0
+										? [[normalizedKey, normalizedValue] as const]
+										: [];
+								}),
 							),
 				children: normalizeInlineChildren(node.children),
 			};
@@ -98,9 +102,13 @@ function normalizeInline(node: MarkdownInline): MarkdownInline {
 					node.attributes === undefined
 						? undefined
 						: Object.fromEntries(
-								Object.entries(node.attributes)
-									.map(([key, value]) => [key.trim(), value.trim()])
-									.filter(([key, value]) => key.length > 0 && value.length > 0),
+								Object.entries(node.attributes).flatMap(([key, value]) => {
+									const normalizedKey = key.trim();
+									const normalizedValue = value.trim();
+									return normalizedKey.length > 0 && normalizedValue.length > 0
+										? [[normalizedKey, normalizedValue] as const]
+										: [];
+								}),
 							),
 				alt: normalizeInlineChildren(node.alt),
 			};
@@ -249,11 +257,16 @@ export function normalizeMarkdownIR(
 							document.metadata.attributes === undefined
 								? undefined
 								: Object.fromEntries(
-										Object.entries(document.metadata.attributes)
-											.map(([key, value]) => [key.trim(), String(value).trim()])
-											.filter(
-												([key, value]) => key.length > 0 && value.length > 0,
-											),
+										Object.entries(document.metadata.attributes).flatMap(
+											([key, value]) => {
+												const normalizedKey = key.trim();
+												const normalizedValue = String(value).trim();
+												return normalizedKey.length > 0 &&
+													normalizedValue.length > 0
+													? [[normalizedKey, normalizedValue] as const]
+													: [];
+											},
+										),
 									),
 						component: document.metadata.component?.trim(),
 						family: document.metadata.family?.trim(),

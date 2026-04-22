@@ -303,12 +303,13 @@ function renderMultiMarkdownMetadata(
 	document: MarkdownDocument,
 ): string | undefined {
 	const attributes = document.metadata?.attributes ?? {};
+	const titleHeading = document.children.find(
+		(block): block is Extract<MarkdownBlock, { type: "heading" }> =>
+			block.type === "heading" && block.depth === 1,
+	);
 	const title =
 		attributes.doctitle ??
-		document.children
-			.find((block) => block.type === "heading" && block.depth === 1)
-			?.children.map((child) => inlineText([child]))
-			.join("");
+		titleHeading?.children.map((child) => inlineText([child])).join("");
 	const metadataEntries = [
 		["Title", title],
 		["Author", attributes.author],

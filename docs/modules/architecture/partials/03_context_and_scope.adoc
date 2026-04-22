@@ -50,4 +50,4 @@ The business boundary is intentionally narrow. The repository does not claim to 
 |Receive the published package and static documentation outputs after successful release automation.
 |===
 
-The technical context reflects two important constraints. First, the repository’s canonical contract begins at assembled AsciiDoc, not at raw Antora source traversal. Second, documentation exports, release checks, and operator scripts must use the same conversion path instead of maintaining sidecar implementations.
+The technical context follows two rules. The canonical contract begins at assembled AsciiDoc, not at raw Antora source traversal. Documentation exports, release checks, and operator scripts also use the same conversion path instead of maintaining sidecar implementations.

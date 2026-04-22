@@ -1,7 +1,7 @@
 [[section-reference-notes]]
 == Reference Notes
 
-This section is a reference index for the canonical notes cited by the architecture document.
+This section is the reference index for canonical notes cited by the architecture document.
 
 [cols="2,3" options="header"]
 |===
