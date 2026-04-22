@@ -1,3 +1,3 @@
 # Family-aware xrefs
 
-See [diagram](docs/2.0/_images/diagram.png), [guide](docs/2.0/_attachments/guide.pdf), and [2.0@docs:api:page$index.html](docs/2.0/api/index.html#overview).
+See [diagram](docs/2.0/_images/diagram.png), [guide](docs/2.0/_attachments/guide.pdf), and [overview](docs/2.0/api/index.html#overview).

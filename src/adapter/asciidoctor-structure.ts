@@ -48,6 +48,7 @@ type AsciidoctorBlock = {
 		getPath?: () => string;
 	};
 	getStyle?: () => string | undefined;
+	getTitle?: () => string | undefined;
 	hasHeader?: () => boolean;
 };
 
@@ -248,6 +249,84 @@ function isStructuredXrefHref(href: string): boolean {
 	);
 }
 
+function joinInlineText(children: AssemblyInline[]): string {
+	return children
+		.map((child) => {
+			switch (child.type) {
+				case "text":
+				case "code":
+				case "htmlInline":
+					return child.value;
+				case "emphasis":
+				case "strong":
+				case "link":
+				case "xref":
+					return joinInlineText(child.children);
+				case "image":
+					return joinInlineText(child.alt);
+				case "hardBreak":
+				case "softBreak":
+					return " ";
+				default:
+					return "";
+			}
+		})
+		.join("")
+		.trim();
+}
+
+function deriveXrefFallbackLabel(target: AssemblyXrefTarget): string {
+	if (target.fragment !== undefined && target.fragment.length > 0) {
+		return target.fragment;
+	}
+
+	const lastSegment = target.path.split("/").at(-1) ?? target.path;
+	return lastSegment.replace(/\.(adoc|html)$/u, "");
+}
+
+function normalizeXrefChildren(
+	href: string,
+	target: AssemblyXrefTarget,
+	children: AssemblyInline[],
+): AssemblyInline[] {
+	const visibleText = joinInlineText(children);
+	const equivalentFallbackLabels = new Set([
+		href,
+		href.split("#", 1)[0] ?? href,
+		target.raw,
+		target.raw.split("#", 1)[0] ?? target.raw,
+	]);
+	if (visibleText.length > 0 && !equivalentFallbackLabels.has(visibleText)) {
+		return children;
+	}
+
+	return [
+		{
+			type: "text",
+			value: deriveXrefFallbackLabel(target),
+		},
+	];
+}
+
+function parsePlainTextWithSoftBreaks(value: string): AssemblyInline[] {
+	const lines = decodeHtmlEntities(value)
+		.split("\n")
+		.map((line) => line.trimEnd());
+	const children: AssemblyInline[] = [];
+
+	for (const [index, line] of lines.entries()) {
+		if (index > 0) {
+			children.push({ type: "softBreak" });
+		}
+		children.push({
+			type: "text",
+			value: line,
+		});
+	}
+
+	return children.length === 0 ? [{ type: "text", value: "" }] : children;
+}
+
 function parseInlineHtml(content: string): AssemblyInline[] {
 	const nodes: AssemblyInline[] = [];
 	let cursor = 0;
@@ -353,10 +432,7 @@ function parseInlineHtml(content: string): AssemblyInline[] {
 					type: "xref",
 					url: href,
 					target,
-					children:
-						children.length === 0
-							? [{ type: "text", value: href.replace(/^#/, "") }]
-							: children,
+					children: normalizeXrefChildren(href, target, children),
 				});
 			} else {
 				nodes.push(<AssemblyLink>{
@@ -576,17 +652,22 @@ function extractCalloutList(block: AsciidoctorBlock): AssemblyCalloutList {
 					type: "paragraph",
 					children: parseInlineHtml(item.getText()),
 				},
+				...(item.getBlocks?.().flatMap((child) => extractBlock(child)) ?? []),
 			],
 		})),
 	};
 }
 
 function extractCodeBlock(block: AsciidoctorBlock): AssemblyCodeBlock {
+	const source = block.getSource?.() ?? "";
 	return {
 		type: "codeBlock",
 		location: getSourceLocation(block),
 		language: block.getAttribute("language"),
-		value: block.getSource?.() ?? "",
+		value: source,
+		callouts: [...source.matchAll(/<(\d+)>/gu)].map((match) =>
+			Number.parseInt(match[1] ?? "0", 10),
+		),
 	};
 }
 
@@ -595,6 +676,20 @@ function extractBlockQuote(block: AsciidoctorBlock): AssemblyBlockQuote {
 		type: "blockquote",
 		location: getSourceLocation(block),
 		children: block.getBlocks().flatMap(extractBlock),
+	};
+}
+
+function extractVerse(block: AsciidoctorBlock): AssemblyBlockQuote {
+	return {
+		type: "blockquote",
+		location: getSourceLocation(block),
+		children: [
+			{
+				type: "paragraph",
+				location: getSourceLocation(block),
+				children: parsePlainTextWithSoftBreaks(block.getSource?.() ?? ""),
+			},
+		],
 	};
 }
 
@@ -626,6 +721,37 @@ function attachBlockAnchor(
 			location: getSourceLocation(block),
 		},
 		...extracted,
+	];
+}
+
+function attachBlockTitle(
+	block: AsciidoctorBlock,
+	extracted: AssemblyBlock[],
+): AssemblyBlock[] {
+	const titleBearingContexts = new Set([
+		"example",
+		"listing",
+		"literal",
+		"quote",
+		"sidebar",
+		"verse",
+	]);
+	if (!titleBearingContexts.has(block.getContext())) {
+		return extracted;
+	}
+
+	const title = block.getTitle?.();
+	if (title === undefined || title.length === 0) {
+		return extracted;
+	}
+
+	return [
+		{
+			type: "labeledGroup",
+			label: parseInlineHtml(title),
+			children: extracted,
+			location: getSourceLocation(block),
+		},
 	];
 }
 
@@ -675,6 +801,9 @@ function extractBlock(block: AsciidoctorBlock): AssemblyBlock[] {
 		case "quote":
 			extracted = [extractBlockQuote(block)];
 			break;
+		case "verse":
+			extracted = [extractVerse(block)];
+			break;
 		case "open":
 			extracted = block.getBlocks().flatMap((child) => extractBlock(child));
 			break;
@@ -711,7 +840,7 @@ function extractBlock(block: AsciidoctorBlock): AssemblyBlock[] {
 			break;
 	}
 
-	return attachBlockAnchor(block, extracted);
+	return attachBlockAnchor(block, attachBlockTitle(block, extracted));
 }
 
 function parseRenderOptions(

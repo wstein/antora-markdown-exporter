@@ -2,4 +2,4 @@
 
 # Overview
 
-See [Overview](#overview) and [install.html](install.adoc).
+See [Overview](#overview) and [install](install.adoc).

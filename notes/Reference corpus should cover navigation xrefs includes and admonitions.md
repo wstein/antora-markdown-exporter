@@ -13,7 +13,7 @@ Reference cases should deliberately represent the highest-value Antora authoring
 - mixed ordered and unordered list hierarchies
 - intra-page and inter-page xrefs, including component/module/version-qualified targets and cases where page, image, attachment, example, and partial families differ by output policy
 - anchors and page-alias metadata
-- include-heavy pages, including recursive partial chains, tagged-region selection, line slicing, stepped and open-ended ranges, indentation, multi-tag selection, diagnostics, level offsets, and behavior that remains stable across internal metadata-transport refactors
+- include-heavy pages where the repository intentionally preserves include semantics, diagnostics, or provenance for inspection
 - admonitions and block variants
 - code listings and callout-adjacent structures
 - tables and images

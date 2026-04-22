@@ -37,7 +37,7 @@ This also keeps Antora-specific concerns near the extension boundary while prese
 Implement the Antora integration in `src/extension/**`, structural extraction in `src/adapter/**`, and semantic lowering plus rendering in `src/exporter/**` and `src/markdown/**`.
 
 
-Treat the assembled AsciiDoc document as the last Antora-facing artifact. After that point, all decisions must move through repository-owned structure and the Markdown semantic layer in `src/adapter/**` and `src/markdown/**`, including dedicated xref target metadata, dedicated anchors, page-alias metadata, images, admonitions, aligned tables, callouts, and recursive include inlining with tagged regions, multi-tag selection, line ranges, indentation, and `leveloffset` handling when source context is available. Xref destination shaping is a separate lowering phase in `src/markdown/xref-resolution.ts`, so renderers can serialize already-resolved destinations without owning Antora routing policy.
+Treat the assembled AsciiDoc document as the last Antora-facing artifact. After that point, all decisions must move through repository-owned structure and the Markdown semantic layer in `src/adapter/**` and `src/markdown/**`, including dedicated xref target metadata, dedicated anchors, page-alias metadata, images, admonitions, aligned tables, callouts, and any include metadata or diagnostics the repository deliberately preserves for inspection. Xref destination shaping is a separate lowering phase in `src/markdown/xref-resolution.ts`, so renderers can serialize already-resolved destinations without owning Antora routing policy.
 
 
 Do not add Pandoc, DocBook, or HTML-to-Markdown fallback chains to the primary path.

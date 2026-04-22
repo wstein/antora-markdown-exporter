@@ -237,6 +237,98 @@ describe("asciidoctor structure extraction", () => {
 		);
 	});
 
+	it("preserves titled example blocks, verse blocks, and richer callout continuations", () => {
+		const document = extractAssemblyStructure(
+			[
+				"== Examples",
+				"",
+				".Worked example",
+				"====",
+				"Example body.",
+				"====",
+				"",
+				"[verse]",
+				"____",
+				"Roses are red",
+				"Violets are blue",
+				"____",
+				"",
+				".Annotated code",
+				"[source,ts]",
+				"----",
+				"const answer = 42; <1>",
+				"----",
+				"<1> Verify the result",
+				"+",
+				"Review the release checklist.",
+			].join("\n"),
+		);
+
+		expect(document.children).toEqual(
+			expect.arrayContaining([
+				expect.objectContaining({
+					type: "labeledGroup",
+					label: [{ type: "text", value: "Worked example" }],
+					children: [
+						expect.objectContaining({
+							type: "blockquote",
+							children: [
+								expect.objectContaining({
+									type: "paragraph",
+									children: [{ type: "text", value: "Example body." }],
+								}),
+							],
+						}),
+					],
+				}),
+				expect.objectContaining({
+					type: "blockquote",
+					children: [
+						expect.objectContaining({
+							type: "paragraph",
+							children: [
+								{ type: "text", value: "Roses are red" },
+								{ type: "softBreak" },
+								{ type: "text", value: "Violets are blue" },
+							],
+						}),
+					],
+				}),
+				expect.objectContaining({
+					type: "labeledGroup",
+					label: [{ type: "text", value: "Annotated code" }],
+					children: [
+						expect.objectContaining({
+							type: "codeBlock",
+							language: "ts",
+							callouts: [1],
+						}),
+					],
+				}),
+				expect.objectContaining({
+					type: "calloutList",
+					items: [
+						expect.objectContaining({
+							ordinal: 1,
+							children: [
+								expect.objectContaining({
+									type: "paragraph",
+									children: [{ type: "text", value: "Verify the result" }],
+								}),
+								expect.objectContaining({
+									type: "paragraph",
+									children: [
+										{ type: "text", value: "Review the release checklist." },
+									],
+								}),
+							],
+						}),
+					],
+				}),
+			]),
+		);
+	});
+
 	it("maps preambles and heading inline code without falling back to unsupported blocks", () => {
 		const document = extractAssemblyStructure(
 			[
@@ -330,5 +422,30 @@ describe("asciidoctor structure extraction", () => {
 				path: "nav.adoc",
 			},
 		});
+	});
+
+	it("derives readable fallback labels for unlabeled qualified xrefs", () => {
+		const document = extractAssemblyStructure(
+			[
+				"== Xrefs",
+				"",
+				"See xref:docs:ROOT:install.adoc[], xref:2.0@docs:ROOT:install.adoc#cli[], xref:2.0@docs:api:page$index.adoc#overview[], and xref:docs:ROOT:partial$nav.adoc[].",
+			].join("\n"),
+		);
+
+		const paragraph = document.children[1];
+		expect(paragraph).toMatchObject({ type: "paragraph" });
+		if (paragraph?.type !== "paragraph") {
+			throw new Error("expected paragraph");
+		}
+
+		const labels = paragraph.children
+			.filter((child) => child.type === "xref")
+			.map((child) =>
+				child.type === "xref" && child.children[0]?.type === "text"
+					? child.children[0].value
+					: "",
+			);
+		expect(labels).toEqual(["install", "cli", "overview", "nav"]);
 	});
 });
