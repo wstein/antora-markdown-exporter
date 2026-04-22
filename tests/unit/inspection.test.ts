@@ -416,4 +416,188 @@ describe("inspection helpers", () => {
 			],
 		});
 	});
+
+	it("collects rag metadata through nested structural blocks and flattens mixed inline labels", () => {
+		const rag = collectMarkdownInspectionRagDocument({
+			type: "document",
+			children: [
+				{
+					type: "blockquote",
+					children: [
+						{
+							type: "heading",
+							depth: 2,
+							identifier: "nested-heading",
+							location: { path: "guide.adoc", line: 2 },
+							children: [
+								{ type: "text", value: "Read" },
+								{ type: "hardBreak" },
+								{ type: "code", value: "code" },
+								{ type: "softBreak" },
+								{ type: "htmlInline", value: "HTML" },
+								{
+									type: "image",
+									url: "images/diagram.svg",
+									alt: [{ type: "text", value: "diagram" }],
+								},
+								{
+									type: "footnoteReference",
+									identifier: "note-1",
+								},
+								{
+									type: "citation",
+									identifier: "smith-2024",
+								},
+							],
+						},
+					],
+				},
+				{
+					type: "admonition",
+					kind: "note",
+					children: [
+						{
+							type: "labeledGroup",
+							label: [{ type: "text", value: "Motivation" }],
+							children: [
+								{
+									type: "anchor",
+									identifier: "nested-anchor",
+									location: { path: "guide.adoc", line: 8 },
+								},
+							],
+						},
+					],
+				},
+				{
+					type: "list",
+					ordered: false,
+					items: [
+						{
+							children: [
+								{
+									type: "heading",
+									depth: 3,
+									identifier: "list-heading",
+									location: { path: "guide.adoc", line: 12 },
+									children: [
+										{
+											type: "link",
+											url: "https://example.invalid",
+											children: [{ type: "text", value: "Linked" }],
+										},
+									],
+								},
+							],
+						},
+					],
+				},
+				{
+					type: "calloutList",
+					items: [
+						{
+							ordinal: 1,
+							children: [
+								{
+									type: "pageAliases",
+									aliases: ["legacy-one", "legacy-two"],
+									location: { path: "guide.adoc", line: 15 },
+								},
+							],
+						},
+					],
+				},
+				{
+					type: "footnoteDefinition",
+					identifier: "note-1",
+					children: [
+						{
+							type: "anchor",
+							identifier: "footnote-anchor",
+							location: { path: "guide.adoc", line: 18 },
+						},
+						{
+							type: "paragraph",
+							children: [
+								{
+									type: "xref",
+									url: "docs/ROOT/install.adoc",
+									target: {
+										raw: "docs:ROOT:install.adoc",
+										component: "docs",
+										module: "ROOT",
+										family: {
+											kind: "page" as const,
+											name: "page",
+										},
+										path: "install.adoc",
+									},
+									location: { path: "guide.adoc", line: 19 },
+									children: [
+										{ type: "text", value: "Install" },
+										{ type: "softBreak" },
+										{
+											type: "strong",
+											children: [{ type: "text", value: "Guide" }],
+										},
+									],
+								},
+							],
+						},
+					],
+				},
+			],
+		});
+
+		expect(rag.headings).toEqual([
+			{
+				index: 0,
+				depth: 2,
+				identifier: "nested-heading",
+				location: { path: "guide.adoc", line: 2 },
+				text: "Read code HTMLdiagramnote-1smith-2024",
+			},
+			{
+				index: 1,
+				depth: 3,
+				identifier: "list-heading",
+				location: { path: "guide.adoc", line: 12 },
+				text: "Linked",
+			},
+		]);
+		expect(rag.anchors).toEqual([
+			{
+				index: 0,
+				identifier: "nested-anchor",
+				location: { path: "guide.adoc", line: 8 },
+			},
+			{
+				index: 1,
+				identifier: "footnote-anchor",
+				location: { path: "guide.adoc", line: 18 },
+			},
+		]);
+		expect(rag.pageAliases).toEqual([
+			{
+				index: 0,
+				aliases: ["legacy-one", "legacy-two"],
+				location: { path: "guide.adoc", line: 15 },
+			},
+		]);
+		expect(rag.entries).toEqual([
+			{
+				index: 0,
+				label: "Install Guide",
+				destination: "docs/ROOT/install.adoc",
+				rawTarget: "docs:ROOT:install.adoc",
+				path: "install.adoc",
+				family: "page",
+				component: "docs",
+				module: "ROOT",
+				location: { path: "guide.adoc", line: 19 },
+			},
+		]);
+		expect(rag.xrefCount).toBe(1);
+		expect(rag.xrefTargetCount).toBe(1);
+	});
 });

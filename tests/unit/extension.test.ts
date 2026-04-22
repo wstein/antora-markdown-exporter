@@ -176,6 +176,21 @@ describe("markdown exporter extension", () => {
 		);
 	});
 
+	it("keeps standalone markdown conversion working without an exported page map", () => {
+		const markdown = renderAssemblyMarkdown(
+			"= Guide\n\nSee xref:guide/setup.adoc[].",
+			"gfm",
+			"guide.adoc",
+			{
+				attributes: {
+					"site-url": "https://example.invalid",
+				},
+			},
+		);
+
+		expect(markdown).toBe("# Guide\n\nSee [setup](guide/setup.adoc).\n");
+	});
+
 	it("registers the converter through Antora assembler configuration", async () => {
 		vi.resetModules();
 		vi.doMock("@antora/assembler", () => ({
@@ -315,6 +330,177 @@ describe("markdown exporter extension", () => {
 		);
 		await expect(readFile(outputFile, "utf8")).resolves.toContain(
 			"See [guide/setup](guide/setup.md).",
+		);
+	});
+
+	it("reads exporter defaults from asciidoc attributes and keeps string config sources intact", async () => {
+		vi.resetModules();
+		vi.doMock("@antora/assembler", () => ({
+			configure: vi.fn(),
+		}));
+
+		const assembler = await import("@antora/assembler");
+		const { register } = await import("../../src/extension/index.ts");
+		const context = { name: "extension-context" };
+
+		register.call(context, {
+			config: {
+				configSource: "antora-playbook.yml",
+				rootLevel: 0,
+			},
+		});
+
+		expect(assembler.configure).toHaveBeenNthCalledWith(
+			1,
+			context,
+			expect.objectContaining({
+				backend: "markdown",
+				extname: ".md",
+			}),
+			{},
+			{
+				configSource: "antora-playbook.yml",
+				navigationCatalog: undefined,
+			},
+		);
+
+		register.call(context, {
+			config: {
+				rootLevel: 1,
+				configSource: {
+					asciidoc: {
+						attributes: {
+							"markdown-exporter-flavor": "strict",
+							"markdown-exporter-xref-fallback-label-style": "fragment-or-path",
+						},
+					},
+				},
+			},
+		});
+
+		const converter = vi.mocked(assembler.configure).mock.calls[1]?.[1];
+		expect(assembler.configure).toHaveBeenNthCalledWith(
+			2,
+			context,
+			expect.objectContaining({
+				backend: "markdown",
+				extname: ".md",
+				convert: expect.any(Function),
+			}),
+			{},
+			{
+				configSource: {
+					asciidoc: {
+						attributes: {
+							"markdown-exporter-flavor": "strict",
+							"markdown-exporter-xref-fallback-label-style": "fragment-or-path",
+						},
+					},
+					assembly: {
+						root_level: 1,
+					},
+				},
+				navigationCatalog: undefined,
+			},
+		);
+
+		const outputRoot = await mkdtemp(join(tmpdir(), "antora-md-exporter-"));
+		const outputFile = join(outputRoot, "guide.md");
+
+		await converter?.convert(
+			{
+				path: "/virtual/modules/ROOT/pages/guide.adoc",
+				contents: Buffer.from(
+					"= Guide\n\nSee xref:guide/setup.adoc[].",
+					"utf8",
+				),
+			},
+			{
+				docfile: "/virtual/modules/ROOT/pages/guide.adoc",
+				outdir: outputRoot,
+				outfile: outputFile,
+				outfilesuffix: ".html",
+			},
+			{ dir: outputRoot },
+		);
+
+		await expect(readFile(outputFile, "utf8")).resolves.toContain(
+			"See [guide/setup](guide/setup.md).",
+		);
+	});
+
+	it("rewrites nested exported page links across structured markdown blocks", async () => {
+		const converter = createMarkdownConverter();
+		converter.setExportedPageUrlMap(
+			new Map([
+				["/sample/term.html", "term.md"],
+				["/sample/table.html", "table.md"],
+				["/sample/callout.html", "callout.md"],
+				["/sample/footnote.html", "footnote.md"],
+			]),
+		);
+		const outputRoot = await mkdtemp(join(tmpdir(), "antora-md-exporter-"));
+		const outputFile = join(outputRoot, "guide.md");
+
+		await converter.convert(
+			{
+				path: "/virtual/modules/ROOT/pages/guide.adoc",
+				contents: Buffer.from(
+					[
+						"= Guide",
+						"",
+						"Term:: xref:term.adoc[_Term_]",
+						"",
+						"image:diagram.svg[Diagram]",
+						"",
+						'[cols="1"]',
+						"|===",
+						"|xref:table.adoc[Table]",
+						"|===",
+						"",
+						"[source,js]",
+						"----",
+						"const n = 1 // <1>",
+						"----",
+						"<1> xref:callout.adoc[Callout]",
+						"",
+						"footnote:[xref:footnote.adoc[Footnote]]",
+					].join("\n"),
+					"utf8",
+				),
+			},
+			{
+				docfile: "/virtual/modules/ROOT/pages/guide.adoc",
+				outdir: outputRoot,
+				outfile: outputFile,
+				outfilesuffix: ".html",
+			},
+			{ dir: outputRoot },
+		);
+
+		await expect(readFile(outputFile, "utf8")).resolves.toBe(
+			[
+				"# Guide",
+				"",
+				"**Term:** [*Term*](term.md)",
+				"",
+				"![Diagram](diagram.svg)",
+				"",
+				"| [Table](table.md) |",
+				"| --- |",
+				"",
+				"```js",
+				"const n = 1 // <1>",
+				"```",
+				"",
+				"1. [Callout](callout.md)",
+				"",
+				"[^1]",
+				"",
+				"[^1]: [Footnote](footnote.md)",
+				"",
+				"",
+			].join("\n"),
 		);
 	});
 });
