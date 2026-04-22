@@ -2,14 +2,11 @@ import { copyFile, mkdir, rm, stat } from "node:fs/promises";
 import { dirname, resolve } from "node:path";
 import { pathToFileURL } from "node:url";
 import {
-	createMarkdownConverter,
+	exportAntoraModules,
 	type MarkdownFlavorName,
+	resolveAntoraMarkdownExportDefaults,
 	type XrefFallbackLabelStyle,
-} from "../src/extension/index.ts";
-import {
-	resolveMarkdownExportDefaults,
-	runAntoraAssembler,
-} from "./antora-assembler.mjs";
+} from "../src/index.ts";
 
 export type ParsedExportAntoraModulesOptions = {
 	flavor?: MarkdownFlavorName;
@@ -168,7 +165,7 @@ export function parseArguments(
 export async function resolveExportAntoraModulesOptions(
 	parsed: ParsedExportAntoraModulesOptions,
 ): Promise<ExportAntoraModulesOptions> {
-	const defaults = await resolveMarkdownExportDefaults({
+	const defaults = await resolveAntoraMarkdownExportDefaults({
 		playbookPath: parsed.playbookPath,
 	});
 
@@ -204,11 +201,6 @@ export async function exportAntoraModulesToMarkdown(
 	}
 
 	const rootDir = dirname(options.playbookPath);
-	const converter = createMarkdownConverter({
-		flavor: options.flavor,
-		xrefFallbackLabelStyle: options.xrefFallbackLabelStyle,
-	});
-	const exportedFiles: ExportedMarkdownFile[] = [];
 	const reviewBundleRoot = resolve(options.outputRoot, "review-bundle");
 	const reviewBundleFiles: ReviewBundleFile[] = [];
 	const workflowBundleEntries = [
@@ -220,23 +212,13 @@ export async function exportAntoraModulesToMarkdown(
 	await mkdir(options.outputRoot, { recursive: true });
 	await mkdir(reviewBundleRoot, { recursive: true });
 
-	const files = await runAntoraAssembler({
-		buildDir: options.outputRoot,
-		converter,
+	const { exportedFiles } = await exportAntoraModules({
+		flavor: options.flavor,
+		outputRoot: options.outputRoot,
 		playbookPath: options.playbookPath,
 		rootLevel: options.rootLevel,
+		xrefFallbackLabelStyle: options.xrefFallbackLabelStyle,
 	});
-
-	for (const file of files) {
-		const relativeOutputPath = file.src.relative;
-		const outputPath = resolve(options.outputRoot, relativeOutputPath);
-		const moduleName = relativeOutputPath.replace(/\.md$/u, "");
-		exportedFiles.push({
-			moduleName,
-			outputPath,
-			relativeOutputPath,
-		});
-	}
 
 	for (const relativeSourcePath of workflowBundleEntries) {
 		const sourcePath = resolve(rootDir, relativeSourcePath);

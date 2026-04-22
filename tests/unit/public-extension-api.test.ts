@@ -3,8 +3,10 @@ import {
 	collectMarkdownInspectionRagDocument,
 	createMarkdownConverter,
 	describePackage,
+	exportAntoraModules,
 	PACKAGE_NAME,
 	register,
+	resolveAntoraMarkdownExportDefaults,
 } from "../../src/index.js";
 
 describe("public extension API", () => {
@@ -18,6 +20,11 @@ describe("public extension API", () => {
 	it("exports the real Antora extension entrypoints", () => {
 		expect(typeof createMarkdownConverter).toBe("function");
 		expect(typeof register).toBe("function");
+	});
+
+	it("exports the stable Antora module-export library entrypoints", () => {
+		expect(typeof exportAntoraModules).toBe("function");
+		expect(typeof resolveAntoraMarkdownExportDefaults).toBe("function");
 	});
 
 	it("exports the agent-ready inspection helper from the root entrypoint", () => {

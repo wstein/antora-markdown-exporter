@@ -278,7 +278,10 @@ describe("repository contract", () => {
 		expect(packageIndex).toContain("./adapter/assembly-structure-spec.js");
 		expect(packageIndex).toContain("./adapter/asciidoctor-structure.js");
 		expect(packageIndex).toContain("./adapter/assembly-structure.js");
+		expect(packageIndex).toContain("./module-export.js");
 		expect(packageIndex).toContain("assemblyStructureInvariants");
+		expect(packageIndex).toContain("exportAntoraModules");
+		expect(packageIndex).toContain("resolveAntoraMarkdownExportDefaults");
 		expect(
 			readFileSync(
 				resolve(

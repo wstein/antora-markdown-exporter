@@ -80,6 +80,14 @@ export {
 	renderMultiMarkdown,
 	renderStrict,
 } from "./markdown/render/index.js";
+export {
+	type AntoraMarkdownExportDefaults,
+	type AntoraMarkdownModuleExportFile,
+	type AntoraMarkdownModuleExportOptions,
+	type AntoraMarkdownModuleExportResult,
+	exportAntoraModules,
+	resolveAntoraMarkdownExportDefaults,
+} from "./module-export.js";
 
 export const PACKAGE_NAME = "@wsmy/antora-markdown-exporter";
 
