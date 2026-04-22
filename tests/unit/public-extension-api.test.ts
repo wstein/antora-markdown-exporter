@@ -7,6 +7,7 @@ import {
 	PACKAGE_NAME,
 	register,
 	resolveAntoraMarkdownExportDefaults,
+	runAntoraAssembler,
 } from "../../src/index.js";
 
 describe("public extension API", () => {
@@ -25,6 +26,7 @@ describe("public extension API", () => {
 	it("exports the stable Antora module-export library entrypoints", () => {
 		expect(typeof exportAntoraModules).toBe("function");
 		expect(typeof resolveAntoraMarkdownExportDefaults).toBe("function");
+		expect(typeof runAntoraAssembler).toBe("function");
 	});
 
 	it("exports the agent-ready inspection helper from the root entrypoint", () => {

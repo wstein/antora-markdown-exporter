@@ -369,6 +369,6 @@ After a tag-triggered `Release` workflow completes successfully, the separate Pa
 
 This repository is shaped as a library-first package with a small CLI entrypoint. The published package exposes the core markdown pipeline API and a real Antora extension entrypoint under `./extension`.
 
-The root package also publishes a stable Antora module-export library surface. Use `resolveAntoraMarkdownExportDefaults(...)` when you want Antora-owned defaults from the playbook and Assembler config, and use `exportAntoraModules(...)` when you want the package to drive Antora Assembler and write one Markdown export per configured assembly root.
+The root package also publishes a stable Antora module-export library surface. Use `resolveAntoraMarkdownExportDefaults(...)` when you want Antora-owned defaults from the playbook and Assembler config, use `exportAntoraModules(...)` when you want the package to drive Antora Assembler and write one Markdown export per configured assembly root, and use `runAntoraAssembler(...)` when you need the lower-level shared Antora runner without going back through repository-only script plumbing.
 
 For contributor-first guidance, use the onboarding guide. For operator workflows, support boundaries, and workflow evidence, use the operator manual and architecture guide.

@@ -2,7 +2,7 @@ import { spawnSync } from "node:child_process";
 import { rmSync } from "node:fs";
 import { dirname, resolve } from "node:path";
 import { fileURLToPath } from "node:url";
-import { runAntoraAssembler } from "./antora-assembler.mjs";
+import { runAntoraAssembler } from "../src/antora-runtime.js";
 
 function runCommand(command, args, cwd) {
 	const result = spawnSync(command, args, {

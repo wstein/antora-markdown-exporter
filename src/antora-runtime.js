@@ -1,9 +1,12 @@
 import { stat } from "node:fs/promises";
 import { createRequire } from "node:module";
 import { dirname, resolve } from "node:path";
-import { fileURLToPath } from "node:url";
 
-const require = createRequire(import.meta.url);
+const require = createRequire(
+	typeof __filename === "string"
+		? __filename
+		: resolve(process.cwd(), "package.json"),
+);
 const buildPlaybook = require("@antora/playbook-builder");
 const GeneratorContext = require("@antora/site-generator/generator-context");
 const { assembleContent } = require("@antora/assembler");
@@ -14,7 +17,10 @@ const produceAssemblyFiles = require(
 	resolve(assemblerLibDir, "produce-assembly-files.js"),
 );
 
-const modulePath = fileURLToPath(import.meta.url);
+const modulePath =
+	typeof __filename === "string"
+		? __filename
+		: resolve(process.cwd(), "package.json");
 const moduleShim = {
 	filename: modulePath,
 	path: dirname(modulePath),
@@ -257,7 +263,7 @@ export async function runAntoraAssembler({
 	}
 }
 
-export async function resolveMarkdownExportDefaults({
+export async function resolveAntoraMarkdownExportDefaults({
 	configSource,
 	playbookPath,
 }) {

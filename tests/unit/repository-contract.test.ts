@@ -105,6 +105,9 @@ describe("repository contract", () => {
 		expect(existsSync(resolve(root, "scripts/inspection-report.ts"))).toBe(
 			true,
 		);
+		expect(existsSync(resolve(root, "scripts/antora-assembler.mjs"))).toBe(
+			false,
+		);
 		expect(existsSync(resolve(root, "biome.json"))).toBe(true);
 		expect(existsSync(resolve(root, "tsconfig.json"))).toBe(true);
 		expect(existsSync(resolve(root, "tsconfig.build.json"))).toBe(true);
@@ -282,6 +285,7 @@ describe("repository contract", () => {
 		expect(packageIndex).toContain("assemblyStructureInvariants");
 		expect(packageIndex).toContain("exportAntoraModules");
 		expect(packageIndex).toContain("resolveAntoraMarkdownExportDefaults");
+		expect(packageIndex).toContain("runAntoraAssembler");
 		expect(
 			readFileSync(
 				resolve(
