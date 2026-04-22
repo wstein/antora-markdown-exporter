@@ -334,6 +334,12 @@ Where to look:
 * `tests/integration/fixture-golden.test.ts`
 * `tests/fixtures/**`
 
+Operator direction to keep in mind:
+
+* widen provenance-locked reference coverage deliberately when the published support matrix grows
+* keep MultiMarkdown-specific compatibility pressure in curated reference fixtures instead of relying only on local synthetic render tests
+* move export-policy controls toward Antora-native playbook or Assembler configuration rather than accumulating wrapper-only script flags
+
 Troubleshooting guidance:
 
 * if a rendering change is intentional, review the exact flavor outputs

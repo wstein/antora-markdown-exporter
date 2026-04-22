@@ -415,4 +415,38 @@ describe("repository contract", () => {
 		expect(referenceManifest).not.toContain(".md)");
 		expect(referenceManifest).toContain("[install](docs/install.html)");
 	});
+
+	it("keeps the roadmap notes for export controls, multimarkdown provenance, and agentic inspection in the tree", () => {
+		expect(
+			existsSync(
+				resolve(
+					root,
+					"notes/Antora CLI markdown export should be configurable through playbook variables.md",
+				),
+			),
+		).toBe(true);
+		expect(
+			existsSync(
+				resolve(
+					root,
+					"notes/Inspection reports should provide deterministic RAG inputs.md",
+				),
+			),
+		).toBe(true);
+		expect(
+			existsSync(
+				resolve(
+					root,
+					"notes/Provenance corpus should cover MultiMarkdown edge cases.md",
+				),
+			),
+		).toBe(true);
+		expect(manualDoc).toContain(
+			"MultiMarkdown-specific compatibility pressure",
+		);
+		expect(manualDoc).toContain(
+			"Antora-native playbook or Assembler configuration",
+		);
+		expect(onboardingDoc).toContain("agent-ready inspection surfaces");
+	});
 });
