@@ -15,7 +15,7 @@ The main building blocks are:
 |`src/extension/index.ts` exposes `register()` and `createMarkdownConverter()`. `register()` delegates to `@antora/assembler.configure()` and makes the package usable as a real Antora exporter extension.
 
 |Assembly converter
-|`src/exporter/convert-assembly.ts` parses assembled AsciiDoc-like input into semantic markdown nodes, including headings, lists, links, xrefs, images, admonitions, callouts, tables, include directives, diagnostics, anchors, aliases, and unsupported nodes.
+|`src/exporter/convert-assembly.ts` maps assembled Antora/Asciidoctor output into semantic markdown nodes, honoring assembler-provided structure and preserved metadata such as xrefs, anchors, aliases, images, tables, admonitions, and include diagnostics when present.
 
 |Include metadata transport
 |`src/exporter/include-metadata.ts` isolates the private HTML-comment marker transport used while rehydrating include-directive metadata through the conversion pipeline.
@@ -50,7 +50,7 @@ Its implementation lives in `src/markdown/ir.ts`, `src/markdown/normalize.ts`, `
 The remaining risk is not the absence of an outer Antora integration boundary. It is drift between the real extension entrypoint and the repository-owned conversion semantics that entrypoint is supposed to expose.
 
 ==== Conversion And Include Handling
-The exporter converts assembled content into IR and keeps include semantics, provenance, and diagnostics available without making the private marker format part of the public contract.
+The exporter converts assembled content into IR and keeps include semantics, provenance, and diagnostics available when they are intentionally preserved, without making the private marker format part of the public contract.
 
 Its implementation lives in `src/exporter/convert-assembly.ts` and `src/exporter/include-metadata.ts`.
 

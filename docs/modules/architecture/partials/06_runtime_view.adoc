@@ -6,7 +6,7 @@
 This scenario is based on the notes `Exporter pipeline uses Assembler and a direct TypeScript converter` and `Release and package identity use scoped npm publishing`.
 
 1. An upstream caller provides assembled AsciiDoc content to `convertAssemblyToMarkdownIR(source, { sourcePath })`.
-2. The converter in `src/exporter/convert-assembly.ts` parses blocks and inline constructs into semantic IR nodes.
+2. The converter in `src/exporter/convert-assembly.ts` maps assembled content and preserved metadata into semantic IR nodes.
 3. Include directives are inlined when source-path context is available; include metadata, diagnostics, and provenance are preserved as dedicated `includeDirective` nodes rather than being dropped.
 4. The caller normalizes the document through `normalizeMarkdownIR`.
 5. Xref targets remain structured until lowering in `src/markdown/xref-resolution.ts`.

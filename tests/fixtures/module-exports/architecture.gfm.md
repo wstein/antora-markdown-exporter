@@ -143,7 +143,7 @@ The main building blocks are:
 | Building block | Responsibility |
 | --- | --- |
 | Extension entrypoint | `src/extension/index.ts` exposes `register()` and `createMarkdownConverter()`. `register()` delegates to `@antora/assembler.configure()` and makes the package usable as a real Antora exporter extension. |
-| Assembly converter | `src/exporter/convert-assembly.ts` parses assembled AsciiDoc-like input into semantic markdown nodes, including headings, lists, links, xrefs, images, admonitions, callouts, tables, include directives, diagnostics, anchors, aliases, and unsupported nodes. |
+| Assembly converter | `src/exporter/convert-assembly.ts` maps assembled Antora/Asciidoctor output into semantic markdown nodes, honoring assembler-provided structure and preserved metadata such as xrefs, anchors, aliases, images, tables, admonitions, and include diagnostics when present. |
 | Include metadata transport | `src/exporter/include-metadata.ts` isolates the private HTML-comment marker transport used while rehydrating include-directive metadata through the conversion pipeline. |
 | Markdown kernel | `src/markdown/ir.ts`, `src/markdown/normalize.ts`, and `src/markdown/xref-resolution.ts` define the canonical IR, normalize documents, and lower xref targets before rendering. |
 | Flavor renderers and fallback policy | `src/markdown/flavor.ts`, `src/markdown/fallback.ts`, and `src/markdown/render/**` define flavor capabilities, raw HTML and unsupported-node fallback policy, and the final markdown serializers. |
@@ -168,7 +168,7 @@ The remaining risk is not the absence of an outer Antora integration boundary. I
 
 ### 5.1.2. Conversion And Include Handling
 
-The exporter converts assembled content into IR and keeps include semantics, provenance, and diagnostics available without making the private marker format part of the public contract.
+The exporter converts assembled content into IR and keeps include semantics, provenance, and diagnostics available when they are intentionally preserved, without making the private marker format part of the public contract.
 
 Its implementation lives in `src/exporter/convert-assembly.ts` and `src/exporter/include-metadata.ts`.
 
@@ -186,7 +186,7 @@ These surfaces live in `src/markdown/include-diagnostics.ts`, `scripts/inspectio
 
 This scenario is based on the notes `Exporter pipeline uses Assembler and a direct TypeScript converter` and `Release and package identity use scoped npm publishing`.
 
-1. An upstream caller provides assembled AsciiDoc content to `convertAssemblyToMarkdownIR(source, { sourcePath })`. 2. The converter in `src/exporter/convert-assembly.ts` parses blocks and inline constructs into semantic IR nodes. 3. Include directives are inlined when source-path context is available; include metadata, diagnostics, and provenance are preserved as dedicated `includeDirective` nodes rather than being dropped. 4. The caller normalizes the document through `normalizeMarkdownIR`. 5. Xref targets remain structured until lowering in `src/markdown/xref-resolution.ts`. 6. A flavor renderer serializes the normalized document according to `src/markdown/flavor.ts` and `src/markdown/fallback.ts`.
+1. An upstream caller provides assembled AsciiDoc content to `convertAssemblyToMarkdownIR(source, { sourcePath })`. 2. The converter in `src/exporter/convert-assembly.ts` maps assembled content and preserved metadata into semantic IR nodes. 3. Include directives are inlined when source-path context is available; include metadata, diagnostics, and provenance are preserved as dedicated `includeDirective` nodes rather than being dropped. 4. The caller normalizes the document through `normalizeMarkdownIR`. 5. Xref targets remain structured until lowering in `src/markdown/xref-resolution.ts`. 6. A flavor renderer serializes the normalized document according to `src/markdown/flavor.ts` and `src/markdown/fallback.ts`.
 
 The notable aspect is that the shipped runtime now spans both the Assembler-backed extension entrypoint and the repository-owned conversion boundary. The remaining work is to keep converter behavior, registration behavior, and tests aligned as coverage expands.
 

@@ -1,3 +1,4 @@
+import { existsSync } from "node:fs";
 import { readdir, readFile } from "node:fs/promises";
 import { resolve } from "node:path";
 import { describe, expect, it } from "vitest";
@@ -10,6 +11,9 @@ import { renderMarkdown } from "../../src/markdown/render/index.js";
 const fixturesRoot = resolve(__dirname, "../fixtures");
 const fixtureNames = (await readdir(fixturesRoot, { withFileTypes: true }))
 	.filter((entry) => entry.isDirectory())
+	.filter((entry) =>
+		existsSync(resolve(fixturesRoot, entry.name, "input.adoc")),
+	)
 	.map((entry) => entry.name)
 	.sort();
 

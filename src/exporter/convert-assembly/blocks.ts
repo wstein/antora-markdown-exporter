@@ -363,7 +363,7 @@ function parseTable(
 		if (line.startsWith("|")) {
 			currentRowCells.push(...parseTableRowCells(line));
 			if (
-				expectedColumnCount !== undefined &&
+				expectedColumnCount === undefined ||
 				currentRowCells.length >= expectedColumnCount
 			) {
 				flushCurrentRow();

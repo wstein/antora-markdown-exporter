@@ -71,11 +71,11 @@ As a contributor, assume both the markdown kernel and the outer Antora registrat
 
 The note `Exporter pipeline uses Assembler and a direct TypeScript converter` defines the core project shape:
 
-1. Antora Assembler produces assembled AsciiDoc.
-2. The TypeScript exporter maps that assembled content into a semantic Markdown IR.
+1. Antora Assembler produces assembled AsciiDoc and resolves most low-level inline and block structure first.
+2. The TypeScript exporter maps that assembled content and preserved metadata into a semantic Markdown IR.
 3. Flavor renderers serialize that IR into concrete Markdown.
 
-For day-to-day contribution work, the practical rule is simpler: once content reaches the repository’s markdown kernel, semantic decisions should stay inside repository code instead of being delegated to Pandoc-, DocBook-, or HTML-to-Markdown fallback chains.
+For day-to-day contribution work, the practical rule is simpler: once content reaches the repository’s markdown kernel, semantic decisions should stay inside repository code instead of being delegated to Pandoc-, DocBook-, or HTML-to-Markdown fallback chains. The exporter should honor assembler-provided structure and Antora metadata rather than pretending it owns the full low-level AsciiDoc parse.
 
 This is why the implementation is split across:
 
@@ -149,7 +149,7 @@ For contributors, this distinction is critical:
 
 The note `Include metadata transport is an internal implementation detail` tells contributors what to preserve during refactors.
 
-The converter currently moves include metadata through an HTML-comment transport until it is rehydrated as semantic IR nodes. The transport format itself is private. The public contract is the semantics: include directives remain inspectable, diagnostics survive, and provenance remains available.
+The converter currently moves include metadata through an HTML-comment transport until it is rehydrated as semantic IR nodes. The transport format itself is private. The public contract is the semantics: include directives remain inspectable, diagnostics survive, and provenance remains available when the exporter is asked to preserve or report on include behavior that the assembler would otherwise have already resolved.
 
 When touching includes:
 
