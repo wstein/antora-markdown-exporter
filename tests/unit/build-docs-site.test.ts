@@ -2,7 +2,6 @@ import { resolve } from "node:path";
 import { describe, expect, it } from "vitest";
 import {
 	buildDocsPdf,
-	createArchitecturePdfSource,
 	createModulePdfSource,
 	getPdfModuleNames,
 	getPdfOutputPath,
@@ -16,8 +15,8 @@ describe("build docs site script", () => {
 		expect(stripDocumentTitle("= Sample\n\nBody")).toBe("\nBody");
 	});
 
-	it("assembles the architecture PDF from the arc42 partials", () => {
-		const source = createArchitecturePdfSource(root);
+	it("assembles the architecture PDF from the module page defined in Antora navigation", () => {
+		const source = createModulePdfSource(root, "architecture");
 
 		expect(source).toContain("= Architecture");
 		expect(source).toContain("== Introduction and Goals");
@@ -27,7 +26,7 @@ describe("build docs site script", () => {
 	it("assembles the manual PDF from the module page", () => {
 		const source = createModulePdfSource(root, "manual");
 
-		expect(source).toContain("= Operator Manual");
+		expect(source).toContain("= Manual");
 		expect(source).toContain("== Core Workflows");
 	});
 

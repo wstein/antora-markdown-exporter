@@ -10,10 +10,12 @@ import { renderMarkdown } from "../markdown/render/index.js";
 export type XrefFallbackLabelStyle =
 	| "fragment-or-basename"
 	| "fragment-or-path";
+export type AssemblerRootLevel = 0 | 1;
 
 export interface AntoraMarkdownExporterExtensionConfig {
 	readonly flavor?: MarkdownFlavorName;
 	readonly configSource?: Record<string, unknown> | string;
+	readonly rootLevel?: AssemblerRootLevel;
 	readonly xrefFallbackLabelStyle?: XrefFallbackLabelStyle;
 	readonly navigationCatalog?: {
 		getNavigation: (component: string, version: string) => unknown[];
@@ -45,6 +47,15 @@ type AssemblerFile = {
 };
 
 const defaultFlavor: MarkdownFlavorName = "gfm";
+const defaultAssemblerRootLevel: AssemblerRootLevel = 1;
+
+function createDefaultAssemblerConfigSource(rootLevel: AssemblerRootLevel) {
+	return {
+		assembly: {
+			root_level: rootLevel,
+		},
+	};
+}
 
 export function renderAssemblyMarkdown(
 	source: string,
@@ -109,6 +120,7 @@ export function register(
 		configSource,
 		flavor,
 		navigationCatalog,
+		rootLevel,
 		xrefFallbackLabelStyle,
 		...assemblerConfig
 	} = config;
@@ -117,7 +129,12 @@ export function register(
 		createMarkdownConverter({ flavor, xrefFallbackLabelStyle }),
 		assemblerConfig,
 		{
-			configSource,
+			configSource:
+				typeof configSource === "string" || configSource !== undefined
+					? configSource
+					: createDefaultAssemblerConfigSource(
+							rootLevel ?? defaultAssemblerRootLevel,
+						),
 			navigationCatalog,
 		},
 	);

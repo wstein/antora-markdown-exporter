@@ -4,15 +4,9 @@ import { dirname, resolve } from "node:path";
 import { fileURLToPath } from "node:url";
 
 export {
-	createArchitectureModuleSource as createArchitecturePdfSource,
 	createDocumentationModuleSource as createModulePdfSource,
 	getDocumentationModuleNames as getPdfModuleNames,
 	stripDocumentTitle,
-} from "./docs-module-sources.mjs";
-
-import {
-	createDocumentationModuleSource as createModulePdfSource,
-	getDocumentationModuleNames as getPdfModuleNames,
 } from "./docs-module-sources.mjs";
 
 function runCommand(command, args, cwd) {

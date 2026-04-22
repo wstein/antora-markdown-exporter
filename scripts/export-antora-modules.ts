@@ -8,6 +8,7 @@ import {
 } from "../src/extension/index.ts";
 import {
 	createDocumentationModuleSource,
+	createDocumentationRootSource,
 	getDocumentationModuleNames,
 } from "./docs-module-sources.mjs";
 
@@ -17,6 +18,7 @@ export type ExportAntoraModulesOptions = {
 	outputRoot: string;
 	packageTaskMarkdown: boolean;
 	playbookPath: string;
+	rootLevel: 0 | 1;
 	xrefFallbackLabelStyle: XrefFallbackLabelStyle;
 };
 
@@ -42,9 +44,9 @@ const markdownFlavors = new Set<MarkdownFlavorName>([
 
 function usage(): string {
 	return [
-		"Usage: bun scripts/export-antora-modules.ts [--playbook <file>] [--output-root <dir>] [--flavor <gfm|commonmark|gitlab|multimarkdown|strict>] [--xref-fallback-label-style <fragment-or-basename|fragment-or-path>] [--package-task-markdown] [--json]",
+		"Usage: bun scripts/export-antora-modules.ts [--playbook <file>] [--output-root <dir>] [--flavor <gfm|commonmark|gitlab|multimarkdown|strict>] [--root-level <0|1>] [--xref-fallback-label-style <fragment-or-basename|fragment-or-path>] [--package-task-markdown] [--json]",
 		"",
-		"Export assembled documentation modules to Markdown using the repository's Antora Markdown converter.",
+		"Export documentation assemblies to Markdown using the repository's Antora Markdown converter.",
 	].join("\n");
 }
 
@@ -55,6 +57,7 @@ export function parseArguments(argv: string[]): ExportAntoraModulesOptions {
 	let outputRoot = resolve("build/markdown");
 	let packageTaskMarkdown = false;
 	let playbookPath = resolve("antora-playbook.yml");
+	let rootLevel: 0 | 1 = 1;
 	let xrefFallbackLabelStyle: XrefFallbackLabelStyle = "fragment-or-basename";
 
 	for (let index = 0; index < argv.length; index += 1) {
@@ -112,6 +115,17 @@ export function parseArguments(argv: string[]): ExportAntoraModulesOptions {
 			continue;
 		}
 
+		if (argument === "--root-level") {
+			const value = argv[index + 1];
+			if (value !== "0" && value !== "1") {
+				throw new Error("Missing or invalid value for --root-level");
+			}
+
+			rootLevel = Number(value) as 0 | 1;
+			index += 1;
+			continue;
+		}
+
 		if (argument === "--json") {
 			format = "json";
 			continue;
@@ -135,6 +149,7 @@ export function parseArguments(argv: string[]): ExportAntoraModulesOptions {
 		outputRoot,
 		packageTaskMarkdown,
 		playbookPath,
+		rootLevel,
 		xrefFallbackLabelStyle,
 	};
 }
@@ -172,13 +187,18 @@ export async function exportAntoraModulesToMarkdown(
 	await mkdir(options.outputRoot, { recursive: true });
 	await mkdir(reviewBundleRoot, { recursive: true });
 
-	for (const moduleName of getDocumentationModuleNames()) {
+	const moduleNames =
+		options.rootLevel === 0
+			? ["antora-markdown-exporter"]
+			: getDocumentationModuleNames(rootDir);
+
+	for (const moduleName of moduleNames) {
 		const relativeOutputPath = `${moduleName}.md`;
 		const outputPath = resolve(options.outputRoot, relativeOutputPath);
-		const assembledSource = createDocumentationModuleSource(
-			rootDir,
-			moduleName,
-		);
+		const assembledSource =
+			options.rootLevel === 0
+				? createDocumentationRootSource(rootDir)
+				: createDocumentationModuleSource(rootDir, moduleName);
 		const docfile = resolve(rootDir, `${moduleName}.assembled.adoc`);
 
 		await converter.convert(
@@ -237,6 +257,7 @@ async function main(): Promise<void> {
 					flavor: options.flavor,
 					outputRoot: options.outputRoot,
 					playbookPath: options.playbookPath,
+					rootLevel: options.rootLevel,
 					reviewBundleRoot,
 					reviewBundleFiles: reviewBundleFiles.map((entry) => ({
 						outputPath: entry.relativeOutputPath,
@@ -259,6 +280,7 @@ async function main(): Promise<void> {
 			`Exported ${exportedFiles.length} documentation modules as ${options.flavor} Markdown.`,
 			`Output root: ${options.outputRoot}`,
 			`Review bundle: ${reviewBundleRoot}`,
+			`Assembly root level: ${options.rootLevel}`,
 			`Xref fallback labels: ${options.xrefFallbackLabelStyle}`,
 			...exportedFiles.map(
 				(entry) => `- ${entry.moduleName}: ${entry.relativeOutputPath}`,

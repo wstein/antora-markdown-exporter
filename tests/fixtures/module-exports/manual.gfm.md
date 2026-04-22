@@ -1,4 +1,4 @@
-# Operator Manual
+# Manual
 
 ## Table of Contents
 

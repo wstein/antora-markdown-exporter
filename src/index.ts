@@ -50,6 +50,7 @@ export {
 } from "./adapter/assembly-structure-spec.js";
 export { convertAssemblyStructureToMarkdownIR } from "./exporter/structured-to-ir.js";
 export {
+	type AssemblerRootLevel,
 	createMarkdownConverter,
 	register,
 	renderAssemblyMarkdown,

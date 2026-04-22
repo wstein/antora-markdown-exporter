@@ -182,4 +182,36 @@ describe("markdown exporter extension", () => {
 			},
 		);
 	});
+
+	it("defaults assembler config to root_level 1 when no config source is provided", async () => {
+		vi.resetModules();
+		vi.doMock("@antora/assembler", () => ({
+			configure: vi.fn(),
+		}));
+
+		const assembler = await import("@antora/assembler");
+		const { register } = await import("../../src/extension/index.ts");
+		const context = { name: "extension-context" };
+
+		register.call(context, {
+			config: {},
+		});
+
+		expect(assembler.configure).toHaveBeenCalledWith(
+			context,
+			expect.objectContaining({
+				backend: "markdown",
+				extname: ".md",
+			}),
+			{},
+			{
+				configSource: {
+					assembly: {
+						root_level: 1,
+					},
+				},
+				navigationCatalog: undefined,
+			},
+		);
+	});
 });
