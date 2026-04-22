@@ -3,7 +3,11 @@ import { dirname, resolve } from "node:path";
 import type { AssemblySourceLocation } from "../assembly-structure.js";
 import type { AsciidoctorBlock, AsciidoctorListItem } from "./types.js";
 
-const require = createRequire(import.meta.url);
+const require = createRequire(
+	typeof __filename === "string"
+		? __filename
+		: resolve(process.cwd(), "package.json"),
+);
 
 type AsciidoctorInstance = {
 	load: (source: string, options: Record<string, unknown>) => AsciidoctorBlock;

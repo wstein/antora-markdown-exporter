@@ -34,7 +34,7 @@ type ConvertAttributes = {
 	outdir: string;
 	outfile: string;
 	outfilesuffix: string;
-};
+} & Record<string, unknown>;
 
 type BuildConfig = {
 	cwd?: string;
@@ -57,12 +57,22 @@ function createDefaultAssemblerConfigSource(rootLevel: AssemblerRootLevel) {
 	};
 }
 
+function extractStringAttributes(
+	attributes: Record<string, unknown>,
+): Record<string, string> {
+	return Object.fromEntries(
+		Object.entries(attributes).flatMap(([key, value]) =>
+			typeof value === "string" ? [[key, value]] : [],
+		),
+	);
+}
+
 export function renderAssemblyMarkdown(
 	source: string,
 	flavor: MarkdownFlavorName = defaultFlavor,
 	sourcePath = "assembly.adoc",
 	options: {
-		attributes?: Record<string, unknown>;
+		attributes?: Record<string, string>;
 		xrefFallbackLabelStyle?: XrefFallbackLabelStyle;
 	} = {},
 ): string {
@@ -108,7 +118,7 @@ export function createMarkdownConverter(
 				flavor,
 				convertAttributes.docfile,
 				{
-					attributes: convertAttributes,
+					attributes: extractStringAttributes(convertAttributes),
 					xrefFallbackLabelStyle,
 				},
 			);
