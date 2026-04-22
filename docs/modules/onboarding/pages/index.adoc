@@ -23,7 +23,7 @@ Read the standard Antora concept first, then the repository shorthand:
 
 [cols="1,1" options="header"]
 |===
-|Standard Antora concept |Repository shorthand
+|Standard Antora concept |Secondary repository shorthand
 
 |Antora Assembler extension/exporter
 |extension/runtime path
@@ -57,8 +57,8 @@ Why this matters:
 
 As a contributor, assume both layers are real:
 
-* the outer Antora registration path
-* the inner semantic markdown pipeline
+* the outer Antora Assembler extension registration path
+* the inner semantic markdown conversion pipeline
 
 Changes should keep those layers aligned.
 

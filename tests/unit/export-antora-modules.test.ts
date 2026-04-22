@@ -151,7 +151,10 @@ describe("export antora modules script", () => {
 			"utf8",
 		);
 		expect(manualMarkdown).toContain(
-			"- [Chapter 1. Core Workflows](#chapter-1-core-workflows)",
+			"- [Chapter 1. Reader Split](#chapter-1-reader-split)",
+		);
+		expect(manualMarkdown).toContain(
+			"- [Chapter 2. Core Workflows](#chapter-2-core-workflows)",
 		);
 		expect(manualMarkdown).toContain("1. Install dependencies:");
 		expect(manualMarkdown).not.toContain("\n+\n");

@@ -262,7 +262,7 @@ The emitted JSON contains the normalized inspection report plus the resolved inp
 }
 ```
 
-The extension/runtime path goes through structured extraction and lowering rather than a text parser. The root package also publishes `assemblyStructureInvariants` and `assemblyStructureSpecification` so adapter-boundary rules are visible as code. For the detailed support matrix, workflow proof, and evidence surfaces, use the operator manual and architecture docs.
+The Antora extension registration path goes through structured extraction and lowering rather than a text parser. The root package also publishes `assemblyStructureInvariants` and `assemblyStructureSpecification` so adapter-boundary rules are visible as code. For the detailed support matrix, workflow proof, and evidence surfaces, use the operator manual and architecture docs.
 
 ## Extension
 
@@ -278,7 +278,7 @@ The extension entrypoint delegates to `@antora/assembler.configure()` using the 
 
 These docs use a few repository-local phrases for precision, but the Antora concepts stay primary.
 
-| Standard Antora concept | Repository phrasing |
+| Standard Antora concept | Secondary repository shorthand |
 | --- | --- |
 | Antora Assembler extension/exporter | extension/runtime path |
 | Assembler config such as `assembly.root_level` | export partitioning policy |

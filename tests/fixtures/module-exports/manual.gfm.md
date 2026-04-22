@@ -50,7 +50,7 @@ Do not collapse those personas into one command list. Doing so makes the extensi
 
 These docs sometimes use repository shorthand. Keep this bridge in mind:
 
-| Standard Antora concept | Repository shorthand |
+| Standard Antora concept | Secondary repository shorthand |
 | --- | --- |
 | Antora Assembler extension/exporter | extension/runtime path |
 | Assembler configuration | export partitioning policy |

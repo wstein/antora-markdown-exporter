@@ -51,7 +51,7 @@ You do not need that model to get started. Use the architecture document when yo
 
 Read the standard Antora concept first, then the repository shorthand:
 
-| Standard Antora concept | Repository shorthand |
+| Standard Antora concept | Secondary repository shorthand |
 | --- | --- |
 | Antora Assembler extension/exporter | extension/runtime path |
 | Assembler configuration such as `assembly.root_level` | export partitioning policy |
@@ -75,8 +75,8 @@ Why this matters:
 
 As a contributor, assume both layers are real:
 
-- the outer Antora registration path
-- the inner semantic markdown pipeline
+- the outer Antora Assembler extension registration path
+- the inner semantic markdown conversion pipeline
 
 Changes should keep those layers aligned.
 

@@ -29,7 +29,7 @@ These docs sometimes use repository shorthand. Keep this bridge in mind:
 
 [cols="1,1" options="header"]
 |===
-|Standard Antora concept |Repository shorthand
+|Standard Antora concept |Secondary repository shorthand
 
 |Antora Assembler extension/exporter
 |extension/runtime path
