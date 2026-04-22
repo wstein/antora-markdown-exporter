@@ -2,38 +2,69 @@
 
 ## Table of Contents
 
-- [Chapter 1. Core Workflows](#chapter-1-core-workflows)
-  - [1.1. Run The Standard Repository Loop](#11-run-the-standard-repository-loop)
-  - [1.2. Operator Prerequisites Matrix](#12-operator-prerequisites-matrix)
-  - [1.3. Generate An Inspection Report](#13-generate-an-inspection-report)
-  - [1.4. Start And Finalize A Release](#14-start-and-finalize-a-release)
-- [Chapter 2. Commands And Behavior](#chapter-2-commands-and-behavior)
-  - [2.1. Primary Commands](#21-primary-commands)
-  - [2.2. Inspection Script Behavior](#22-inspection-script-behavior)
-  - [2.3. Canonical Contract Family](#23-canonical-contract-family)
-- [Chapter 3. Validation And Troubleshooting](#chapter-3-validation-and-troubleshooting)
-  - [3.1. Golden Tests: What Counts And What Does Not](#31-golden-tests-what-counts-and-what-does-not)
-  - [3.2. Use Inspection Helpers Instead Of Ad-Hoc Traversal](#32-use-inspection-helpers-instead-of-ad-hoc-traversal)
-  - [3.3. Reference Fixtures: Coverage, Provenance, And Scope](#33-reference-fixtures-coverage-provenance-and-scope)
-  - [3.4. Converter Support Matrix](#34-converter-support-matrix)
-  - [3.5. Changed Responsibilities](#35-changed-responsibilities)
-  - [3.6. Evidence Ledger](#36-evidence-ledger)
-  - [3.7. Common Failure Modes](#37-common-failure-modes)
-- [Chapter 4. Release And Integrity](#chapter-4-release-and-integrity)
-  - [4.1. Package Identity And Publish Checks](#41-package-identity-and-publish-checks)
-  - [4.2. Proof Matrix](#42-proof-matrix)
-  - [4.3. Keep Scripts, Docs, And Files In Lockstep](#43-keep-scripts-docs-and-files-in-lockstep)
-- [Chapter 5. Reference Notes](#chapter-5-reference-notes)
+- [Chapter 1. Reader Split](#chapter-1-reader-split)
+  - [1.1. Antora Site Integrator Versus Repository Operator](#11-antora-site-integrator-versus-repository-operator)
+  - [1.2. Terminology Bridge](#12-terminology-bridge)
+- [Chapter 2. Core Workflows](#chapter-2-core-workflows)
+  - [2.1. Run The Standard Repository Loop](#21-run-the-standard-repository-loop)
+  - [2.2. Operator Prerequisites Matrix](#22-operator-prerequisites-matrix)
+  - [2.3. Generate An Inspection Report](#23-generate-an-inspection-report)
+  - [2.4. Start And Finalize A Release](#24-start-and-finalize-a-release)
+- [Chapter 3. Commands And Behavior](#chapter-3-commands-and-behavior)
+  - [3.1. Primary Commands](#31-primary-commands)
+  - [3.2. Inspection Script Behavior](#32-inspection-script-behavior)
+  - [3.3. Fallback Behavior For Review Exports](#33-fallback-behavior-for-review-exports)
+  - [3.4. Canonical Contract Family](#34-canonical-contract-family)
+- [Chapter 4. Validation And Troubleshooting](#chapter-4-validation-and-troubleshooting)
+  - [4.1. Golden Tests: What Counts And What Does Not](#41-golden-tests-what-counts-and-what-does-not)
+  - [4.2. Use Inspection Helpers Instead Of Ad-Hoc Traversal](#42-use-inspection-helpers-instead-of-ad-hoc-traversal)
+  - [4.3. Reference Fixtures: Coverage, Provenance, And Scope](#43-reference-fixtures-coverage-provenance-and-scope)
+  - [4.4. Converter Support Matrix](#44-converter-support-matrix)
+  - [4.5. Changed Responsibilities](#45-changed-responsibilities)
+  - [4.6. Evidence Ledger](#46-evidence-ledger)
+  - [4.7. Common Failure Modes](#47-common-failure-modes)
+- [Chapter 5. Release And Integrity](#chapter-5-release-and-integrity)
+  - [5.1. Package Identity And Publish Checks](#51-package-identity-and-publish-checks)
+  - [5.2. Proof Matrix](#52-proof-matrix)
+  - [5.3. Keep Scripts, Docs, And Files In Lockstep](#53-keep-scripts-docs-and-files-in-lockstep)
+- [Chapter 6. Reference Notes](#chapter-6-reference-notes)
 
 This manual is for operators and maintainers who need to run, validate, and release `@wsmy/antora-markdown-exporter`, the Antora Assembler based Markdown exporter with semantic IR, inspection surfaces, and explicit Markdown flavor rendering.
 
 Use this document for prerequisites, commands, troubleshooting, validation, and release operations. For first-contributor guidance, see the onboarding guide. For invariants, proof surfaces, and full rationale, use the architecture document.
 
-# Chapter 1. Core Workflows
+# Chapter 1. Reader Split
 
-## 1.1. Run The Standard Repository Loop
+## 1.1. Antora Site Integrator Versus Repository Operator
+
+This manual is primarily for repository operators and maintainers. If you are integrating the published package into an Antora site, start with the README quick start instead of this repository workflow guide.
+
+| Reader | Use this first |
+| --- | --- |
+| Antora site integrator | `npm install`, the extension entrypoint under `@wsmy/antora-markdown-exporter/extension`, playbook `asciidoc.attributes` for exporter defaults, and Assembler config for `assembly.root_level` |
+| Repository operator or maintainer | `make` targets, Bun-first scripts, repository validation flows, release automation, and golden or reference test discipline |
+
+Do not collapse those personas into one command list. Doing so makes the extension look heavier than it is for normal Antora users.
+
+## 1.2. Terminology Bridge
+
+These docs sometimes use repository shorthand. Keep this bridge in mind:
+
+| Standard Antora concept | Repository shorthand |
+| --- | --- |
+| Antora Assembler extension/exporter | extension/runtime path |
+| Assembler configuration | export partitioning policy |
+| Playbook `asciidoc.attributes` for exporter defaults | exporter display policy |
+| Assembled AsciiDoc from Antora | assembled source buffer |
+| Semantic conversion stages after assembly | semantic pipeline |
+
+# Chapter 2. Core Workflows
+
+## 2.1. Run The Standard Repository Loop
 
 The repository’s primary execution path is Bun-first through `make` and `package.json` scripts.
+
+This is the repository operator path, not the minimal Antora site integration path.
 
 Recommended operator loop:
 
@@ -84,7 +115,7 @@ That export emits:
 - public publication to `https://wstein.github.io/antora-markdown-exporter` happens from `.github/workflows/pages.yml`
 - the Pages workflow checks out `main`, which the release workflow has already promoted
 
-## 1.2. Operator Prerequisites Matrix
+## 2.2. Operator Prerequisites Matrix
 
 Use this matrix before troubleshooting local environment failures.
 
@@ -97,20 +128,20 @@ Use this matrix before troubleshooting local environment failures.
 | Poppler `pdftotext` | PDF-versus-Markdown structural parity tests | `Test-enforced`, `CI-enforced` | `tests/integration/module-export-structure.test.ts`; `.github/workflows/ci.yml` |
 | GitHub Actions runners | Release publishing and Pages publication | `CI-enforced` | `.github/workflows/release.yml`; `.github/workflows/pages.yml`; `tests/unit/repository-contract.test.ts` |
 
-## 1.3. Generate An Inspection Report
+## 2.3. Generate An Inspection Report
 
 Use the inspection script when you need machine-readable validation for xref metadata.
 
 File-backed input:
 
 ```bash
-make inspect-report INPUT=tests/fixtures/xrefs/input.adoc
+make inspect-report INPUT=modules/ROOT/pages/guide.adoc
 ```
 
 Equivalent direct script invocation:
 
 ```bash
-bun run inspect:report -- tests/fixtures/xrefs/input.adoc
+bun run inspect:report -- modules/ROOT/pages/guide.adoc
 ```
 
 Read from standard input:
@@ -123,14 +154,14 @@ cat generated-page.adoc | bun run inspect:report -- --stdin \
 Emit GitHub Actions annotations instead of JSON:
 
 ```bash
-bun run inspect:report -- tests/fixtures/xrefs/input.adoc \
+bun run inspect:report -- modules/ROOT/pages/guide.adoc \
   --format github-actions
 ```
 
 Emit deterministic agent-oriented JSON for retrieval and prompt assembly:
 
 ```bash
-bun run inspect:report -- tests/fixtures/xrefs/input.adoc \
+bun run inspect:report -- modules/ROOT/pages/guide.adoc \
   --format rag-json
 ```
 
@@ -148,7 +179,7 @@ Operator rule:
 - use this script for validation and reporting
 - do not reimplement IR traversal in CI or release scripts unless the library API cannot express the needed behavior
 
-## 1.4. Start And Finalize A Release
+## 2.4. Start And Finalize A Release
 
 The release operating model uses `develop` as the integration branch, `main` as published history, and semver tags as the publish trigger.
 
@@ -201,9 +232,9 @@ Important conflict to preserve:
 - the extension export is also real and packaged
 - the extension package now implements the Antora runtime registration contract through Assembler
 
-# Chapter 2. Commands And Behavior
+# Chapter 3. Commands And Behavior
 
-## 2.1. Primary Commands
+## 3.1. Primary Commands
 
 | Command | Behavior |
 | --- | --- |
@@ -221,7 +252,7 @@ Important conflict to preserve:
 | `make release VERSION=vX.Y.Z` | Runs the release wizard on `develop`. A new version starts a release candidate; the current untagged version finalizes by creating and pushing the release tag. |
 | `make docs` | Builds the Antora docs site locally into `build/site` and emits downloadable module PDFs at `build/site/antora-markdown-exporter/documentation.pdf`, `build/site/antora-markdown-exporter/architecture.pdf`, `build/site/antora-markdown-exporter/manual.pdf`, and `build/site/antora-markdown-exporter/onboarding.pdf`. Public publication is handled separately by the GitHub Pages workflow after successful tag-triggered release completion. |
 
-## 2.2. Inspection Script Behavior
+## 3.2. Inspection Script Behavior
 
 The inspection script accepts these supported modes:
 
@@ -238,7 +269,17 @@ Known behavior from the implementation and tests:
 
 These failure modes print a usage message and exit with a non-zero status.
 
-## 2.3. Canonical Contract Family
+## 3.3. Fallback Behavior For Review Exports
+
+Current policy is intentionally strict:
+
+- unsupported constructs stay visibly degraded instead of being silently rewritten
+- raw HTML fallback remains explicit and flavor-dependent
+- no graceful text-recovery mode is currently part of the supported contract
+
+This means a reader may still see explicit unsupported markers in flavors or contexts that cannot faithfully carry the source semantics. That is a conscious evidence-preservation choice today, not an accidental renderer quirk.
+
+## 3.4. Canonical Contract Family
 
 The repository exposes one coherent contract family rather than separate ad-hoc tools:
 
@@ -249,9 +290,9 @@ The repository exposes one coherent contract family rather than separate ad-hoc 
 | Operator scripts | Repository automation entrypoints in `scripts/export-antora-modules.ts`, `scripts/inspection-report.ts`, and `scripts/release.js` | `Implemented`, `Test-enforced` |
 | Workflow automation | Release and publication behavior in `.github/workflows/release.yml` and `.github/workflows/pages.yml` | `CI-enforced` |
 
-# Chapter 3. Validation And Troubleshooting
+# Chapter 4. Validation And Troubleshooting
 
-## 3.1. Golden Tests: What Counts And What Does Not
+## 4.1. Golden Tests: What Counts And What Does Not
 
 The notes `Testing relies on golden fixtures and deterministic snapshots` and `Golden tests require rendered output comparison` define the exact-output contract.
 
@@ -281,7 +322,7 @@ Troubleshooting guidance:
 - if a rendering change is intentional, review the exact flavor outputs
 - if a change only updates structure assertions without touching expected markdown, the test may not be covering the real contract you think it covers
 
-## 3.2. Use Inspection Helpers Instead Of Ad-Hoc Traversal
+## 4.2. Use Inspection Helpers Instead Of Ad-Hoc Traversal
 
 The note `Inspection helpers expose normalized validation surfaces` is the operator rule for diagnostics and reporting.
 
@@ -302,7 +343,7 @@ Troubleshooting hint:
 
 If two validation consumers disagree, verify that both are operating on normalized documents and that one has not reimplemented traversal incompletely.
 
-## 3.3. Reference Fixtures: Coverage, Provenance, And Scope
+## 4.3. Reference Fixtures: Coverage, Provenance, And Scope
 
 Four notes define the reference suite:
 
@@ -334,7 +375,7 @@ Troubleshooting guidance:
 - if a reference test fails because the hash changed, confirm whether the snapshot was intentionally refreshed
 - if a reference test passes but real regressions slipped through, the next step is often better coverage tags or a better representative fixture, not a bigger uncurated corpus
 
-## 3.4. Converter Support Matrix
+## 4.4. Converter Support Matrix
 
 Treat this section as the primary honesty surface for converter behavior. If a prose claim elsewhere sounds stronger than this matrix, the matrix wins until proof is updated.
 
@@ -356,7 +397,7 @@ Status legend used in this and later proof sections:
 | Raw HTML and unsupported degradation | Partial | Fallback stays explicit and deterministic, but downstream allowance depends on flavor policy instead of blanket passthrough. | `src/markdown/fallback.ts`; `tests/unit/fallback.test.ts`; `tests/integration/raw-html-policy.test.ts` | Flavor policy review; release validation |
 | Unmodeled AsciiDoc constructs outside the current IR | Unsupported | New constructs must become explicit IR extensions or visible fallback; they are not silently normalized into “good enough” Markdown. | `src/markdown/ir.ts`; `src/markdown/fallback.ts`; note `Strict architecture must be extended without weakening invariants` | Architecture review; support-matrix updates |
 
-## 3.5. Changed Responsibilities
+## 4.5. Changed Responsibilities
 
 The structured rewrite changed what the exporter owns.
 
@@ -367,7 +408,7 @@ The structured rewrite changed what the exporter owns.
 | Markdown IR lowering | `src/exporter/structured-to-ir.ts` | Change this layer when semantic structure is already present but the IR mapping is wrong or incomplete. |
 | Inspection surfaces | `src/markdown/inspection.ts` | Prefer normalized semantic inspection over ad-hoc renderer traversal or dormant include transport assumptions. |
 
-## 3.6. Evidence Ledger
+## 4.6. Evidence Ledger
 
 This ledger turns the architecture story into reviewable evidence. Use it when a claim spans code, tests, and workflows and you need the exact proof surface rather than a broad status marker.
 
@@ -379,7 +420,7 @@ This ledger turns the architecture story into reviewable evidence. Use it when a
 | Inspection stays machine-readable | `src/markdown/inspection.ts`; `scripts/inspection-report.ts` | `tests/unit/inspection.test.ts`; `tests/unit/inspection-report-script.test.ts` | `bun run inspect:report`; CI annotation consumers | Prefer normalized report surfaces over ad-hoc traversal. |
 | Release and publication claims stay bounded | `scripts/release-check.mjs`; `scripts/release.js`; `antora-playbook.yml` | `tests/unit/repository-contract.test.ts` | `.github/workflows/release.yml`; `.github/workflows/pages.yml`; `build/markdown/review-bundle/.github/workflows/**` | Do not describe publication behavior without linking both workflow files and the contract test. |
 
-## 3.7. Common Failure Modes
+## 4.7. Common Failure Modes
 
 | Failure mode | What to check |
 | --- | --- |
@@ -388,9 +429,9 @@ This ledger turns the architecture story into reviewable evidence. Use it when a
 | GitHub Actions annotations look incomplete | Confirm the script is using `--format github-actions`, and that the consumer did not bypass `collectMarkdownInspectionReport`. |
 | Reference suite is noisy | Check whether the issue is a hash drift, a stale coverage assumption in `tests/reference/manifest.json`, or a real semantic regression in xrefs, includes, fallback, tables, or admonitions. |
 
-# Chapter 4. Release And Integrity
+# Chapter 5. Release And Integrity
 
-## 4.1. Package Identity And Publish Checks
+## 5.1. Package Identity And Publish Checks
 
 The repository publishes as `@wsmy/antora-markdown-exporter` and is expected to behave like a publishable TypeScript package.
 
@@ -407,7 +448,7 @@ Current conflict to preserve:
 - the extension export is also real and packaged
 - the extension export is a real runtime integration surface and should stay aligned with package docs and release checks
 
-## 4.2. Proof Matrix
+## 5.2. Proof Matrix
 
 | Claim | Status | Evidence surface | Proof files |
 | --- | --- | --- | --- |
@@ -418,7 +459,7 @@ Current conflict to preserve:
 | Release integrity and publish flow | `Implemented`, `CI-enforced` | Release checks plus tag-triggered workflow | `scripts/release-check.mjs`; `.github/workflows/release.yml`; `tests/unit/repository-contract.test.ts` |
 | GitHub Pages publication after successful release promotion | `CI-enforced` | Workflow handoff from `Release` to `Pages` | `.github/workflows/release.yml`; `.github/workflows/pages.yml`; `tests/unit/repository-contract.test.ts` |
 
-## 4.3. Keep Scripts, Docs, And Files In Lockstep
+## 5.3. Keep Scripts, Docs, And Files In Lockstep
 
 Before considering a release or operational change complete, verify that:
 
@@ -430,7 +471,7 @@ Before considering a release or operational change complete, verify that:
 
 In this repository, stale references are blocking issues, not cleanup backlog.
 
-# Chapter 5. Reference Notes
+# Chapter 6. Reference Notes
 
 This manual is primarily grounded in the following notes:
 

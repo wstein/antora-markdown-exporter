@@ -4,11 +4,56 @@ This manual is for operators and maintainers who need to run, validate, and rele
 
 Use this document for prerequisites, commands, troubleshooting, validation, and release operations. For first-contributor guidance, see the onboarding guide. For invariants, proof surfaces, and full rationale, use the architecture document.
 
+== Reader Split
+
+=== Antora Site Integrator Versus Repository Operator
+
+This manual is primarily for repository operators and maintainers. If you are integrating the published package into an Antora site, start with the README quick start instead of this repository workflow guide.
+
+[cols="1,2" options="header"]
+|===
+|Reader |Use this first
+
+|Antora site integrator
+|`npm install`, the extension entrypoint under `@wsmy/antora-markdown-exporter/extension`, playbook `asciidoc.attributes` for exporter defaults, and Assembler config for `assembly.root_level`
+
+|Repository operator or maintainer
+|`make` targets, Bun-first scripts, repository validation flows, release automation, and golden or reference test discipline
+|===
+
+Do not collapse those personas into one command list. Doing so makes the extension look heavier than it is for normal Antora users.
+
+=== Terminology Bridge
+
+These docs sometimes use repository shorthand. Keep this bridge in mind:
+
+[cols="1,1" options="header"]
+|===
+|Standard Antora concept |Repository shorthand
+
+|Antora Assembler extension/exporter
+|extension/runtime path
+
+|Assembler configuration
+|export partitioning policy
+
+|Playbook `asciidoc.attributes` for exporter defaults
+|exporter display policy
+
+|Assembled AsciiDoc from Antora
+|assembled source buffer
+
+|Semantic conversion stages after assembly
+|semantic pipeline
+|===
+
 == Core Workflows
 
 === Run The Standard Repository Loop
 
 The repository’s primary execution path is Bun-first through `make` and `package.json` scripts.
+
+This is the repository operator path, not the minimal Antora site integration path.
 
 Recommended operator loop:
 
@@ -128,14 +173,14 @@ File-backed input:
 
 [source,bash]
 ----
-make inspect-report INPUT=tests/fixtures/xrefs/input.adoc
+make inspect-report INPUT=modules/ROOT/pages/guide.adoc
 ----
 
 Equivalent direct script invocation:
 
 [source,bash]
 ----
-bun run inspect:report -- tests/fixtures/xrefs/input.adoc
+bun run inspect:report -- modules/ROOT/pages/guide.adoc
 ----
 
 Read from standard input:
@@ -150,7 +195,7 @@ Emit GitHub Actions annotations instead of JSON:
 
 [source,bash]
 ----
-bun run inspect:report -- tests/fixtures/xrefs/input.adoc \
+bun run inspect:report -- modules/ROOT/pages/guide.adoc \
   --format github-actions
 ----
 
@@ -158,7 +203,7 @@ Emit deterministic agent-oriented JSON for retrieval and prompt assembly:
 
 [source,bash]
 ----
-bun run inspect:report -- tests/fixtures/xrefs/input.adoc \
+bun run inspect:report -- modules/ROOT/pages/guide.adoc \
   --format rag-json
 ----
 
@@ -297,6 +342,16 @@ Known behavior from the implementation and tests:
 * invalid `--format` values are rejected
 
 These failure modes print a usage message and exit with a non-zero status.
+
+=== Fallback Behavior For Review Exports
+
+Current policy is intentionally strict:
+
+* unsupported constructs stay visibly degraded instead of being silently rewritten
+* raw HTML fallback remains explicit and flavor-dependent
+* no graceful text-recovery mode is currently part of the supported contract
+
+This means a reader may still see explicit unsupported markers in flavors or contexts that cannot faithfully carry the source semantics. That is a conscious evidence-preservation choice today, not an accidental renderer quirk.
 
 === Canonical Contract Family
 

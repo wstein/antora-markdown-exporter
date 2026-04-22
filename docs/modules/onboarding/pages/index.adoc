@@ -17,6 +17,32 @@ Some docs use short status markers such as `Implemented`, `Test-enforced`, `CI-e
 
 You do not need that model to get started. Use the architecture document when you need the full proof matrix, evidence ledger, or contract traceability.
 
+=== Concept Bridge Before Repository Shorthand
+
+Read the standard Antora concept first, then the repository shorthand:
+
+[cols="1,1" options="header"]
+|===
+|Standard Antora concept |Repository shorthand
+
+|Antora Assembler extension/exporter
+|extension/runtime path
+
+|Assembler configuration such as `assembly.root_level`
+|export partitioning policy
+
+|Playbook `asciidoc.attributes` for exporter defaults
+|exporter display policy
+
+|Assembled AsciiDoc from Antora
+|assembled source buffer
+
+|Semantic conversion stages after assembly
+|semantic pipeline
+|===
+
+Contributor rule: keep Antora concepts primary in user-facing docs. Repository shorthand is only a compact internal label for people already working inside this codebase.
+
 == Mental Models
 
 === Start With The Real Boundary, Not The Marketing Boundary
@@ -118,8 +144,11 @@ This matters because fallback behavior is part of the contract:
 * unsupported output must stay deterministic
 * raw HTML allowance must be explicit
 * regressions should be testable in one policy surface
+* the current repository default is strict visible degradation, not silent text recovery
 
 If you are about to add a one-off renderer branch for unsupported behavior, stop and check whether the change belongs in the fallback layer instead.
+
+If a future review-oriented graceful mode is added, it must arrive as explicit configuration with contract tests and docs. Do not smuggle it in as an untracked renderer convenience.
 
 === Transparent Extensions Are Not Fallback
 
@@ -162,6 +191,17 @@ Practical onboarding takeaway:
 * use `make` targets first
 * expect Bun to be the default runtime for day-to-day development
 * do not add new lockfile-detection or multi-package-manager branching
+
+=== Separate Integrator And Contributor Paths
+
+Do not make Antora site integrators learn the repository's contributor workflow before they can evaluate the extension.
+
+Use this split:
+
+* Antora site integrators need `npm install`, the extension entrypoint, and Antora-owned config such as playbook attributes and Assembler config
+* repository contributors need `make`, Bun-first scripts, focused tests, release workflow knowledge, and local export helpers
+
+If you are editing docs and those two personas are mixed in one step list, split the section instead of adding more caveats.
 
 == Core Workflows
 

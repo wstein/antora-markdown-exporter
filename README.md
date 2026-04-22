@@ -10,6 +10,37 @@ The package consumes assembled Antora/Asciidoctor output, maps that structure in
 npm install @wsmy/antora-markdown-exporter
 ```
 
+## Antora Site Quick Start
+
+Use this path if you are integrating the exporter into an Antora site and do not need this repository's contributor tooling.
+
+1. Install the package in your Antora site project.
+2. Export the extension entrypoint from your Antora runtime setup:
+
+```ts
+import { register } from "@wsmy/antora-markdown-exporter/extension";
+
+export { register };
+```
+
+3. Keep exporter defaults in Antora-owned config:
+
+```yaml
+asciidoc:
+  attributes:
+    markdown-exporter-flavor: gfm
+    markdown-exporter-xref-fallback-label-style: fragment-or-basename
+```
+
+4. Keep assembly partitioning in Assembler config:
+
+```yaml
+assembly:
+  root_level: 1
+```
+
+That is the standard integration path. Repository commands such as `make markdown`, `bun run export:modules`, `make test`, and `make pdf` are contributor conveniences for this package repository, not requirements for a normal Antora site.
+
 ## Quick Start
 
 ```ts
@@ -148,7 +179,7 @@ for (const target of report.xrefTargets) {
 For machine-readable CI output, the repository also ships a Bun-native example script. JSON and GitHub Actions modes serialize the normalized inspection report directly, and `rag-json` emits the agent-oriented inspection shape with document metadata, headings, anchors, page aliases, xrefs, and best-effort source locations.
 
 ```bash
-bun run inspect:report -- tests/fixtures/xrefs/input.adoc > inspection-report.json
+bun run inspect:report -- modules/ROOT/pages/guide.adoc > inspection-report.json
 ```
 
 The same script can stream AsciiDoc from stdin in CI without creating a temporary file:
@@ -162,14 +193,14 @@ cat generated-page.adoc | bun run inspect:report -- --stdin \
 When a workflow wants GitHub Actions annotations instead of JSON, use the alternate format:
 
 ```bash
-bun run inspect:report -- tests/fixtures/xrefs/input.adoc \
+bun run inspect:report -- modules/ROOT/pages/guide.adoc \
   --format github-actions
 ```
 
 For deterministic agent-oriented JSON instead of the full validation report:
 
 ```bash
-bun run inspect:report -- tests/fixtures/xrefs/input.adoc \
+bun run inspect:report -- modules/ROOT/pages/guide.adoc \
   --format rag-json
 ```
 
@@ -180,7 +211,7 @@ Example GitHub Actions step using the Makefile delegate target, artifact upload,
 ```yaml
 - name: Generate inspection report
   run: |
-    make inspect-report INPUT=tests/fixtures/xrefs/input.adoc \
+    make inspect-report INPUT=modules/ROOT/pages/guide.adoc \
       > inspection-report.json
 
 - name: Upload inspection report
@@ -191,7 +222,7 @@ Example GitHub Actions step using the Makefile delegate target, artifact upload,
 
 - name: Emit inspection annotations
   run: |
-    bun run inspect:report -- tests/fixtures/xrefs/input.adoc \
+    bun run inspect:report -- modules/ROOT/pages/guide.adoc \
       --format github-actions \
       || true
 ```
@@ -243,6 +274,20 @@ export { register };
 
 The extension entrypoint delegates to `@antora/assembler.configure()` using the repository’s Markdown converter, matching the Antora Assembler custom exporter contract.
 
+## Terminology Bridge
+
+These docs use a few repository-local phrases for precision, but the Antora concepts stay primary.
+
+| Standard Antora concept | Repository phrasing |
+| --- | --- |
+| Antora Assembler extension/exporter | extension/runtime path |
+| Assembler config such as `assembly.root_level` | export partitioning policy |
+| Playbook `asciidoc.attributes` for exporter defaults | exporter display policy |
+| Assembled AsciiDoc from Antora | assembled source buffer |
+| Semantic conversion stages after assembly | semantic pipeline |
+
+If you are coming from normal Antora usage, read the left column first. The right column is repository shorthand, not a replacement vocabulary.
+
 ## CLI
 
 ```bash
@@ -260,9 +305,9 @@ make integration
 make reference
 make pdf
 make markdown
-make inspect-report INPUT=tests/fixtures/sample/input.adoc
-bun run inspect:report -- tests/fixtures/sample/input.adoc
-bun run inspect:report -- --stdin --source-path /virtual/page.adoc < tests/fixtures/sample/input.adoc
+make inspect-report INPUT=modules/ROOT/pages/guide.adoc
+bun run inspect:report -- modules/ROOT/pages/guide.adoc
+bun run inspect:report -- --stdin --source-path /virtual/page.adoc < guide.adoc
 make format
 make fix
 ```
@@ -324,4 +369,4 @@ After a tag-triggered `Release` workflow completes successfully, the separate Pa
 
 This repository is shaped as a library-first package with a small CLI entrypoint. The published package exposes the core markdown pipeline API and a real Antora extension entrypoint under `./extension`.
 
-For contributor-first guidance, use the onboarding guide. For operator workflows, support boundaries, and workflow evidence, use the manual and architecture docs in `docs/modules/**`.
+For contributor-first guidance, use the onboarding guide. For operator workflows, support boundaries, and workflow evidence, use the operator manual and architecture guide.

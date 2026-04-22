@@ -3,6 +3,7 @@
 ## Table of Contents
 
 - [Chapter 1. Start Here](#chapter-1-start-here)
+  - [1.1. Concept Bridge Before Repository Shorthand](#11-concept-bridge-before-repository-shorthand)
 - [Chapter 2. Mental Models](#chapter-2-mental-models)
   - [2.1. Start With The Real Boundary, Not The Marketing Boundary](#21-start-with-the-real-boundary-not-the-marketing-boundary)
   - [2.2. Think In Pipeline Stages](#22-think-in-pipeline-stages)
@@ -14,6 +15,7 @@
   - [2.8. Includes Are Mostly Assembler-Owned](#28-includes-are-mostly-assembler-owned)
   - [2.9. Xref Routing Is Lowering, Not Rendering](#29-xref-routing-is-lowering-not-rendering)
   - [2.10. One Toolchain Path Is Primary](#210-one-toolchain-path-is-primary)
+  - [2.11. Separate Integrator And Contributor Paths](#211-separate-integrator-and-contributor-paths)
 - [Chapter 3. Core Workflows](#chapter-3-core-workflows)
   - [3.1. Day One](#31-day-one)
   - [3.2. First Task](#32-first-task)
@@ -44,6 +46,20 @@ If you need the full architectural rationale, proof surface, or invariants, jump
 Some docs use short status markers such as `Implemented`, `Test-enforced`, `CI-enforced`, and `Intended`.
 
 You do not need that model to get started. Use the architecture document when you need the full proof matrix, evidence ledger, or contract traceability.
+
+## 1.1. Concept Bridge Before Repository Shorthand
+
+Read the standard Antora concept first, then the repository shorthand:
+
+| Standard Antora concept | Repository shorthand |
+| --- | --- |
+| Antora Assembler extension/exporter | extension/runtime path |
+| Assembler configuration such as `assembly.root_level` | export partitioning policy |
+| Playbook `asciidoc.attributes` for exporter defaults | exporter display policy |
+| Assembled AsciiDoc from Antora | assembled source buffer |
+| Semantic conversion stages after assembly | semantic pipeline |
+
+Contributor rule: keep Antora concepts primary in user-facing docs. Repository shorthand is only a compact internal label for people already working inside this codebase.
 
 # Chapter 2. Mental Models
 
@@ -146,8 +162,11 @@ This matters because fallback behavior is part of the contract:
 - unsupported output must stay deterministic
 - raw HTML allowance must be explicit
 - regressions should be testable in one policy surface
+- the current repository default is strict visible degradation, not silent text recovery
 
 If you are about to add a one-off renderer branch for unsupported behavior, stop and check whether the change belongs in the fallback layer instead.
+
+If a future review-oriented graceful mode is added, it must arrive as explicit configuration with contract tests and docs. Do not smuggle it in as an untracked renderer convenience.
 
 ## 2.7. Transparent Extensions Are Not Fallback
 
@@ -190,6 +209,17 @@ Practical onboarding takeaway:
 - use `make` targets first
 - expect Bun to be the default runtime for day-to-day development
 - do not add new lockfile-detection or multi-package-manager branching
+
+## 2.11. Separate Integrator And Contributor Paths
+
+Do not make Antora site integrators learn the repository&#8217;s contributor workflow before they can evaluate the extension.
+
+Use this split:
+
+- Antora site integrators need `npm install`, the extension entrypoint, and Antora-owned config such as playbook attributes and Assembler config
+- repository contributors need `make`, Bun-first scripts, focused tests, release workflow knowledge, and local export helpers
+
+If you are editing docs and those two personas are mixed in one step list, split the section instead of adding more caveats.
 
 # Chapter 3. Core Workflows
 
