@@ -306,6 +306,17 @@ describe("asciidoctor block helpers", () => {
 		).toEqual([null, null]);
 
 		expect(
+			extractAlignment({
+				getAttribute: () => "<",
+				getColumns: () => [
+					{ getAttributes: () => ({}) },
+					{ getAttributes: () => ({ halign: "right" }) },
+					{ getAttributes: () => ({ halign: "center" }) },
+				],
+			} as never),
+		).toEqual(["left", "right", "center"]);
+
+		expect(
 			extractTable({
 				getAttribute: () => undefined,
 				getColumns: () => [{ getAttributes: () => ({}) }],
@@ -319,6 +330,40 @@ describe("asciidoctor block helpers", () => {
 				cells: [{ children: [{ type: "text", value: "Header" }] }],
 			},
 			rows: [],
+		});
+
+		expect(
+			extractTable({
+				getAttribute: () => undefined,
+				getColumns: () => [
+					{ getAttributes: () => ({ halign: "center" }) },
+					{ getAttributes: () => ({ halign: "right" }) },
+				],
+				getHeadRows: () => [
+					[{ getText: () => "Head A" }, { getText: () => "Head B" }],
+				],
+				getBodyRows: () => [
+					[{ getText: () => "Body A" }, { getText: () => "Body B" }],
+				],
+				getSourceLocation: () => undefined,
+			} as never),
+		).toMatchObject({
+			type: "table",
+			align: ["center", "right"],
+			header: {
+				cells: [
+					{ children: [{ type: "text", value: "Head A" }] },
+					{ children: [{ type: "text", value: "Head B" }] },
+				],
+			},
+			rows: [
+				{
+					cells: [
+						{ children: [{ type: "text", value: "Body A" }] },
+						{ children: [{ type: "text", value: "Body B" }] },
+					],
+				},
+			],
 		});
 
 		expect(
@@ -400,11 +445,17 @@ describe("asciidoctor block helpers", () => {
 			extractRow([
 				{ getText: () => "" },
 				{ getText: () => "Alpha &lt; Beta" },
+				{ getText: () => "<strong>Gamma</strong>" },
 			] as never[]),
 		).toEqual({
 			cells: [
 				{ children: [{ type: "text", value: "" }] },
 				{ children: [{ type: "text", value: "Alpha < Beta" }] },
+				{
+					children: [
+						{ type: "strong", children: [{ type: "text", value: "Gamma" }] },
+					],
+				},
 			],
 		});
 	});
