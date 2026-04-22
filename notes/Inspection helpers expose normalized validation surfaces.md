@@ -4,13 +4,11 @@ aliases: ["Validation helper API", "Inspection report surface", "Normalized insp
 tags: ["api", "validation", "inspection", "testing", "release"]
 target: current
 ---
-Inspection helpers expose normalized validation surfaces because downstream tooling should inspect include diagnostics and xref targets through a stable API instead of reimplementing tree traversal over Markdown IR nodes. Validation consumers need durable semantics, not knowledge of every recursive block shape.
+Inspection helpers expose normalized validation surfaces because downstream tooling should inspect xrefs and xref targets through a stable API instead of reimplementing tree traversal over Markdown IR nodes. Validation consumers need durable semantics, not knowledge of every recursive block shape.
 
 ## What
 
 The repository exposes helper functions that consume a Markdown document and return normalized inspection data:
-- include directives
-- include diagnostics
 - xrefs
 - xref targets
 - combined inspection reports

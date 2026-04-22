@@ -38,6 +38,10 @@ const extensionEntrypoint = readFileSync(
 	"utf8",
 );
 const packageIndex = readFileSync(resolve(root, "src/index.ts"), "utf8");
+const cliEntrypoint = readFileSync(
+	resolve(root, "bin/antora-markdown-exporter.js"),
+	"utf8",
+);
 const readme = readFileSync(resolve(root, "README.md"), "utf8");
 const manualDoc = readFileSync(
 	resolve(root, "docs/modules/manual/pages/index.adoc"),
@@ -122,10 +126,22 @@ describe("repository contract", () => {
 		expect(exportScript).toContain('format: "human" | "json"');
 		expect(exportScript).toContain('let format: "human" | "json" = "human"');
 		expect(exportScript).toContain('if (argument === "--json")');
+		expect(exportScript).toContain(
+			'if (argument === "--xref-fallback-label-style")',
+		);
+		expect(exportScript).toContain("Xref fallback labels:");
 		expect(exportScript).toContain('if (options.format === "json")');
 		expect(exportScript).not.toContain('if (argument === "--format")');
 		expect(exportScript).toContain("Exported ");
 		expect(exportScript).toContain("Output root:");
+	});
+
+	it("keeps the lightweight CLI wrapper honest about its current scope", () => {
+		expect(cliEntrypoint).toContain("Current scope:");
+		expect(cliEntrypoint).toContain(
+			"--xref-fallback-label-style fragment-or-path",
+		);
+		expect(cliEntrypoint).toContain("only help and version output");
 	});
 
 	it("keeps package metadata wording aligned with the public package description", () => {

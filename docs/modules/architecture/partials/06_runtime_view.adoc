@@ -12,7 +12,7 @@ This scenario is based on the notes `Exporter pipeline uses Assembler and a dire
 5. Xref targets remain structured until lowering in `src/markdown/xref-resolution.ts`.
 6. A flavor renderer serializes the normalized document according to `src/markdown/flavor.ts` and `src/markdown/fallback.ts`.
 
-The notable aspect is that the shipped runtime now spans both the Assembler-backed extension entrypoint and the repository-owned structured conversion boundary. The remaining work is to delete the legacy text parser without weakening supported semantics.
+The notable aspect is that the shipped runtime now spans both the Assembler-backed extension entrypoint and the repository-owned structured conversion boundary. The remaining work is to keep coverage, docs, and CLI-facing policy controls aligned with that structured runtime rather than letting legacy wording creep back in.
 
 === Collect Inspection Data For CI Or Release Validation
 

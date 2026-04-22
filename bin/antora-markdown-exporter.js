@@ -13,6 +13,14 @@ if (argv.includes("--help") || argv.length === 0) {
 	console.log(`${name} - Antora Markdown exporter CLI`);
 	console.log("\nUsage:");
 	console.log("  antora-markdown-exporter [--help|--version]");
+	console.log("\nCurrent scope:");
+	console.log("  This wrapper currently exposes only help and version output.");
+	console.log(
+		"  For module export options such as --xref-fallback-label-style, run:",
+	);
+	console.log(
+		"  bun run export:modules -- --xref-fallback-label-style fragment-or-path",
+	);
 	process.exit(0);
 }
 
