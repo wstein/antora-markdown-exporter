@@ -116,6 +116,35 @@ describe("markdown exporter extension", () => {
 		);
 	});
 
+	it("writes configured path-style xref fallback labels when requested", async () => {
+		const converter = createMarkdownConverter({
+			xrefFallbackLabelStyle: "fragment-or-path",
+		});
+		const outputRoot = await mkdtemp(join(tmpdir(), "antora-md-exporter-"));
+		const outputFile = join(outputRoot, "guide.md");
+
+		await converter.convert(
+			{
+				path: "/virtual/modules/ROOT/pages/guide.adoc",
+				contents: Buffer.from(
+					"= Guide\n\nSee xref:guide/setup.adoc[].",
+					"utf8",
+				),
+			},
+			{
+				docfile: "/virtual/modules/ROOT/pages/guide.adoc",
+				outdir: outputRoot,
+				outfile: outputFile,
+				outfilesuffix: ".html",
+			},
+			{ dir: outputRoot },
+		);
+
+		await expect(readFile(outputFile, "utf8")).resolves.toBe(
+			"# Guide\n\nSee [guide/setup](guide/setup.adoc).\n\n",
+		);
+	});
+
 	it("registers the converter through Antora assembler configuration", async () => {
 		vi.resetModules();
 		vi.doMock("@antora/assembler", () => ({
@@ -135,6 +164,7 @@ describe("markdown exporter extension", () => {
 				configSource: { playbook: true },
 				navigationCatalog,
 				configFile: "antora-playbook.yml",
+				xrefFallbackLabelStyle: "fragment-or-path",
 			},
 		});
 
@@ -143,6 +173,7 @@ describe("markdown exporter extension", () => {
 			expect.objectContaining({
 				backend: "markdown",
 				extname: ".md",
+				convert: expect.any(Function),
 			}),
 			{ configFile: "antora-playbook.yml" },
 			{

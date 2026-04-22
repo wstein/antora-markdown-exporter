@@ -449,6 +449,34 @@ describe("asciidoctor structure extraction", () => {
 		expect(labels).toEqual(["install", "cli", "overview", "setup", "nav"]);
 	});
 
+	it("supports explicit xref fallback label display policy", () => {
+		const document = extractAssemblyStructure(
+			[
+				"== Xrefs",
+				"",
+				"See xref:docs:ROOT:guide/setup.adoc[] and xref:2.0@docs:api:page$guide/index.adoc#overview[].",
+			].join("\n"),
+			{
+				xrefFallbackLabelStyle: "fragment-or-path",
+			},
+		);
+
+		const paragraph = document.children[1];
+		expect(paragraph).toMatchObject({ type: "paragraph" });
+		if (paragraph?.type !== "paragraph") {
+			throw new Error("expected paragraph");
+		}
+
+		const labels = paragraph.children
+			.filter((child) => child.type === "xref")
+			.map((child) =>
+				child.type === "xref" && child.children[0]?.type === "text"
+					? child.children[0].value
+					: "",
+			);
+		expect(labels).toEqual(["guide/setup", "overview"]);
+	});
+
 	it("extracts pass blocks and halign-driven table alignment structurally", () => {
 		const document = extractAssemblyStructure(
 			[
@@ -475,6 +503,48 @@ describe("asciidoctor structure extraction", () => {
 				expect.objectContaining({
 					type: "table",
 					align: [null, null, null],
+				}),
+			]),
+		);
+	});
+
+	it("keeps malformed inline html literal and exposes unsupported block contexts", () => {
+		const document = extractAssemblyStructure(
+			[
+				"== Edge Cases",
+				"",
+				"+++<strong>broken+++",
+				"",
+				"video::clip.mp4[]",
+			].join("\n"),
+		);
+
+		expect(document.children).toEqual(
+			expect.arrayContaining([
+				expect.objectContaining({
+					type: "paragraph",
+					children: [{ type: "text", value: "<strong>broken" }],
+				}),
+				expect.objectContaining({
+					type: "unsupported",
+					reason: expect.stringContaining("video"),
+				}),
+			]),
+		);
+	});
+
+	it("joins multi-term description labels with a stable separator", () => {
+		const document = extractAssemblyStructure(
+			["== Terms", "", "first term; second term:: Shared description."].join(
+				"\n",
+			),
+		);
+
+		expect(document.children).toEqual(
+			expect.arrayContaining([
+				expect.objectContaining({
+					type: "labeledGroup",
+					label: [{ type: "text", value: "first term; second term" }],
 				}),
 			]),
 		);

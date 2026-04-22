@@ -443,13 +443,13 @@ The note `Converter coverage should be published as a support matrix` defines th
 |Xrefs, anchors, and page aliases
 |Supported
 |Structured xref targets, anchor identifiers, and page aliases remain inspectable until lowering or rendering.
-|`src/markdown/xref-resolution.ts`; `tests/unit/xref-resolution.test.ts`; `tests/unit/include-diagnostics.test.ts`; reference fixtures
+|`src/markdown/xref-resolution.ts`; `tests/unit/xref-resolution.test.ts`; `tests/unit/inspection.test.ts`; reference fixtures
 |Inspection report review; rendered fixture review
 
 |Inspection report surfaces
 |Supported
 |Normalized inspection reports expose xrefs and normalized targets from the structured runtime path without requiring renderer-local traversal.
-|`src/markdown/inspection.ts`; `scripts/inspection-report.ts`; `tests/unit/include-diagnostics.test.ts`; `tests/unit/inspection-report-script.test.ts`; `tests/integration/reference-antora.test.ts`
+|`src/markdown/inspection.ts`; `scripts/inspection-report.ts`; `tests/unit/inspection.test.ts`; `tests/unit/inspection-report-script.test.ts`; `tests/integration/reference-antora.test.ts`
 |`scripts/inspection-report.ts`; CI annotation review
 
 |Admonitions, images, and tables
@@ -499,7 +499,7 @@ This ledger turns the architecture story into reviewable evidence. Use it when a
 
 |Inspection stays machine-readable
 |`src/markdown/inspection.ts`; `scripts/inspection-report.ts`
-|`tests/unit/include-diagnostics.test.ts`; `tests/unit/inspection-report-script.test.ts`
+|`tests/unit/inspection.test.ts`; `tests/unit/inspection-report-script.test.ts`
 |`bun run inspect:report`; CI annotation consumers
 |Prefer normalized report surfaces over ad-hoc traversal.
 
@@ -569,7 +569,7 @@ Current conflict to preserve:
 |Inspection surfaces for xrefs
 |`Implemented`, `Test-enforced`
 |Root API, inspection script, and inspection tests
-|`src/markdown/inspection.ts`; `scripts/inspection-report.ts`; `tests/unit/include-diagnostics.test.ts`; `tests/unit/inspection-report-script.test.ts`
+|`src/markdown/inspection.ts`; `scripts/inspection-report.ts`; `tests/unit/inspection.test.ts`; `tests/unit/inspection-report-script.test.ts`
 
 |Module Markdown export follows the canonical pipeline
 |`Implemented`, `Test-enforced`

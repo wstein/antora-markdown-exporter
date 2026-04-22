@@ -38,7 +38,7 @@
 |Reusable inspection surfaces
 |`Implemented`, `Test-enforced`
 |Inspection helpers and machine-readable reporting
-|`src/markdown/inspection.ts`; `scripts/inspection-report.ts`; `tests/unit/include-diagnostics.test.ts`; `tests/unit/inspection-report-script.test.ts`
+|`src/markdown/inspection.ts`; `scripts/inspection-report.ts`; `tests/unit/inspection.test.ts`; `tests/unit/inspection-report-script.test.ts`
 
 |Module export follows the package pipeline
 |`Implemented`, `Test-enforced`

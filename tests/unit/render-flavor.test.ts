@@ -132,6 +132,29 @@ describe("flavor-aware markdown rendering", () => {
 		);
 	});
 
+	it("falls back for anchor and page alias metadata in strict mode", () => {
+		const rendered = renderStrict({
+			type: "document",
+			children: [
+				{
+					type: "anchor" as const,
+					identifier: "overview",
+				},
+				{
+					type: "pageAliases" as const,
+					aliases: ["legacy-home"],
+				},
+			],
+		});
+
+		expect(rendered).toContain(
+			"> Unsupported: anchor blocks require raw HTML support in this flavor",
+		);
+		expect(rendered).toContain(
+			"> Unsupported: page alias metadata requires raw HTML support in this flavor",
+		);
+	});
+
 	it("shapes Antora xref destinations per flavor policy", () => {
 		const documentWithXrefs = {
 			type: "document" as const,

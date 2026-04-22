@@ -83,6 +83,7 @@ type AsciidoctorTableCell = {
 export type ExtractAssemblyStructureOptions = {
 	attributes?: Record<string, string>;
 	sourcePath?: string;
+	xrefFallbackLabelStyle?: "fragment-or-basename" | "fragment-or-path";
 };
 
 const createAsciidoctor = asciidoctorFactory as unknown as () => {
@@ -275,9 +276,16 @@ function joinInlineText(children: AssemblyInline[]): string {
 		.trim();
 }
 
-function deriveXrefFallbackLabel(target: AssemblyXrefTarget): string {
+function deriveXrefFallbackLabel(
+	target: AssemblyXrefTarget,
+	style: NonNullable<ExtractAssemblyStructureOptions["xrefFallbackLabelStyle"]>,
+): string {
 	if (target.fragment !== undefined && target.fragment.length > 0) {
 		return target.fragment;
+	}
+
+	if (style === "fragment-or-path") {
+		return target.path.replace(/\.(adoc|html)$/u, "");
 	}
 
 	const lastSegment = target.path.split("/").at(-1) ?? target.path;
@@ -288,22 +296,32 @@ function normalizeXrefChildren(
 	href: string,
 	target: AssemblyXrefTarget,
 	children: AssemblyInline[],
+	style: NonNullable<ExtractAssemblyStructureOptions["xrefFallbackLabelStyle"]>,
 ): AssemblyInline[] {
 	const visibleText = joinInlineText(children);
+	const preferredLabel = deriveXrefFallbackLabel(target, style);
+	const generatedFallbackLabels = new Set([
+		deriveXrefFallbackLabel(target, "fragment-or-basename"),
+		deriveXrefFallbackLabel(target, "fragment-or-path"),
+	]);
 	const equivalentFallbackLabels = new Set([
 		href,
 		href.split("#", 1)[0] ?? href,
 		target.raw,
 		target.raw.split("#", 1)[0] ?? target.raw,
 	]);
-	if (visibleText.length > 0 && !equivalentFallbackLabels.has(visibleText)) {
+	if (
+		visibleText.length > 0 &&
+		!equivalentFallbackLabels.has(visibleText) &&
+		!generatedFallbackLabels.has(visibleText)
+	) {
 		return children;
 	}
 
 	return [
 		{
 			type: "text",
-			value: deriveXrefFallbackLabel(target),
+			value: preferredLabel,
 		},
 	];
 }
@@ -327,176 +345,34 @@ function parsePlainTextWithSoftBreaks(value: string): AssemblyInline[] {
 	return children.length === 0 ? [{ type: "text", value: "" }] : children;
 }
 
-function parseInlineHtml(content: string): AssemblyInline[] {
-	const nodes: AssemblyInline[] = [];
-	let cursor = 0;
-
-	function pushText(value: string): void {
-		if (value.length === 0) {
-			return;
-		}
-
-		nodes.push({
-			type: "text",
-			value: decodeHtmlEntities(value),
-		});
-	}
-
-	while (cursor < content.length) {
-		const nextTagIndex = content.indexOf("<", cursor);
-		if (nextTagIndex === -1) {
-			pushText(content.slice(cursor));
-			break;
-		}
-
-		if (nextTagIndex > cursor) {
-			pushText(content.slice(cursor, nextTagIndex));
-		}
-
-		const strongOpen = content
-			.slice(nextTagIndex)
-			.match(/^<strong(?:\s[^>]*)?>/u)?.[0];
-		if (strongOpen !== undefined) {
-			const endIndex = content.indexOf("</strong>", nextTagIndex);
-			if (endIndex === -1) {
-				pushText(content.slice(nextTagIndex));
-				break;
-			}
-
-			nodes.push({
-				type: "strong",
-				children: parseInlineHtml(
-					content.slice(nextTagIndex + strongOpen.length, endIndex),
-				),
-			});
-			cursor = endIndex + 9;
-			continue;
-		}
-
-		const emphasisOpen = content
-			.slice(nextTagIndex)
-			.match(/^<em(?:\s[^>]*)?>/u)?.[0];
-		if (emphasisOpen !== undefined) {
-			const endIndex = content.indexOf("</em>", nextTagIndex);
-			if (endIndex === -1) {
-				pushText(content.slice(nextTagIndex));
-				break;
-			}
-
-			nodes.push({
-				type: "emphasis",
-				children: parseInlineHtml(
-					content.slice(nextTagIndex + emphasisOpen.length, endIndex),
-				),
-			});
-			cursor = endIndex + 5;
-			continue;
-		}
-
-		const codeOpen = content
-			.slice(nextTagIndex)
-			.match(/^<code(?:\s[^>]*)?>/u)?.[0];
-		if (codeOpen !== undefined) {
-			const endIndex = content.indexOf("</code>", nextTagIndex);
-			if (endIndex === -1) {
-				pushText(content.slice(nextTagIndex));
-				break;
-			}
-
-			nodes.push({
-				type: "code",
-				value: decodeLiteralCode(
-					content.slice(nextTagIndex + codeOpen.length, endIndex),
-				),
-			});
-			cursor = endIndex + 7;
-			continue;
-		}
-
-		if (content.startsWith("<a ", nextTagIndex)) {
-			const openEndIndex = content.indexOf(">", nextTagIndex);
-			const endIndex = content.indexOf("</a>", nextTagIndex);
-			if (openEndIndex === -1 || endIndex === -1) {
-				pushText(content.slice(nextTagIndex));
-				break;
-			}
-
-			const openTag = content.slice(nextTagIndex, openEndIndex + 1);
-			const inner = content.slice(openEndIndex + 1, endIndex);
-			const { attributes } = parseHtmlAttributes(openTag);
-			const href = attributes.href ?? "";
-			const children = parseInlineHtml(inner);
-			if (isStructuredXrefHref(href)) {
-				const target = parseXrefTarget(href);
-				nodes.push(<AssemblyXref>{
-					type: "xref",
-					url: href,
-					target,
-					children: normalizeXrefChildren(href, target, children),
-				});
-			} else {
-				nodes.push(<AssemblyLink>{
-					type: "link",
-					url: href,
-					children,
-				});
-			}
-			cursor = endIndex + 4;
-			continue;
-		}
-
-		if (content.startsWith('<span class="image">', nextTagIndex)) {
-			const imgStartIndex = content.indexOf("<img ", nextTagIndex);
-			const imgEndIndex = content.indexOf(">", imgStartIndex);
-			const spanEndIndex = content.indexOf("</span>", nextTagIndex);
-			if (imgStartIndex === -1 || imgEndIndex === -1 || spanEndIndex === -1) {
-				pushText(content.slice(nextTagIndex));
-				break;
-			}
-
-			const imgTag = content.slice(imgStartIndex, imgEndIndex + 1);
-			const { attributes } = parseHtmlAttributes(imgTag);
-			nodes.push(<AssemblyImage>{
-				type: "image",
-				url: attributes.src ?? "",
-				title: attributes.title,
-				alt: [{ type: "text", value: attributes.alt ?? "" }],
-			});
-			cursor = spanEndIndex + 7;
-			continue;
-		}
-
-		const endIndex = content.indexOf(">", nextTagIndex);
-		if (endIndex === -1) {
-			pushText(content.slice(nextTagIndex));
-			break;
-		}
-		pushText(content.slice(nextTagIndex, endIndex + 1));
-		cursor = endIndex + 1;
-	}
-
-	return nodes.length === 0 ? [{ type: "text", value: "" }] : nodes;
-}
-
-function extractParagraph(block: AsciidoctorBlock): AssemblyParagraph {
+function extractParagraph(
+	block: AsciidoctorBlock,
+	options: ExtractAssemblyStructureOptions,
+): AssemblyParagraph {
 	return {
 		type: "paragraph",
 		location: getSourceLocation(block),
-		children: parseInlineHtml(block.getContent?.() ?? ""),
+		children: parseInlineHtmlWithOptions(block.getContent?.() ?? "", options),
 	};
 }
 
-function extractHeading(block: AsciidoctorBlock): AssemblyHeading {
+function extractHeading(
+	block: AsciidoctorBlock,
+	options: ExtractAssemblyStructureOptions,
+): AssemblyHeading {
 	return {
 		type: "heading",
 		depth: Math.max(1, block.getLevel?.() ?? 1),
 		identifier: block.getId?.(),
 		location: getSourceLocation(block),
-		children: parseInlineHtml(block.getTitle?.() ?? ""),
+		children: parseInlineHtmlWithOptions(block.getTitle?.() ?? "", options),
 	};
 }
 
-function extractList(block: AsciidoctorBlock): AssemblyList {
+function extractList(
+	block: AsciidoctorBlock,
+	options: ExtractAssemblyStructureOptions,
+): AssemblyList {
 	const items = (block.getItems?.() ?? []) as AsciidoctorListItem[];
 	return {
 		type: "list",
@@ -507,15 +383,20 @@ function extractList(block: AsciidoctorBlock): AssemblyList {
 			children: [
 				{
 					type: "paragraph",
-					children: parseInlineHtml(item.getText()),
+					children: parseInlineHtmlWithOptions(item.getText(), options),
 				},
-				...(item.getBlocks?.().flatMap(extractBlock) ?? []),
+				...(item
+					.getBlocks?.()
+					.flatMap((child) => extractBlock(child, options)) ?? []),
 			],
 		})),
 	};
 }
 
-function extractLabeledGroups(block: AsciidoctorBlock): AssemblyLabeledGroup[] {
+function extractLabeledGroups(
+	block: AsciidoctorBlock,
+	options: ExtractAssemblyStructureOptions,
+): AssemblyLabeledGroup[] {
 	const items = (block.getItems?.() ?? []) as Array<
 		[AsciidoctorDescriptionListTerm[], AsciidoctorDescriptionListDescription]
 	>;
@@ -527,15 +408,18 @@ function extractLabeledGroups(block: AsciidoctorBlock): AssemblyLabeledGroup[] {
 			if (index > 0) {
 				label.push({ type: "text", value: "; " });
 			}
-			label.push(...parseInlineHtml(term.getText()));
+			label.push(...parseInlineHtmlWithOptions(term.getText(), options));
 		}
 		const children =
 			blocks.length > 0
-				? blocks.flatMap((child) => extractBlock(child))
+				? blocks.flatMap((child) => extractBlock(child, options))
 				: [
 						<AssemblyParagraph>{
 							type: "paragraph",
-							children: parseInlineHtml(description.getText?.() ?? ""),
+							children: parseInlineHtmlWithOptions(
+								description.getText?.() ?? "",
+								options,
+							),
 							location: getSourceLocation(description),
 						},
 					];
@@ -549,7 +433,10 @@ function extractLabeledGroups(block: AsciidoctorBlock): AssemblyLabeledGroup[] {
 	});
 }
 
-function extractAdmonition(block: AsciidoctorBlock): AssemblyAdmonition {
+function extractAdmonition(
+	block: AsciidoctorBlock,
+	options: ExtractAssemblyStructureOptions,
+): AssemblyAdmonition {
 	return {
 		type: "admonition",
 		kind: ((block.getStyle?.() ?? "NOTE").toLowerCase() ??
@@ -557,11 +444,14 @@ function extractAdmonition(block: AsciidoctorBlock): AssemblyAdmonition {
 		location: getSourceLocation(block),
 		children:
 			block.getBlocks?.().length && block.getBlocks().length > 0
-				? block.getBlocks().flatMap(extractBlock)
+				? block.getBlocks().flatMap((child) => extractBlock(child, options))
 				: [
 						{
 							type: "paragraph",
-							children: parseInlineHtml(block.getContent?.() ?? ""),
+							children: parseInlineHtmlWithOptions(
+								block.getContent?.() ?? "",
+								options,
+							),
 						},
 					],
 	};
@@ -619,7 +509,7 @@ function extractAlignment(block: AsciidoctorBlock): AssemblyTable["align"] {
 function extractRow(row: AsciidoctorTableCell[]): AssemblyTableRow {
 	return {
 		cells: row.map((cell) => ({
-			children: parseInlineHtml(cell.getText()),
+			children: parseInlineHtmlWithOptions(cell.getText(), {}),
 		})),
 	};
 }
@@ -639,7 +529,10 @@ function extractTable(block: AsciidoctorBlock): AssemblyTable {
 	};
 }
 
-function extractCalloutList(block: AsciidoctorBlock): AssemblyCalloutList {
+function extractCalloutList(
+	block: AsciidoctorBlock,
+	options: ExtractAssemblyStructureOptions,
+): AssemblyCalloutList {
 	const items = (block.getItems?.() ?? []) as AsciidoctorListItem[];
 	return {
 		type: "calloutList",
@@ -650,9 +543,11 @@ function extractCalloutList(block: AsciidoctorBlock): AssemblyCalloutList {
 			children: [
 				{
 					type: "paragraph",
-					children: parseInlineHtml(item.getText()),
+					children: parseInlineHtmlWithOptions(item.getText(), options),
 				},
-				...(item.getBlocks?.().flatMap((child) => extractBlock(child)) ?? []),
+				...(item
+					.getBlocks?.()
+					.flatMap((child) => extractBlock(child, options)) ?? []),
 			],
 		})),
 	};
@@ -727,6 +622,7 @@ function attachBlockAnchor(
 function attachBlockTitle(
 	block: AsciidoctorBlock,
 	extracted: AssemblyBlock[],
+	options: ExtractAssemblyStructureOptions,
 ): AssemblyBlock[] {
 	const titleBearingContexts = new Set([
 		"example",
@@ -748,37 +644,42 @@ function attachBlockTitle(
 	return [
 		{
 			type: "labeledGroup",
-			label: parseInlineHtml(title),
+			label: parseInlineHtmlWithOptions(title, options),
 			children: extracted,
 			location: getSourceLocation(block),
 		},
 	];
 }
 
-function extractBlock(block: AsciidoctorBlock): AssemblyBlock[] {
+function extractBlock(
+	block: AsciidoctorBlock,
+	options: ExtractAssemblyStructureOptions,
+): AssemblyBlock[] {
 	let extracted: AssemblyBlock[];
 	switch (block.getContext()) {
 		case "paragraph":
-			extracted = [extractParagraph(block)];
+			extracted = [extractParagraph(block, options)];
 			break;
 		case "section":
 			extracted = [
-				extractHeading(block),
-				...block.getBlocks().flatMap((child) => extractBlock(child)),
+				extractHeading(block, options),
+				...block.getBlocks().flatMap((child) => extractBlock(child, options)),
 			];
 			break;
 		case "preamble":
-			extracted = block.getBlocks().flatMap((child) => extractBlock(child));
+			extracted = block
+				.getBlocks()
+				.flatMap((child) => extractBlock(child, options));
 			break;
 		case "ulist":
 		case "olist":
-			extracted = [extractList(block)];
+			extracted = [extractList(block, options)];
 			break;
 		case "dlist":
-			extracted = extractLabeledGroups(block);
+			extracted = extractLabeledGroups(block, options);
 			break;
 		case "admonition":
-			extracted = [extractAdmonition(block)];
+			extracted = [extractAdmonition(block, options)];
 			break;
 		case "image":
 			extracted = [extractImageBlock(block)];
@@ -792,7 +693,7 @@ function extractBlock(block: AsciidoctorBlock): AssemblyBlock[] {
 			extracted = [extractTable(block)];
 			break;
 		case "colist":
-			extracted = [extractCalloutList(block)];
+			extracted = [extractCalloutList(block, options)];
 			break;
 		case "listing":
 		case "literal":
@@ -805,7 +706,9 @@ function extractBlock(block: AsciidoctorBlock): AssemblyBlock[] {
 			extracted = [extractVerse(block)];
 			break;
 		case "open":
-			extracted = block.getBlocks().flatMap((child) => extractBlock(child));
+			extracted = block
+				.getBlocks()
+				.flatMap((child) => extractBlock(child, options));
 			break;
 		case "example":
 		case "sidebar":
@@ -815,11 +718,16 @@ function extractBlock(block: AsciidoctorBlock): AssemblyBlock[] {
 					location: getSourceLocation(block),
 					children:
 						block.getBlocks?.().length && block.getBlocks().length > 0
-							? block.getBlocks().flatMap((child) => extractBlock(child))
+							? block
+									.getBlocks()
+									.flatMap((child) => extractBlock(child, options))
 							: [
 									{
 										type: "paragraph",
-										children: parseInlineHtml(block.getContent?.() ?? ""),
+										children: parseInlineHtmlWithOptions(
+											block.getContent?.() ?? "",
+											options,
+										),
 										location: getSourceLocation(block),
 									},
 								],
@@ -840,7 +748,179 @@ function extractBlock(block: AsciidoctorBlock): AssemblyBlock[] {
 			break;
 	}
 
-	return attachBlockAnchor(block, attachBlockTitle(block, extracted));
+	return attachBlockAnchor(block, attachBlockTitle(block, extracted, options));
+}
+
+function parseInlineHtmlWithOptions(
+	content: string,
+	options: ExtractAssemblyStructureOptions = {},
+): AssemblyInline[] {
+	const xrefFallbackLabelStyle =
+		options.xrefFallbackLabelStyle ?? "fragment-or-basename";
+	return parseInlineHtmlWithPolicy(content, xrefFallbackLabelStyle);
+}
+
+function parseInlineHtmlWithPolicy(
+	content: string,
+	xrefFallbackLabelStyle: NonNullable<
+		ExtractAssemblyStructureOptions["xrefFallbackLabelStyle"]
+	>,
+): AssemblyInline[] {
+	const nodes: AssemblyInline[] = [];
+	let cursor = 0;
+
+	function pushText(value: string): void {
+		if (value.length === 0) {
+			return;
+		}
+
+		nodes.push({
+			type: "text",
+			value: decodeHtmlEntities(value),
+		});
+	}
+
+	while (cursor < content.length) {
+		const nextTagIndex = content.indexOf("<", cursor);
+		if (nextTagIndex === -1) {
+			pushText(content.slice(cursor));
+			break;
+		}
+
+		if (nextTagIndex > cursor) {
+			pushText(content.slice(cursor, nextTagIndex));
+		}
+
+		const strongOpen = content
+			.slice(nextTagIndex)
+			.match(/^<strong(?:\s[^>]*)?>/u)?.[0];
+		if (strongOpen !== undefined) {
+			const endIndex = content.indexOf("</strong>", nextTagIndex);
+			if (endIndex === -1) {
+				pushText(content.slice(nextTagIndex));
+				break;
+			}
+
+			nodes.push({
+				type: "strong",
+				children: parseInlineHtmlWithPolicy(
+					content.slice(nextTagIndex + strongOpen.length, endIndex),
+					xrefFallbackLabelStyle,
+				),
+			});
+			cursor = endIndex + 9;
+			continue;
+		}
+
+		const emphasisOpen = content
+			.slice(nextTagIndex)
+			.match(/^<em(?:\s[^>]*)?>/u)?.[0];
+		if (emphasisOpen !== undefined) {
+			const endIndex = content.indexOf("</em>", nextTagIndex);
+			if (endIndex === -1) {
+				pushText(content.slice(nextTagIndex));
+				break;
+			}
+
+			nodes.push({
+				type: "emphasis",
+				children: parseInlineHtmlWithPolicy(
+					content.slice(nextTagIndex + emphasisOpen.length, endIndex),
+					xrefFallbackLabelStyle,
+				),
+			});
+			cursor = endIndex + 5;
+			continue;
+		}
+
+		const codeOpen = content
+			.slice(nextTagIndex)
+			.match(/^<code(?:\s[^>]*)?>/u)?.[0];
+		if (codeOpen !== undefined) {
+			const endIndex = content.indexOf("</code>", nextTagIndex);
+			if (endIndex === -1) {
+				pushText(content.slice(nextTagIndex));
+				break;
+			}
+
+			nodes.push({
+				type: "code",
+				value: decodeLiteralCode(
+					content.slice(nextTagIndex + codeOpen.length, endIndex),
+				),
+			});
+			cursor = endIndex + 7;
+			continue;
+		}
+
+		if (content.startsWith("<a ", nextTagIndex)) {
+			const openEndIndex = content.indexOf(">", nextTagIndex);
+			const endIndex = content.indexOf("</a>", nextTagIndex);
+			if (openEndIndex === -1 || endIndex === -1) {
+				pushText(content.slice(nextTagIndex));
+				break;
+			}
+
+			const openTag = content.slice(nextTagIndex, openEndIndex + 1);
+			const inner = content.slice(openEndIndex + 1, endIndex);
+			const { attributes } = parseHtmlAttributes(openTag);
+			const href = attributes.href ?? "";
+			const children = parseInlineHtmlWithPolicy(inner, xrefFallbackLabelStyle);
+			if (isStructuredXrefHref(href)) {
+				const target = parseXrefTarget(href);
+				nodes.push(<AssemblyXref>{
+					type: "xref",
+					url: href,
+					target,
+					children: normalizeXrefChildren(
+						href,
+						target,
+						children,
+						xrefFallbackLabelStyle,
+					),
+				});
+			} else {
+				nodes.push(<AssemblyLink>{
+					type: "link",
+					url: href,
+					children,
+				});
+			}
+			cursor = endIndex + 4;
+			continue;
+		}
+
+		if (content.startsWith('<span class="image">', nextTagIndex)) {
+			const imgStartIndex = content.indexOf("<img ", nextTagIndex);
+			const imgEndIndex = content.indexOf(">", imgStartIndex);
+			const spanEndIndex = content.indexOf("</span>", nextTagIndex);
+			if (imgStartIndex === -1 || imgEndIndex === -1 || spanEndIndex === -1) {
+				pushText(content.slice(nextTagIndex));
+				break;
+			}
+
+			const imgTag = content.slice(imgStartIndex, imgEndIndex + 1);
+			const { attributes } = parseHtmlAttributes(imgTag);
+			nodes.push(<AssemblyImage>{
+				type: "image",
+				url: attributes.src ?? "",
+				title: attributes.title,
+				alt: [{ type: "text", value: attributes.alt ?? "" }],
+			});
+			cursor = spanEndIndex + 7;
+			continue;
+		}
+
+		const endIndex = content.indexOf(">", nextTagIndex);
+		if (endIndex === -1) {
+			pushText(content.slice(nextTagIndex));
+			break;
+		}
+		pushText(content.slice(nextTagIndex, endIndex + 1));
+		cursor = endIndex + 1;
+	}
+
+	return nodes.length === 0 ? [{ type: "text", value: "" }] : nodes;
 }
 
 function parseRenderOptions(
@@ -867,6 +947,120 @@ function parseRenderOptions(
 						maxDepth: Number.isFinite(maxDepth) ? maxDepth : undefined,
 					},
 	};
+}
+
+function applyXrefFallbackLabelStyleToInlines(
+	children: AssemblyInline[],
+	style: NonNullable<ExtractAssemblyStructureOptions["xrefFallbackLabelStyle"]>,
+): AssemblyInline[] {
+	return children.map((child) => {
+		switch (child.type) {
+			case "emphasis":
+			case "strong":
+			case "link":
+				return {
+					...child,
+					children: applyXrefFallbackLabelStyleToInlines(child.children, style),
+				};
+			case "xref": {
+				const visibleText = joinInlineText(child.children);
+				const basenameLabel = deriveXrefFallbackLabel(
+					child.target,
+					"fragment-or-basename",
+				);
+				const pathLabel = deriveXrefFallbackLabel(
+					child.target,
+					"fragment-or-path",
+				);
+				const preferredLabel = deriveXrefFallbackLabel(child.target, style);
+				const generatedFallbackChildren =
+					visibleText === basenameLabel || visibleText === pathLabel
+						? [{ type: "text", value: preferredLabel } satisfies AssemblyText]
+						: applyXrefFallbackLabelStyleToInlines(child.children, style);
+				return {
+					...child,
+					children: generatedFallbackChildren,
+				};
+			}
+			case "image":
+				return {
+					...child,
+					alt: applyXrefFallbackLabelStyleToInlines(child.alt, style),
+				};
+			default:
+				return child;
+		}
+	});
+}
+
+function applyXrefFallbackLabelStyleToBlocks(
+	blocks: AssemblyBlock[],
+	style: NonNullable<ExtractAssemblyStructureOptions["xrefFallbackLabelStyle"]>,
+): AssemblyBlock[] {
+	return blocks.map((block) => {
+		switch (block.type) {
+			case "paragraph":
+			case "heading":
+				return {
+					...block,
+					children: applyXrefFallbackLabelStyleToInlines(block.children, style),
+				};
+			case "list":
+				return {
+					...block,
+					items: block.items.map((item) => ({
+						...item,
+						children: applyXrefFallbackLabelStyleToBlocks(item.children, style),
+					})),
+				};
+			case "labeledGroup":
+				return {
+					...block,
+					label: applyXrefFallbackLabelStyleToInlines(block.label, style),
+					children: applyXrefFallbackLabelStyleToBlocks(block.children, style),
+				};
+			case "admonition":
+			case "blockquote":
+				return {
+					...block,
+					children: applyXrefFallbackLabelStyleToBlocks(block.children, style),
+				};
+			case "table":
+				return {
+					...block,
+					header: {
+						...block.header,
+						cells: block.header.cells.map((cell) => ({
+							...cell,
+							children: applyXrefFallbackLabelStyleToInlines(
+								cell.children,
+								style,
+							),
+						})),
+					},
+					rows: block.rows.map((row) => ({
+						...row,
+						cells: row.cells.map((cell) => ({
+							...cell,
+							children: applyXrefFallbackLabelStyleToInlines(
+								cell.children,
+								style,
+							),
+						})),
+					})),
+				};
+			case "calloutList":
+				return {
+					...block,
+					items: block.items.map((item) => ({
+						...item,
+						children: applyXrefFallbackLabelStyleToBlocks(item.children, style),
+					})),
+				};
+			default:
+				return block;
+		}
+	});
 }
 
 export function extractAssemblyStructure(
@@ -897,13 +1091,19 @@ export function extractAssemblyStructure(
 		children.push({
 			type: "heading",
 			depth: 1,
-			children: parseInlineHtml(document.getDocumentTitle?.() ?? ""),
+			children: parseInlineHtmlWithOptions(
+				document.getDocumentTitle?.() ?? "",
+				options,
+			),
 		});
 	}
 
 	for (const block of document.getBlocks()) {
-		children.push(...extractBlock(block));
+		children.push(...extractBlock(block, options));
 	}
+
+	const xrefFallbackLabelStyle =
+		options.xrefFallbackLabelStyle ?? "fragment-or-basename";
 
 	return defineAssemblyDocument({
 		type: "document",
@@ -919,6 +1119,9 @@ export function extractAssemblyStructure(
 			relativeSrcPath: document.getAttribute("page-relative-src-path"),
 		},
 		renderOptions: parseRenderOptions(document),
-		children,
+		children: applyXrefFallbackLabelStyleToBlocks(
+			children,
+			xrefFallbackLabelStyle,
+		),
 	});
 }

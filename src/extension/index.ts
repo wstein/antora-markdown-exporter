@@ -8,9 +8,14 @@ import type { MarkdownFlavorName } from "../markdown/flavor.js";
 import { normalizeMarkdownIR } from "../markdown/normalize.js";
 import { renderMarkdown } from "../markdown/render/index.js";
 
+export type XrefFallbackLabelStyle =
+	| "fragment-or-basename"
+	| "fragment-or-path";
+
 export interface AntoraMarkdownExporterExtensionConfig {
 	readonly flavor?: MarkdownFlavorName;
 	readonly configSource?: Record<string, unknown> | string;
+	readonly xrefFallbackLabelStyle?: XrefFallbackLabelStyle;
 	readonly navigationCatalog?: {
 		getNavigation: (component: string, version: string) => unknown[];
 	};
@@ -20,6 +25,7 @@ export interface AntoraMarkdownExporterExtensionConfig {
 
 type MarkdownConverterConfig = {
 	readonly flavor: MarkdownFlavorName;
+	readonly xrefFallbackLabelStyle: XrefFallbackLabelStyle;
 };
 
 type ConvertAttributes = {
@@ -45,9 +51,13 @@ export function renderAssemblyMarkdown(
 	source: string,
 	flavor: MarkdownFlavorName = defaultFlavor,
 	sourcePath = "assembly.adoc",
+	options: {
+		xrefFallbackLabelStyle?: XrefFallbackLabelStyle;
+	} = {},
 ): string {
 	const structured = extractAssemblyStructure(source, {
 		sourcePath,
+		xrefFallbackLabelStyle: options.xrefFallbackLabelStyle,
 	});
 	return renderMarkdown(
 		normalizeMarkdownIR(convertAssemblyStructureToMarkdownIR(structured)),
@@ -59,6 +69,8 @@ export function createMarkdownConverter(
 	config: Partial<MarkdownConverterConfig> = {},
 ) {
 	const flavor = config.flavor ?? defaultFlavor;
+	const xrefFallbackLabelStyle =
+		config.xrefFallbackLabelStyle ?? "fragment-or-basename";
 
 	return {
 		backend: "markdown",
@@ -83,6 +95,7 @@ export function createMarkdownConverter(
 				file.contents.toString("utf8"),
 				flavor,
 				convertAttributes.docfile,
+				{ xrefFallbackLabelStyle },
 			);
 			await writeFile(outputPath, `${markdown}\n`);
 		},
@@ -93,12 +106,22 @@ export function register(
 	this: unknown,
 	{ config = {} }: { config?: AntoraMarkdownExporterExtensionConfig } = {},
 ): void {
-	const { configSource, flavor, navigationCatalog, ...assemblerConfig } =
-		config;
-	configure(this, createMarkdownConverter({ flavor }), assemblerConfig, {
+	const {
 		configSource,
+		flavor,
 		navigationCatalog,
-	});
+		xrefFallbackLabelStyle,
+		...assemblerConfig
+	} = config;
+	configure(
+		this,
+		createMarkdownConverter({ flavor, xrefFallbackLabelStyle }),
+		assemblerConfig,
+		{
+			configSource,
+			navigationCatalog,
+		},
+	);
 }
 
 function isDirectExecution(): boolean {

@@ -178,6 +178,43 @@ describe("renderGfm", () => {
 		);
 	});
 
+	it("renders anchor and page alias metadata through raw-html fallback policy", () => {
+		const rendered = renderGfm({
+			type: "document",
+			children: [
+				{
+					type: "anchor",
+					identifier: "overview",
+				},
+				{
+					type: "pageAliases",
+					aliases: ["legacy-home"],
+				},
+			],
+		});
+
+		expect(rendered).toBe(
+			[
+				'<a id="overview"></a>',
+				"",
+				"<!-- page-aliases: legacy-home -->",
+				"",
+			].join("\n"),
+		);
+	});
+
+	it("renders empty table-of-contents documents without stray separators", () => {
+		const rendered = renderGfm({
+			type: "document",
+			renderOptions: {
+				tableOfContents: { maxDepth: 2 },
+			},
+			children: [],
+		});
+
+		expect(rendered).toBe("\n");
+	});
+
 	it("renders ordered and nested lists, links, code blocks, and block quotes", () => {
 		const rendered = renderGfm({
 			type: "document",

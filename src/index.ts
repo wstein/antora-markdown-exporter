@@ -46,6 +46,7 @@ export {
 	createMarkdownConverter,
 	register,
 	renderAssemblyMarkdown,
+	type XrefFallbackLabelStyle,
 } from "./extension/index.js";
 export type {
 	MarkdownFlavorName,

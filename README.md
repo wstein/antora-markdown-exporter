@@ -97,7 +97,10 @@ import {
 
 const structured = extractAssemblyStructure(
   "== Sample\n\nSee xref:install.adoc#cli[install].",
-  { sourcePath: "/virtual/project/page.adoc" },
+  {
+    sourcePath: "/virtual/project/page.adoc",
+    xrefFallbackLabelStyle: "fragment-or-basename",
+  },
 );
 const document = convertAssemblyStructureToMarkdownIR(structured);
 
@@ -112,6 +115,8 @@ console.log(report.xrefs.length, report.xrefTargets.length);
 ```
 
 Inspection helpers normalize before traversal and return entries in document order, so the combined report is stable enough for CI, release validation, and snapshot-style contract tests.
+
+When unlabeled xrefs need a different display form, the structured extractor and extension runtime also accept `xrefFallbackLabelStyle`. Use `fragment-or-basename` for labels like `setup`, or `fragment-or-path` for labels like `guide/setup`.
 
 ### CI And Release Validation
 
