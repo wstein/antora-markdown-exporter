@@ -90,6 +90,7 @@ export {
 	resolveAntoraMarkdownExportDefaults,
 	runAntoraAssembler,
 } from "./module-export.js";
+export { runAntoraSiteBuild } from "./site-build.js";
 
 export const PACKAGE_NAME = "@wsmy/antora-markdown-exporter";
 

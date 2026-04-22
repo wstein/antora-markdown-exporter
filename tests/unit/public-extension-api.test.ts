@@ -8,6 +8,7 @@ import {
 	register,
 	resolveAntoraMarkdownExportDefaults,
 	runAntoraAssembler,
+	runAntoraSiteBuild,
 } from "../../src/index.js";
 
 describe("public extension API", () => {
@@ -27,6 +28,7 @@ describe("public extension API", () => {
 		expect(typeof exportAntoraModules).toBe("function");
 		expect(typeof resolveAntoraMarkdownExportDefaults).toBe("function");
 		expect(typeof runAntoraAssembler).toBe("function");
+		expect(typeof runAntoraSiteBuild).toBe("function");
 	});
 
 	it("exports the agent-ready inspection helper from the root entrypoint", () => {

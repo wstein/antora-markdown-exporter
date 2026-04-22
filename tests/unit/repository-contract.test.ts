@@ -143,7 +143,7 @@ describe("repository contract", () => {
 		expect(packageJson.scripts["docs:build"]).toBe(
 			"node scripts/build-docs-site.mjs",
 		);
-		expect(packageJson.scripts["pdf:build"]).toContain("buildDocsPdf");
+		expect(packageJson.scripts["pdf:build"]).toBeUndefined();
 		expect(existsSync(resolve(root, "scripts/build-docs-site.mjs"))).toBe(true);
 		expect(packageJson.scripts["export:modules"]).toBe(
 			"bun scripts/export-antora-modules.ts",
@@ -372,9 +372,11 @@ describe("repository contract", () => {
 
 	it("keeps CI and release workflows aligned with the develop/tag operating model", () => {
 		expect(ciWorkflow).toContain("branches: [develop]");
-		expect(ciWorkflow).toContain("ruby/setup-ruby@v1");
-		expect(ciWorkflow).toContain("gem install asciidoctor-pdf --no-document");
-		expect(ciWorkflow).toContain("apt-get install -y poppler-utils");
+		expect(ciWorkflow).not.toContain("ruby/setup-ruby@v1");
+		expect(ciWorkflow).not.toContain(
+			"gem install asciidoctor-pdf --no-document",
+		);
+		expect(ciWorkflow).not.toContain("apt-get install -y poppler-utils");
 		expect(releaseWorkflow).toContain("tags:");
 		expect(releaseWorkflow).toContain('- "v*"');
 		expect(releaseWorkflow).toContain("origin/develop$");
@@ -390,8 +392,8 @@ describe("repository contract", () => {
 		expect(pagesWorkflow).toContain("event == 'push'");
 		expect(pagesWorkflow).toContain("ref: main");
 		expect(pagesWorkflow).toContain("actions/configure-pages@v5");
-		expect(pagesWorkflow).toContain("ruby/setup-ruby@v1");
-		expect(pagesWorkflow).toContain(
+		expect(pagesWorkflow).not.toContain("ruby/setup-ruby@v1");
+		expect(pagesWorkflow).not.toContain(
 			"gem install asciidoctor-pdf --no-document",
 		);
 		expect(pagesWorkflow).toContain("bun run docs:build");

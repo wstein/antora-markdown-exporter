@@ -90,25 +90,16 @@ Recommended operator loop:
   ```bash
   make docs
   ```
-6. Build only the assembled documentation PDFs when you need the portable module documents without the full HTML site:
+6. Export Antora module pages to Markdown when you need generated Markdown artifacts from the repository’s own pipeline:
   ```bash
-  make pdf
+  make markdown
   ```
-
-That build now emits:
-
-- the static Antora site under `build/site`
-- downloadable module PDFs at `build/site/antora-markdown-exporter/documentation.pdf`, `build/site/antora-markdown-exporter/architecture.pdf`, `build/site/antora-markdown-exporter/manual.pdf`, and `build/site/antora-markdown-exporter/onboarding.pdf`
-  1. Export Antora module pages to Markdown when you need generated Markdown artifacts from the repository’s own pipeline:
-    ```bash
-    make markdown
-    ```
 
 That export emits:
 
 - flat module documents at `build/markdown/documentation.md`, `build/markdown/architecture.md`, `build/markdown/manual.md`, and `build/markdown/onboarding.md`
 - one assembled `.md` file for each exported documentation module
-- output built from the same Assembler-driven export model as the repository PDFs and rendered through the same conversion, normalization, and flavor pipeline used by the package API
+- output built from the same Assembler-driven export model as the package API and rendered through the same conversion, normalization, and flavor pipeline
 - no post-render Markdown cleanup layer; if the generated Markdown is wrong, the fix belongs in the converter or renderer
   1. Let the Pages workflow publish the static site only after a successful tag-triggered `Release` workflow:
 - local docs validation happens on your working branch
@@ -123,9 +114,7 @@ Use this matrix before troubleshooting local environment failures.
 | --- | --- | --- | --- |
 | Bun 1.3.13 | Primary local development path, `make` targets, build, tests, export scripts | `Implemented`, `Test-enforced` | `package.json`; `Makefile`; `tests/unit/repository-contract.test.ts` |
 | Node.js | Package metadata reads, release-body generation, build scripts invoked through npm-compatible tooling | `Implemented` | `package.json`; `.github/workflows/release.yml` |
-| Ruby + `asciidoctor-pdf` | Module PDF generation and published docs site build | `Implemented`, `CI-enforced` | `package.json`; `scripts/build-docs-site.mjs`; `.github/workflows/ci.yml`; `.github/workflows/pages.yml` |
 | Antora CLI and site generator | Static site build and Assembler-backed export flows | `Implemented` | `package.json`; `antora-playbook.yml`; `scripts/build-docs-site.mjs` |
-| Poppler `pdftotext` | PDF-versus-Markdown structural parity tests | `Test-enforced`, `CI-enforced` | `tests/integration/module-export-structure.test.ts`; `.github/workflows/ci.yml` |
 | GitHub Actions runners | Release publishing and Pages publication | `CI-enforced` | `.github/workflows/release.yml`; `.github/workflows/pages.yml`; `tests/unit/repository-contract.test.ts` |
 
 ## 2.3. Generate An Inspection Report
@@ -245,12 +234,11 @@ Important conflict to preserve:
 | `make integration` | Runs integration tests only. |
 | `make reference` | Runs the reference compatibility suite in `tests/integration/reference-antora.test.ts`. |
 | `make inspect-report INPUT=...` | Emits a machine-readable inspection report for one input file by delegating to `bun run inspect:report`. |
-| `make markdown` | Exports Assembler-driven module documents to `build/markdown/documentation.md`, `build/markdown/architecture.md`, `build/markdown/manual.md`, and `build/markdown/onboarding.md` through the dedicated package `markdown:build` task, which runs `scripts/export-antora-modules.ts` in explicit `--package-task-markdown` mode. The repository now keeps the default Markdown export flavor and xref fallback label policy in `antora-playbook.yml` under `asciidoc.attributes.markdown-exporter-flavor` and `asciidoc.attributes.markdown-exporter-xref-fallback-label-style`, while `assembly.root_level` remains owned by `antora-assembler.yml`. The direct script reads those Antora-owned defaults; the package task still emits `multimarkdown` as an explicit convenience mode. Both modes keep the `.md` extension. The default CLI output is a human-readable summary; use `bun run export:modules -- --json` when automation needs machine-readable output. The export uses the same Assembler-driven partitioning model as the repository PDFs and the same converter path as the package API. Internal page links between those assembled review artifacts are rewritten to sibling `.md` files so local review does not bounce back out to published site `.html` URLs. It also materializes a review bundle under `build/markdown/review-bundle/.github/workflows/` so release and publication claims always ship with `release.yml` and `pages.yml` evidence. Pass `bun run export:modules -- --flavor gfm` to force GFM output or `bun run export:modules -- --xref-fallback-label-style fragment-or-path` when nested unlabeled xrefs should render as full repository-style paths instead of basenames. |
-| `make pdf` | Builds the Assembler-driven documentation, architecture, manual, and onboarding PDFs at `build/site/antora-markdown-exporter/*.pdf` without rebuilding the full Antora HTML site. |
+| `make markdown` | Exports Assembler-driven module documents to `build/markdown/documentation.md`, `build/markdown/architecture.md`, `build/markdown/manual.md`, and `build/markdown/onboarding.md` through the dedicated package `markdown:build` task, which runs `scripts/export-antora-modules.ts` in explicit `--package-task-markdown` mode. The repository now keeps the default Markdown export flavor and xref fallback label policy in `antora-playbook.yml` under `asciidoc.attributes.markdown-exporter-flavor` and `asciidoc.attributes.markdown-exporter-xref-fallback-label-style`, while `assembly.root_level` remains owned by `antora-assembler.yml`. The direct script reads those Antora-owned defaults; the package task still emits `multimarkdown` as an explicit convenience mode. Both modes keep the `.md` extension. The default CLI output is a human-readable summary; use `bun run export:modules -- --json` when automation needs machine-readable output. The export uses the same Assembler-driven partitioning model and the same converter path as the package API. Internal page links between those assembled review artifacts are rewritten to sibling `.md` files so local review does not bounce back out to published site `.html` URLs. It also materializes a review bundle under `build/markdown/review-bundle/.github/workflows/` so release and publication claims always ship with `release.yml` and `pages.yml` evidence. Pass `bun run export:modules -- --flavor gfm` to force GFM output or `bun run export:modules -- --xref-fallback-label-style fragment-or-path` when nested unlabeled xrefs should render as full repository-style paths instead of basenames. |
 | `bun run check` | Runs Biome checks and the full coverage-enabled Vitest suite. |
 | `bun run release:check` | Runs pre-publish package integrity checks against built artifacts and `npm pack --dry-run`. |
 | `make release VERSION=vX.Y.Z` | Runs the release wizard on `develop`. A new version starts a release candidate; the current untagged version finalizes by creating and pushing the release tag. |
-| `make docs` | Builds the Antora docs site locally into `build/site` and emits downloadable module PDFs at `build/site/antora-markdown-exporter/documentation.pdf`, `build/site/antora-markdown-exporter/architecture.pdf`, `build/site/antora-markdown-exporter/manual.pdf`, and `build/site/antora-markdown-exporter/onboarding.pdf`. Public publication is handled separately by the GitHub Pages workflow after successful tag-triggered release completion. |
+| `make docs` | Builds the Antora docs site locally into `build/site`. Public publication is handled separately by the GitHub Pages workflow after successful tag-triggered release completion. |
 
 ## 3.2. Inspection Script Behavior
 
@@ -388,7 +376,7 @@ Status legend used in this and later proof sections:
 
 | Construct family | Status | Semantic contract | Primary proof | Workflow and review surface |
 | --- | --- | --- | --- | --- |
-| Section structure and headings | Supported | Headings, section numbering metadata, and table-of-contents render options stay semantic until rendering. | `src/adapter/asciidoctor-structure.ts`; `src/exporter/structured-to-ir.ts`; `tests/unit/asciidoctor-structure.test.ts`; `tests/integration/module-export-golden.test.ts`; `tests/integration/module-export-structure.test.ts` | `make markdown`; documentation module export review |
+| Section structure and headings | Supported | Headings, section numbering metadata, and table-of-contents render options stay semantic until rendering. | `src/adapter/asciidoctor-structure.ts`; `src/exporter/structured-to-ir.ts`; `tests/unit/asciidoctor-structure.test.ts`; `tests/integration/module-export-golden.test.ts` | `make markdown`; documentation module export review |
 | Xrefs, anchors, and page aliases | Supported | Structured xref targets, anchor identifiers, and page aliases remain inspectable until lowering or rendering. | `src/markdown/xref-resolution.ts`; `tests/unit/xref-resolution.test.ts`; `tests/unit/inspection.test.ts`; reference fixtures | Inspection report review; rendered fixture review |
 | Inspection report surfaces | Supported | Normalized inspection reports expose xrefs and normalized targets from the structured runtime path without requiring renderer-local traversal. | `src/markdown/inspection.ts`; `scripts/inspection-report.ts`; `tests/unit/inspection.test.ts`; `tests/unit/inspection-report-script.test.ts`; `tests/integration/reference-antora.test.ts` | `scripts/inspection-report.ts`; CI annotation review |
 | Admonitions, images, and tables | Supported | These constructs map to dedicated semantic nodes instead of renderer-local string rewrites. | `src/markdown/ir.ts`; `tests/unit/asciidoctor-structure.test.ts`; `tests/integration/fixture-golden.test.ts`; `tests/integration/reference-antora.test.ts` | Fixture diff review |

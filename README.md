@@ -39,7 +39,7 @@ assembly:
   root_level: 1
 ```
 
-That is the standard integration path. Repository commands such as `make markdown`, `bun run export:modules`, `make test`, and `make pdf` are contributor conveniences for this package repository, not requirements for a normal Antora site.
+That is the standard integration path. Repository commands such as `make markdown`, `bun run export:modules`, `make test`, and `make docs` are contributor conveniences for this package repository, not requirements for a normal Antora site.
 
 ## Quick Start
 
@@ -303,7 +303,6 @@ make test
 make unit
 make integration
 make reference
-make pdf
 make markdown
 make inspect-report INPUT=modules/ROOT/pages/guide.adoc
 bun run inspect:report -- modules/ROOT/pages/guide.adoc
@@ -320,7 +319,7 @@ make check
 make PM=npm install
 ```
 
-Documentation publication follows the same operating model. `make docs` builds the local Antora site into `build/site`, generates Assembler-driven PDFs at `build/site/antora-markdown-exporter/documentation.pdf`, `build/site/antora-markdown-exporter/architecture.pdf`, `build/site/antora-markdown-exporter/manual.pdf`, and `build/site/antora-markdown-exporter/onboarding.pdf`, and `.github/workflows/pages.yml` deploys that site to `https://wstein.github.io/antora-markdown-exporter` only after a successful tag-triggered `Release` workflow has already fast-forwarded `main` to the published commit.
+Documentation publication follows the same operating model. `make docs` builds the local Antora site into `build/site`, and `.github/workflows/pages.yml` deploys that site to `https://wstein.github.io/antora-markdown-exporter` only after a successful tag-triggered `Release` workflow has already fast-forwarded `main` to the published commit.
 
 Each target is a thin delegate to the matching package-manager script.
 
@@ -334,12 +333,6 @@ make markdown
 
 This emits flat Assembler exports under `build/markdown/documentation.md`, `build/markdown/architecture.md`, `build/markdown/manual.md`, and `build/markdown/onboarding.md` through the same structured conversion path as the library API: structured extraction, IR lowering, normalization, and flavor rendering. It also materializes a review bundle under `build/markdown/review-bundle/.github/workflows/` so exported docs ship with `release.yml` and `pages.yml`. The repository tracks `assembly.root_level: 1` in [antora-assembler.yml](./antora-assembler.yml), and it now keeps exporter display defaults in [antora-playbook.yml](./antora-playbook.yml) under `asciidoc.attributes.markdown-exporter-flavor` and `asciidoc.attributes.markdown-exporter-xref-fallback-label-style`. The direct `bun run export:modules` script reads those Antora-owned defaults, while `make markdown` remains an explicit convenience task that requests `multimarkdown`. Both flavors still write `.md` files. Use `--root-level 0` when you want the single combined `index.md` export instead of one export per top-level navigation entry. The default CLI output is a human-readable summary. If automation needs machine-readable output, run `bun run export:modules -- --json`. Use `bun run export:modules -- --flavor gitlab`, `bun run export:modules -- --flavor gfm`, `bun run export:modules -- --xref-fallback-label-style fragment-or-path`, or an alternate `--output-root` when you need a different target.
 When the exporter writes assembled pages directly, Antora page links are rewritten to the matching exported `.md` files instead of leaking site `.html` URLs into the review artifacts.
-
-To build only the assembled module PDFs without rebuilding the full Antora HTML site, run:
-
-```bash
-make pdf
-```
 
 ## Release
 

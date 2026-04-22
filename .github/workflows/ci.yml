@@ -14,15 +14,6 @@ jobs:
       - uses: oven-sh/setup-bun@v2
         with:
           bun-version: "1.3.13"
-      - name: Setup Ruby
-        uses: ruby/setup-ruby@v1
-        with:
-          ruby-version: "3.3"
-      - name: Install PDF test tooling
-        run: |
-          sudo apt-get update
-          sudo apt-get install -y poppler-utils
-          gem install asciidoctor-pdf --no-document
       - run: bun install --frozen-lockfile
       - run: bun run lint
       - run: bun run build

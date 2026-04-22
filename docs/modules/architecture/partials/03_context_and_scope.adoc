@@ -41,7 +41,7 @@ The business boundary is intentionally narrow. The repository does not claim to 
 |`src/exporter/**`, `src/markdown/**`, and `src/extension/**` implement AsciiDoc-to-IR conversion, normalization, xref lowering, rendering, and the Antora extension entrypoint.
 
 |Bun-first operator tooling
-|`Makefile`, `package.json`, and `scripts/**` provide the supported local execution path for build, validation, release, PDF generation, inspection reporting, and module Markdown export.
+|`Makefile`, `package.json`, and `scripts/**` provide the supported local execution path for build, validation, release, inspection reporting, and module Markdown export.
 
 |GitHub Actions
 |Runs CI, release publication, and Pages deployment workflows against certified repository states.

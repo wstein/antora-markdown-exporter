@@ -116,7 +116,7 @@ The business boundary is intentionally narrow. The repository does not claim to 
 | --- | --- |
 | Antora and Assembler | Provide the assembly and exporter extension boundary. The repository integrates through `@antora/assembler.configure()` and consumes assembled AsciiDoc as the converter input. |
 | Repository conversion kernel | `src/exporter/**`, `src/markdown/**`, and `src/extension/**` implement AsciiDoc-to-IR conversion, normalization, xref lowering, rendering, and the Antora extension entrypoint. |
-| Bun-first operator tooling | `Makefile`, `package.json`, and `scripts/**` provide the supported local execution path for build, validation, release, PDF generation, inspection reporting, and module Markdown export. |
+| Bun-first operator tooling | `Makefile`, `package.json`, and `scripts/**` provide the supported local execution path for build, validation, release, inspection reporting, and module Markdown export. |
 | GitHub Actions | Runs CI, release publication, and Pages deployment workflows against certified repository states. |
 | npm registry and GitHub Pages | Receive the published package and static documentation outputs after successful release automation. |
 
@@ -220,16 +220,16 @@ Key deployment qualities are:
 - deterministic builds from tracked repository inputs
 - one Bun-first operator path for local validation
 - one certified release path from `develop` through semver tags to `main`
-- reproducible documentation artifacts for both HTML and per-module PDF outputs
+- reproducible documentation artifacts for the published Antora site and repository markdown exports
 
 The infrastructure mapping is:
 
 | Environment | Mapped responsibilities |
 | --- | --- |
-| Local maintainer workstation | Runs `make install`, `make build`, `make test`, `make markdown`, `make pdf`, `make docs`, and `make release`. This environment exercises the markdown kernel, inspection helpers, and documentation-export scripts before changes reach CI. |
+| Local maintainer workstation | Runs `make install`, `make build`, `make test`, `make markdown`, `make docs`, and `make release`. This environment exercises the markdown kernel, inspection helpers, and documentation-export scripts before changes reach CI. |
 | GitHub Actions CI on `develop` | Runs repository validation, unit and integration tests, fixture golden tests, reference tests, repository-contract checks, and build verification on the integration branch. |
 | GitHub Actions release workflow | Validates tagged commits from `develop`, rebuilds the package, runs release checks, publishes `@wsmy/antora-markdown-exporter`, attaches release assets, and fast-forwards `main` to the certified release commit. |
-| GitHub Actions Pages workflow | Builds the Antora site and module PDFs from `main` after successful release completion and publishes the static site to `https://wstein.github.io/antora-markdown-exporter`. |
+| GitHub Actions Pages workflow | Builds the Antora site from `main` after successful release completion and publishes the static site to `https://wstein.github.io/antora-markdown-exporter`. |
 | npm registry and GitHub Pages | Receive the packaged library artifacts and static documentation outputs that the repository automation promotes. |
 
 ## 7.2. Infrastructure Level 2
@@ -241,7 +241,7 @@ The local validation surface consists of the Bun runtime, repository scripts in 
 This level exists to catch semantic drift before release:
 
 - the same converter and renderer power package APIs, inspection reporting, and module Markdown export
-- the same assembled module-source path powers both module PDF and module Markdown export
+- the assembled module-source path powers module Markdown export
 - operator commands remain thin wrappers over maintained repository entrypoints
 
 ### 7.2.2. Release and Publication Surface
