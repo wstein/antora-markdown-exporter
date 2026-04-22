@@ -116,6 +116,37 @@ describe("markdown exporter extension", () => {
 		);
 	});
 
+	it("rewrites internal assembled site links to exported markdown targets", async () => {
+		const converter = createMarkdownConverter();
+		converter.setExportedPageUrlMap(
+			new Map([
+				["/sample/setup.html", "setup.md"],
+				["https://example.invalid/docs/sample/setup.html", "setup.md"],
+			]),
+		);
+		const outputRoot = await mkdtemp(join(tmpdir(), "antora-md-exporter-"));
+		const outputFile = join(outputRoot, "guide.md");
+
+		await converter.convert(
+			{
+				path: "/virtual/modules/ROOT/pages/guide.adoc",
+				contents: Buffer.from("= Guide\n\nSee xref:setup.adoc[].", "utf8"),
+			},
+			{
+				docfile: "/virtual/modules/ROOT/pages/guide.adoc",
+				outdir: outputRoot,
+				outfile: outputFile,
+				outfilesuffix: ".html",
+				"site-url": "https://example.invalid/docs",
+			},
+			{ dir: outputRoot },
+		);
+
+		await expect(readFile(outputFile, "utf8")).resolves.toBe(
+			"# Guide\n\nSee [setup](setup.md).\n\n",
+		);
+	});
+
 	it("writes configured path-style xref fallback labels when requested", async () => {
 		const converter = createMarkdownConverter({
 			xrefFallbackLabelStyle: "fragment-or-path",

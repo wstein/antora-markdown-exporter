@@ -7,6 +7,12 @@ const require = createRequire(import.meta.url);
 const buildPlaybook = require("@antora/playbook-builder");
 const GeneratorContext = require("@antora/site-generator/generator-context");
 const { assembleContent } = require("@antora/assembler");
+const assemblerPackagePath = require.resolve("@antora/assembler/package.json");
+const assemblerLibDir = resolve(dirname(assemblerPackagePath), "lib");
+const loadAssemblerConfig = require(resolve(assemblerLibDir, "load-config.js"));
+const produceAssemblyFiles = require(
+	resolve(assemblerLibDir, "produce-assembly-files.js"),
+);
 
 const modulePath = fileURLToPath(import.meta.url);
 const moduleShim = {
@@ -41,6 +47,101 @@ function createAssemblerConfigSource(rootLevel, buildDir, keepSource = false) {
 		},
 		build: createBuildConfig(buildDir, keepSource),
 	};
+}
+
+function createIntrinsicAssemblerAttributes(converter) {
+	const attributes = {
+		"loader-assembler": "",
+	};
+	const targetExtname = converter?.extname ?? "";
+	const targetBackend = converter?.backend ?? targetExtname.slice(1);
+	const profile = targetBackend;
+
+	if (profile) {
+		attributes[`assembler-profile-${profile}`] = "";
+		attributes["assembler-profile"] = profile;
+	}
+
+	if (targetBackend) {
+		attributes[`assembler-backend-${targetBackend}`] = "";
+		attributes["assembler-backend"] = targetBackend;
+	}
+
+	if (targetExtname) {
+		const targetFiletype = targetExtname.slice(1);
+		attributes[`assembler-filetype-${targetFiletype}`] = "";
+		attributes["assembler-filetype"] = targetFiletype;
+	}
+
+	return attributes;
+}
+
+async function createExportedPageUrlMap(
+	context,
+	playbook,
+	contentCatalog,
+	converter,
+	configSource,
+	navigationCatalog,
+) {
+	const assemblerConfig = await loadAssemblerConfig.call(
+		context,
+		playbook,
+		configSource,
+		`-${converter?.backend ?? converter?.extname?.slice(1) ?? ""}`,
+	);
+	if (assemblerConfig.enabled === false) {
+		return new Map();
+	}
+
+	Object.assign(
+		assemblerConfig.assembly.attributes,
+		createIntrinsicAssemblerAttributes(converter),
+	);
+
+	const generatorFunctions = context.getFunctions();
+	const loadAsciiDoc =
+		generatorFunctions.loadAsciiDoc ?? require("@antora/asciidoc-loader");
+	const assemblyFiles = produceAssemblyFiles(
+		loadAsciiDoc,
+		contentCatalog,
+		assemblerConfig,
+		(componentVersion) => ({
+			...assemblerConfig.assembly,
+			attributes: { ...assemblerConfig.assembly.attributes },
+			navigation:
+				navigationCatalog?.getNavigation(
+					componentVersion.name,
+					componentVersion.version,
+				) ?? componentVersion.navigation,
+		}),
+	);
+	const siteUrl =
+		assemblerConfig.assembly.attributes["site-url"] ??
+		assemblerConfig.assembly.attributes["primary-site-url"];
+	const exportedPageUrlMap = new Map();
+
+	for (const assemblyFile of assemblyFiles) {
+		const outputRelativePath = assemblyFile.src.relative.replace(
+			/\.adoc$/u,
+			converter.extname,
+		);
+		for (const page of assemblyFile.assembler.assembled.pages.keys()) {
+			if (typeof page.pub?.url !== "string" || page.pub.url.length === 0) {
+				continue;
+			}
+
+			exportedPageUrlMap.set(page.pub.url, outputRelativePath);
+			if (typeof siteUrl === "string" && siteUrl.length > 0) {
+				exportedPageUrlMap.set(
+					new URL(page.pub.url, siteUrl).toString(),
+					outputRelativePath,
+				);
+			}
+		}
+	}
+
+	return exportedPageUrlMap;
 }
 
 export async function runAntoraAssembler({
@@ -81,6 +182,23 @@ export async function runAntoraAssembler({
 			vars.contentCatalog,
 			vars.siteAsciiDocConfig,
 		);
+		const configSource = createAssemblerConfigSource(
+			rootLevel,
+			buildDir,
+			keepSource,
+		);
+		if (typeof converter?.setExportedPageUrlMap === "function") {
+			converter.setExportedPageUrlMap(
+				await createExportedPageUrlMap(
+					context,
+					playbook,
+					vars.contentCatalog,
+					converter,
+					configSource,
+					navigationCatalog,
+				),
+			);
+		}
 
 		return await assembleContent.call(
 			context,
@@ -88,11 +206,7 @@ export async function runAntoraAssembler({
 			vars.contentCatalog,
 			converter,
 			{
-				configSource: createAssemblerConfigSource(
-					rootLevel,
-					buildDir,
-					keepSource,
-				),
+				configSource,
 				navigationCatalog,
 			},
 		);
