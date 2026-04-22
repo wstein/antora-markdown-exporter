@@ -85,6 +85,35 @@ describe("asciidoctor block helpers", () => {
 				},
 			],
 		});
+
+		expect(
+			extractList(
+				{
+					getContext: () => "ulist",
+					getItems: () => [
+						{
+							getText: () => "plain item",
+						},
+					],
+					getSourceLocation: () => undefined,
+				} as never,
+				{},
+				extractBlock,
+			),
+		).toMatchObject({
+			type: "list",
+			ordered: false,
+			items: [
+				{
+					children: [
+						{
+							type: "paragraph",
+							children: [{ type: "text", value: "plain item" }],
+						},
+					],
+				},
+			],
+		});
 	});
 
 	it("covers callout nesting and zero-item fallbacks", () => {
@@ -160,6 +189,12 @@ describe("asciidoctor block helpers", () => {
 		expect(
 			extractAlignment({
 				getAttribute: () => undefined,
+			} as never),
+		).toBeUndefined();
+
+		expect(
+			extractAlignment({
+				getAttribute: () => undefined,
 				getColumns: () => [
 					{ getAttributes: () => ({ halign: "center" }) },
 					{ getAttributes: () => ({ halign: "right" }) },
@@ -167,6 +202,16 @@ describe("asciidoctor block helpers", () => {
 				],
 			} as never),
 		).toEqual(["center", "right", null]);
+
+		expect(
+			extractAlignment({
+				getAttribute: () => undefined,
+				getColumns: () => [
+					{ getAttributes: () => ({ halign: "left" }) },
+					{ getAttributes: () => ({ halign: "justify" }) },
+				],
+			} as never),
+		).toEqual([null, null]);
 
 		expect(
 			extractTable({
@@ -188,6 +233,48 @@ describe("asciidoctor block helpers", () => {
 			extractTable({
 				getAttribute: () => undefined,
 				getColumns: () => [{ getAttributes: () => ({}) }],
+				getHeadRows: () => [],
+				getBodyRows: () => [[{ getText: () => "Only row" }]],
+				getSourceLocation: () => undefined,
+			} as never),
+		).toMatchObject({
+			type: "table",
+			header: {
+				cells: [{ children: [{ type: "text", value: "Only row" }] }],
+			},
+			rows: [],
+		});
+
+		expect(
+			extractTable({
+				getAttribute: () => undefined,
+				getColumns: () => [{ getAttributes: () => ({}) }],
+				getHeadRows: () => [],
+				getBodyRows: () => [
+					[{ getText: () => "Header" }],
+					[{ getText: () => "Body 1" }],
+					[{ getText: () => "Body 2" }],
+				],
+				getSourceLocation: () => undefined,
+			} as never),
+		).toMatchObject({
+			type: "table",
+			header: {
+				cells: [{ children: [{ type: "text", value: "Header" }] }],
+			},
+			rows: [
+				{
+					cells: [{ children: [{ type: "text", value: "Body 1" }] }],
+				},
+				{
+					cells: [{ children: [{ type: "text", value: "Body 2" }] }],
+				},
+			],
+		});
+
+		expect(
+			extractTable({
+				getAttribute: () => undefined,
 				getHeadRows: () => [],
 				getBodyRows: () => [],
 				getSourceLocation: () => undefined,

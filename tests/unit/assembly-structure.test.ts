@@ -4,6 +4,7 @@ import {
 	assemblyStructureInvariants,
 	defineAssemblyDocument,
 } from "../../src/adapter/assembly-structure.js";
+import { assemblyStructureSpecification } from "../../src/adapter/assembly-structure-spec.js";
 
 describe("assembly structure contract", () => {
 	it("defines a repository-owned structured document boundary", () => {
@@ -215,6 +216,35 @@ describe("assembly structure contract", () => {
 		expect(unsupportedNodes?.requirements.join(" ")).toContain("visible");
 		expect(unsupportedNodes?.requirements.join(" ")).toContain(
 			"semantic support",
+		);
+	});
+
+	it("ships a formal adapter invariant specification alongside the contract", () => {
+		expect(assemblyStructureSpecification.title).toBe(
+			"Assembly Structure Contract Specification",
+		);
+		expect(assemblyStructureSpecification.scope).toEqual(
+			expect.arrayContaining([
+				expect.stringContaining("assembled AsciiDoc input"),
+				expect.stringContaining("Markdown IR lowering"),
+			]),
+		);
+		expect(
+			assemblyStructureSpecification.invariants.map(
+				(section) => section.heading,
+			),
+		).toEqual([
+			"Repository-Owned Boundary",
+			"Explicit Loss Rules",
+			"Source Location Expectations",
+			"Unsupported Node Semantics",
+			"Inline Fallback Semantics",
+		]);
+		expect(assemblyStructureSpecification.reviewRules).toEqual(
+			expect.arrayContaining([
+				expect.stringContaining("assembly-structure.ts"),
+				expect.stringContaining("support matrix"),
+			]),
 		);
 	});
 });

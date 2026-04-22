@@ -92,6 +92,113 @@ describe("asciidoctor inline helpers", () => {
 		]);
 	});
 
+	it("preserves mixed nested inline semantics when parsing is unambiguous", () => {
+		expect(
+			parseInlineHtmlWithOptions(
+				'<strong>See <a href="guide/setup.html">guide/setup.html</a></strong>',
+				{
+					xrefFallbackLabelStyle: "fragment-or-path",
+				},
+			),
+		).toEqual([
+			{
+				type: "strong",
+				children: [
+					{ type: "text", value: "See " },
+					{
+						type: "xref",
+						url: "guide/setup.html",
+						target: {
+							raw: "guide/setup.html",
+							path: "guide/setup.adoc",
+							family: undefined,
+							component: undefined,
+							module: undefined,
+							version: undefined,
+							fragment: undefined,
+						},
+						children: [{ type: "text", value: "guide/setup" }],
+					},
+				],
+			},
+		]);
+
+		expect(
+			parseInlineHtmlWithOptions(
+				'<a href="guide/setup.html"><code>guide/setup.html</code></a>',
+				{
+					xrefFallbackLabelStyle: "fragment-or-path",
+				},
+			),
+		).toEqual([
+			{
+				type: "xref",
+				url: "guide/setup.html",
+				target: {
+					raw: "guide/setup.html",
+					path: "guide/setup.adoc",
+					family: undefined,
+					component: undefined,
+					module: undefined,
+					version: undefined,
+					fragment: undefined,
+				},
+				children: [{ type: "text", value: "guide/setup" }],
+			},
+		]);
+	});
+
+	it("keeps malformed anchor-like tags and empty href anchors deterministic", () => {
+		expect(
+			parseInlineHtmlWithOptions('<a id="legacy">broken anchor</a>'),
+		).toEqual([
+			{
+				type: "link",
+				url: "",
+				children: [{ type: "text", value: "broken anchor" }],
+			},
+		]);
+
+		expect(parseInlineHtmlWithOptions('<a name="legacy"></a>')).toEqual([
+			{
+				type: "link",
+				url: "",
+				children: [{ type: "text", value: "" }],
+			},
+		]);
+	});
+
+	it("keeps authored xref labels when they are not generated fallbacks", () => {
+		expect(
+			parseInlineHtmlWithOptions(
+				'<a href="guide/setup.html"><em>Install Guide</em></a>',
+				{
+					xrefFallbackLabelStyle: "fragment-or-path",
+				},
+			),
+		).toEqual([
+			{
+				type: "xref",
+				url: "guide/setup.html",
+				target: {
+					raw: "guide/setup.html",
+					path: "guide/setup.adoc",
+					family: undefined,
+					component: undefined,
+					module: undefined,
+					version: undefined,
+					fragment: undefined,
+				},
+				children: [
+					{
+						type: "emphasis",
+						children: [{ type: "text", value: "Install Guide" }],
+					},
+				],
+			},
+		]);
+	});
+
 	it("preserves soft breaks for plain text helper parsing", () => {
 		expect(parsePlainTextWithSoftBreaks("first\nsecond")).toEqual([
 			{ type: "text", value: "first" },
