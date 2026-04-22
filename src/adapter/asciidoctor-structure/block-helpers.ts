@@ -39,9 +39,9 @@ export function extractList(
 					type: "paragraph",
 					children: parseInlineHtmlWithOptions(item.getText(), options),
 				},
-				...(item
-					.getBlocks?.()
-					.flatMap((child) => extractBlock(child, options)) ?? []),
+				...((item.getBlocks?.() ?? []).flatMap((child) =>
+					extractBlock(child, options),
+				) ?? []),
 			],
 		})),
 	};
@@ -98,7 +98,12 @@ export function extractAlignment(
 		.getAttribute("cols")
 		?.split(",")
 		.map((entry) => entry.trim());
-	return block.getColumns?.().map((column, index) => {
+	const columns = block.getColumns?.();
+	if (columns === undefined) {
+		return undefined;
+	}
+
+	return columns.map((column, index) => {
 		const spec = columnSpec?.[index] ?? "";
 		if (spec.includes("<")) {
 			return "left";
@@ -165,9 +170,9 @@ export function extractCalloutList(
 					type: "paragraph",
 					children: parseInlineHtmlWithOptions(item.getText(), options),
 				},
-				...(item
-					.getBlocks?.()
-					.flatMap((child) => extractBlock(child, options)) ?? []),
+				...((item.getBlocks?.() ?? []).flatMap((child) =>
+					extractBlock(child, options),
+				) ?? []),
 			],
 		})),
 	};

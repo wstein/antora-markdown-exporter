@@ -43,6 +43,11 @@ export {
 	assemblyStructureInvariants,
 	defineAssemblyDocument,
 } from "./adapter/assembly-structure.js";
+export {
+	type AssemblyStructureSpecification,
+	type AssemblyStructureSpecSection,
+	assemblyStructureSpecification,
+} from "./adapter/assembly-structure-spec.js";
 export { convertAssemblyStructureToMarkdownIR } from "./exporter/structured-to-ir.js";
 export {
 	createMarkdownConverter,

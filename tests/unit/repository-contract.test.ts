@@ -227,6 +227,7 @@ describe("repository contract", () => {
 		).toBe(true);
 		expect(readme).toContain("semantic IR");
 		expect(packageJson.description).toContain("semantic IR");
+		expect(packageIndex).toContain("./adapter/assembly-structure-spec.js");
 		expect(packageIndex).toContain("./adapter/asciidoctor-structure.js");
 		expect(packageIndex).toContain("./adapter/assembly-structure.js");
 		expect(packageIndex).toContain("assemblyStructureInvariants");

@@ -1,6 +1,7 @@
 import { describe, expect, it } from "vitest";
 import {
 	type AssemblyDocument,
+	type AssemblyStructureSpecification,
 	assemblyStructureInvariants,
 	defineAssemblyDocument,
 } from "../../src/adapter/assembly-structure.js";
@@ -220,9 +221,13 @@ describe("assembly structure contract", () => {
 	});
 
 	it("ships a formal adapter invariant specification alongside the contract", () => {
+		const specification: AssemblyStructureSpecification =
+			assemblyStructureSpecification;
+
 		expect(assemblyStructureSpecification.title).toBe(
 			"Assembly Structure Contract Specification",
 		);
+		expect(specification.invariants).toHaveLength(5);
 		expect(assemblyStructureSpecification.scope).toEqual(
 			expect.arrayContaining([
 				expect.stringContaining("assembled AsciiDoc input"),

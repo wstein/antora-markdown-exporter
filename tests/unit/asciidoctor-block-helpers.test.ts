@@ -114,6 +114,36 @@ describe("asciidoctor block helpers", () => {
 				},
 			],
 		});
+
+		expect(
+			extractList(
+				{
+					getContext: () => "olist",
+					getItems: () => [
+						{
+							getText: () => "item without blocks",
+							getBlocks: () => undefined,
+						},
+					],
+					getSourceLocation: () => undefined,
+				} as never,
+				{},
+				extractBlock,
+			),
+		).toMatchObject({
+			type: "list",
+			ordered: true,
+			items: [
+				{
+					children: [
+						{
+							type: "paragraph",
+							children: [{ type: "text", value: "item without blocks" }],
+						},
+					],
+				},
+			],
+		});
 	});
 
 	it("covers callout nesting and zero-item fallbacks", () => {
@@ -167,6 +197,35 @@ describe("asciidoctor block helpers", () => {
 						{
 							type: "paragraph",
 							children: [{ type: "text", value: "continued explanation" }],
+						},
+					],
+				},
+			],
+		});
+
+		expect(
+			extractCalloutList(
+				{
+					getItems: () => [
+						{
+							getText: () => "callout without blocks",
+							getBlocks: () => undefined,
+						},
+					],
+					getSourceLocation: () => undefined,
+				} as never,
+				{},
+				extractBlock,
+			),
+		).toMatchObject({
+			type: "calloutList",
+			items: [
+				{
+					ordinal: 1,
+					children: [
+						{
+							type: "paragraph",
+							children: [{ type: "text", value: "callout without blocks" }],
 						},
 					],
 				},
@@ -283,6 +342,23 @@ describe("asciidoctor block helpers", () => {
 			type: "table",
 			header: { cells: [] },
 			rows: [],
+		});
+
+		expect(
+			extractTable({
+				getAttribute: () => undefined,
+				getColumns: () => undefined,
+				getHeadRows: () => [],
+				getBodyRows: () => [[{ getText: () => "Header" }], []],
+				getSourceLocation: () => undefined,
+			} as never),
+		).toMatchObject({
+			type: "table",
+			align: undefined,
+			header: {
+				cells: [{ children: [{ type: "text", value: "Header" }] }],
+			},
+			rows: [{ cells: [] }],
 		});
 	});
 });
