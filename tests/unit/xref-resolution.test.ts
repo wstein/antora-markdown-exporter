@@ -51,6 +51,28 @@ describe("resolveMarkdownXrefDestination", () => {
 				markdownFlavorSpecs.gitlab,
 			),
 		).toBe("docs/2.0/install.html#cli");
+		expect(
+			resolveMarkdownXrefDestination(
+				{
+					type: "xref",
+					url: "docs/2.0/ROOT/install.adoc#cli",
+					target: {
+						raw: "2.0@docs:ROOT:install.adoc#cli",
+						component: "docs",
+						version: "2.0",
+						module: "ROOT",
+						family: {
+							kind: "page",
+							name: "page",
+						},
+						path: "install.adoc",
+						fragment: "cli",
+					},
+					children: [{ type: "text", value: "cli" }],
+				},
+				markdownFlavorSpecs.multimarkdown,
+			),
+		).toBe("docs/2.0/install.html#cli");
 	});
 
 	it("routes each supported site asset family explicitly", () => {

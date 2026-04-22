@@ -218,4 +218,26 @@ describe("export antora modules script", () => {
 		]);
 		expect(reviewBundleFiles).toHaveLength(2);
 	});
+
+	it("keeps multimarkdown module exports free of source-style antora xref destinations", async () => {
+		const outputRoot = await mkdtemp(
+			resolve(tmpdir(), "antora-markdown-export-"),
+		);
+		await exportAntoraModulesToMarkdown({
+			flavor: "multimarkdown",
+			outputRoot,
+			packageTaskMarkdown: true,
+			playbookPath: resolve("antora-playbook.yml"),
+			xrefFallbackLabelStyle: "fragment-or-basename",
+		});
+
+		const manualMarkdown = await readFile(
+			resolve(outputRoot, "manual.md"),
+			"utf8",
+		);
+
+		expect(manualMarkdown).not.toContain(".adoc)");
+		expect(manualMarkdown).not.toContain("ROOT:");
+		expect(manualMarkdown).not.toContain("page$");
+	});
 });

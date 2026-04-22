@@ -111,9 +111,13 @@ export const markdownFlavorSpecs: Record<
 		preserveOrderedListStart: true,
 		citationStyle: "plain",
 		blockFallbackLabel: "Unsupported",
-		xrefStyle: "source",
-		xrefSiteAssetFamilies: {},
-		xrefSiteOmitRootModule: false,
+		xrefStyle: "site",
+		xrefSiteAssetFamilies: {
+			attachment: "_attachments",
+			example: "_examples",
+			image: "_images",
+		},
+		xrefSiteOmitRootModule: true,
 	},
 	strict: {
 		name: "strict",
