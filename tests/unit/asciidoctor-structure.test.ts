@@ -533,6 +533,31 @@ describe("asciidoctor structure extraction", () => {
 		);
 	});
 
+	it("treats malformed inline image spans and raw angle-bracket fragments as text", () => {
+		const document = extractAssemblyStructure(
+			[
+				"== Inline edge cases",
+				"",
+				'Broken <span class="image"><img src="diagram.png" alt="Diagram"> and dangling <raw text',
+			].join("\n"),
+		);
+
+		expect(document.children).toEqual(
+			expect.arrayContaining([
+				expect.objectContaining({
+					type: "paragraph",
+					children: [
+						{
+							type: "text",
+							value:
+								'Broken <span class="image"><img src="diagram.png" alt="Diagram"> and dangling <raw text',
+						},
+					],
+				}),
+			]),
+		);
+	});
+
 	it("joins multi-term description labels with a stable separator", () => {
 		const document = extractAssemblyStructure(
 			["== Terms", "", "first term; second term:: Shared description."].join(
