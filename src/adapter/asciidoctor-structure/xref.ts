@@ -90,6 +90,7 @@ export function isStructuredXrefHref(href: string): boolean {
 	}
 
 	return (
+		href.includes(".md") ||
 		href.includes(".html") ||
 		href.includes("$") ||
 		href.includes("@") ||
@@ -132,11 +133,11 @@ export function deriveXrefFallbackLabel(
 	}
 
 	if (style === "fragment-or-path") {
-		return target.path.replace(/\.(adoc|html)$/u, "");
+		return target.path.replace(/\.(adoc|html|md)$/u, "");
 	}
 
 	const lastSegment = target.path.split("/").at(-1) ?? target.path;
-	return lastSegment.replace(/\.(adoc|html)$/u, "");
+	return lastSegment.replace(/\.(adoc|html|md)$/u, "");
 }
 
 export function normalizeXrefChildren(

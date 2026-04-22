@@ -112,7 +112,7 @@ describe("markdown exporter extension", () => {
 		expect(attributes.outfilesuffix).toBe(".md");
 		expect(attributes.outfile).toBe(outputFile);
 		await expect(readFile(outputFile, "utf8")).resolves.toBe(
-			"# Guide\n\nSee [setup](guide/setup.adoc).\n\n",
+			"# Guide\n\nSee [setup](guide/setup.md).\n\n",
 		);
 	});
 
@@ -141,7 +141,7 @@ describe("markdown exporter extension", () => {
 		);
 
 		await expect(readFile(outputFile, "utf8")).resolves.toBe(
-			"# Guide\n\nSee [guide/setup](guide/setup.adoc).\n\n",
+			"# Guide\n\nSee [guide/setup](guide/setup.md).\n\n",
 		);
 	});
 

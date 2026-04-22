@@ -11,6 +11,7 @@ describe("asciidoctor xref helpers", () => {
 	it("recognizes structured href forms and parses qualified targets", () => {
 		expect(isStructuredXrefHref("#anchor")).toBe(true);
 		expect(isStructuredXrefHref("https://example.com")).toBe(false);
+		expect(isStructuredXrefHref("guide/setup.md")).toBe(true);
 		expect(isStructuredXrefHref("docs:ROOT:page$guide/setup.html")).toBe(true);
 		expect(isStructuredXrefHref("2.0@docs:ROOT:partial$nav.adoc")).toBe(true);
 
@@ -40,10 +41,17 @@ describe("asciidoctor xref helpers", () => {
 
 	it("normalizes fallback labels while preserving custom visible labels", () => {
 		const target = parseXrefTarget("guide/setup.html");
+		const markdownTarget = parseXrefTarget("guide/setup.md");
 		expect(deriveXrefFallbackLabel(target, "fragment-or-basename")).toBe(
 			"setup",
 		);
 		expect(deriveXrefFallbackLabel(target, "fragment-or-path")).toBe(
+			"guide/setup",
+		);
+		expect(
+			deriveXrefFallbackLabel(markdownTarget, "fragment-or-basename"),
+		).toBe("setup");
+		expect(deriveXrefFallbackLabel(markdownTarget, "fragment-or-path")).toBe(
 			"guide/setup",
 		);
 
@@ -68,6 +76,14 @@ describe("asciidoctor xref helpers", () => {
 				"guide/setup.html",
 				target,
 				[{ type: "text", value: "guide/setup.html" }],
+				"fragment-or-path",
+			),
+		).toEqual([{ type: "text", value: "guide/setup" }]);
+		expect(
+			normalizeXrefChildren(
+				"guide/setup.md",
+				markdownTarget,
+				[{ type: "text", value: "guide/setup.md" }],
 				"fragment-or-path",
 			),
 		).toEqual([{ type: "text", value: "guide/setup" }]);
