@@ -33,6 +33,11 @@ const exportScript = readFileSync(
 	resolve(root, "scripts/export-antora-modules.ts"),
 	"utf8",
 );
+const extensionEntrypoint = readFileSync(
+	resolve(root, "src/extension/index.ts"),
+	"utf8",
+);
+const packageIndex = readFileSync(resolve(root, "src/index.ts"), "utf8");
 const readme = readFileSync(resolve(root, "README.md"), "utf8");
 const manualDoc = readFileSync(
 	resolve(root, "docs/modules/manual/pages/index.adoc"),
@@ -185,12 +190,8 @@ describe("repository contract", () => {
 		expect(packageJson.dependencies?.["@asciidoctor/core"]).toBe("~2.2.8");
 		expect(readme).toContain("semantic IR");
 		expect(packageJson.description).toContain("semantic IR");
-		expect(readFileSync(resolve(root, "src/index.ts"), "utf8")).toContain(
-			"./adapter/asciidoctor-structure.js",
-		);
-		expect(readFileSync(resolve(root, "src/index.ts"), "utf8")).toContain(
-			"./adapter/assembly-structure.js",
-		);
+		expect(packageIndex).toContain("./adapter/asciidoctor-structure.js");
+		expect(packageIndex).toContain("./adapter/assembly-structure.js");
 		expect(
 			readFileSync(
 				resolve(
@@ -222,6 +223,35 @@ describe("repository contract", () => {
 		).toContain(
 			"Asciidoctor structural extraction should replace legacy text parsing incrementally",
 		);
+	});
+
+	it("keeps the shipped extension runtime on the structured exporter path", () => {
+		expect(extensionEntrypoint).toContain("./adapter/asciidoctor-structure.js");
+		expect(extensionEntrypoint).toContain("./exporter/structured-to-ir.js");
+		expect(extensionEntrypoint).not.toContain("./exporter/convert-assembly.js");
+		expect(extensionEntrypoint).toContain("renderAssemblyMarkdown");
+		expect(extensionEntrypoint).toContain("extractAssemblyStructure");
+		expect(extensionEntrypoint).toContain(
+			"convertAssemblyStructureToMarkdownIR",
+		);
+		expect(
+			readFileSync(
+				resolve(
+					root,
+					"notes/Structured runtime cutover means the legacy text parser is now a deletion target.md",
+				),
+				"utf8",
+			),
+		).toContain("legacy text parser is now a deletion target");
+		expect(
+			readFileSync(
+				resolve(
+					root,
+					"docs/modules/architecture/partials/06_runtime_view.adoc",
+				),
+				"utf8",
+			),
+		).toContain("convertAssemblyStructureToMarkdownIR(document)");
 	});
 
 	it("keeps CI and release workflows aligned with the develop/tag operating model", () => {

@@ -46,7 +46,8 @@ The most important interfaces are:
 
 * `defineAssemblyDocument(document)` pins the repository-owned adapter contract for structured assembly input.
 * `extractAssemblyStructure(source, options)` extracts supported document structure into the repository-owned assembly adapter.
-* `convertAssemblyToMarkdownIR(source, options)` is the main converter entrypoint.
+* `convertAssemblyStructureToMarkdownIR(document)` lowers repository-owned structured assembly into Markdown IR.
+* `renderAssemblyMarkdown(source, flavor, sourcePath)` is the shipped extension runtime entrypoint for assembled AsciiDoc export.
 * `normalizeMarkdownIR(document)` freezes the semantic shape expected by renderers and inspection helpers.
 * `renderMarkdown(document, flavor)` and flavor-specific helpers serialize the normalized IR.
 * `collectMarkdownInspectionReport(document)` provides normalized inspection data for includes and xrefs.
@@ -61,7 +62,7 @@ The remaining risk is not the absence of an outer Antora integration boundary. I
 ==== Conversion And Include Handling
 The exporter converts assembled content into IR and keeps include semantics, provenance, and diagnostics available when they are intentionally preserved, without making the private marker format part of the public contract.
 
-Its current implementation lives in `src/exporter/convert-assembly.ts` and `src/exporter/include-metadata.ts`. The structured rewrite boundary is defined separately in `src/adapter/assembly-structure.ts`.
+Its shipped structured runtime lives in `src/extension/index.ts`, `src/adapter/asciidoctor-structure.ts`, `src/exporter/structured-to-ir.ts`, and `src/markdown/**`. Legacy text-parsing code in `src/exporter/convert-assembly.ts` remains a removal target, not the preferred runtime path.
 
 The private marker transport is intentionally isolated. The main ongoing risk is conversion coverage for richer assembled AsciiDoc constructs, not missing registration itself.
 

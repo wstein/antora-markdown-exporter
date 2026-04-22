@@ -157,7 +157,8 @@ The most important interfaces are:
 
 - `defineAssemblyDocument(document)` pins the repository-owned adapter contract for structured assembly input.
 - `extractAssemblyStructure(source, options)` extracts supported document structure into the repository-owned assembly adapter.
-- `convertAssemblyToMarkdownIR(source, options)` is the main converter entrypoint.
+- `convertAssemblyStructureToMarkdownIR(document)` lowers repository-owned structured assembly into Markdown IR.
+- `renderAssemblyMarkdown(source, flavor, sourcePath)` is the shipped extension runtime entrypoint for assembled AsciiDoc export.
 - `normalizeMarkdownIR(document)` freezes the semantic shape expected by renderers and inspection helpers.
 - `renderMarkdown(document, flavor)` and flavor-specific helpers serialize the normalized IR.
 - `collectMarkdownInspectionReport(document)` provides normalized inspection data for includes and xrefs.
@@ -174,7 +175,7 @@ The remaining risk is not the absence of an outer Antora integration boundary. I
 
 The exporter converts assembled content into IR and keeps include semantics, provenance, and diagnostics available when they are intentionally preserved, without making the private marker format part of the public contract.
 
-Its current implementation lives in `src/exporter/convert-assembly.ts` and `src/exporter/include-metadata.ts`. The structured rewrite boundary is defined separately in `src/adapter/assembly-structure.ts`.
+Its shipped structured runtime lives in `src/extension/index.ts`, `src/adapter/asciidoctor-structure.ts`, `src/exporter/structured-to-ir.ts`, and `src/markdown/**`. Legacy text-parsing code in `src/exporter/convert-assembly.ts` remains a removal target, not the preferred runtime path.
 
 The private marker transport is intentionally isolated. The main ongoing risk is conversion coverage for richer assembled AsciiDoc constructs, not missing registration itself.
 
@@ -190,14 +191,14 @@ These surfaces live in `src/markdown/include-diagnostics.ts`, `scripts/inspectio
 
 This scenario is based on the notes `Exporter pipeline uses Assembler and a direct TypeScript converter` and `Release and package identity use scoped npm publishing`.
 
-1. An upstream caller provides assembled AsciiDoc content to `convertAssemblyToMarkdownIR(source, { sourcePath })`.
-2. The converter in `src/exporter/convert-assembly.ts` maps assembled content and preserved metadata into semantic IR nodes.
-3. Include directives are inlined when source-path context is available; include metadata, diagnostics, and provenance are preserved as dedicated `includeDirective` nodes rather than being dropped.
+1. An upstream caller provides assembled AsciiDoc content to `renderAssemblyMarkdown(source, flavor, sourcePath)` or explicitly invokes `extractAssemblyStructure(source, { sourcePath })`.
+2. `src/adapter/asciidoctor-structure.ts` loads the assembled content through Asciidoctor and maps supported structure into the repository-owned assembly adapter.
+3. `convertAssemblyStructureToMarkdownIR(document)` lowers that structured assembly document into Markdown IR nodes.
 4. The caller normalizes the document through `normalizeMarkdownIR`.
 5. Xref targets remain structured until lowering in `src/markdown/xref-resolution.ts`.
 6. A flavor renderer serializes the normalized document according to `src/markdown/flavor.ts` and `src/markdown/fallback.ts`.
 
-The notable aspect is that the shipped runtime now spans both the Assembler-backed extension entrypoint and the repository-owned conversion boundary. The remaining work is to keep converter behavior, registration behavior, and tests aligned as coverage expands.
+The notable aspect is that the shipped runtime now spans both the Assembler-backed extension entrypoint and the repository-owned structured conversion boundary. The remaining work is to delete the legacy text parser without weakening supported semantics.
 
 ## 6.2. Collect Inspection Data For CI Or Release Validation
 
