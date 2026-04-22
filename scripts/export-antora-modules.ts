@@ -39,6 +39,23 @@ const markdownFlavors = new Set<MarkdownFlavorName>([
 	"strict",
 ]);
 
+const packageTaskDefaultFlavorEnvVar = "ANTORA_MARKDOWN_EXPORT_DEFAULT_FLAVOR";
+
+function resolveDefaultFlavor(): MarkdownFlavorName {
+	const configured = process.env[packageTaskDefaultFlavorEnvVar];
+	if (
+		configured === "gfm" ||
+		configured === "commonmark" ||
+		configured === "gitlab" ||
+		configured === "multimarkdown" ||
+		configured === "strict"
+	) {
+		return configured;
+	}
+
+	return "gfm";
+}
+
 function usage(): string {
 	return [
 		"Usage: bun scripts/export-antora-modules.ts [--playbook <file>] [--output-root <dir>] [--flavor <gfm|commonmark|gitlab|multimarkdown|strict>] [--xref-fallback-label-style <fragment-or-basename|fragment-or-path>] [--json]",
@@ -48,7 +65,7 @@ function usage(): string {
 }
 
 export function parseArguments(argv: string[]): ExportAntoraModulesOptions {
-	let flavor: MarkdownFlavorName = "gfm";
+	let flavor: MarkdownFlavorName = resolveDefaultFlavor();
 	let format: "human" | "json" = "human";
 	let outputRoot = resolve("build/markdown");
 	let playbookPath = resolve("antora-playbook.yml");

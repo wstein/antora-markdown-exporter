@@ -51,6 +51,38 @@ describe("export antora modules script", () => {
 		expect(options.flavor).toBe("gfm");
 	});
 
+	it("accepts a package-task default flavor from the environment", () => {
+		const previous = process.env.ANTORA_MARKDOWN_EXPORT_DEFAULT_FLAVOR;
+		process.env.ANTORA_MARKDOWN_EXPORT_DEFAULT_FLAVOR = "multimarkdown";
+
+		try {
+			const options = parseArguments(["--output-root", "tmp/out"]);
+			expect(options.flavor).toBe("multimarkdown");
+		} finally {
+			if (previous === undefined) {
+				delete process.env.ANTORA_MARKDOWN_EXPORT_DEFAULT_FLAVOR;
+			} else {
+				process.env.ANTORA_MARKDOWN_EXPORT_DEFAULT_FLAVOR = previous;
+			}
+		}
+	});
+
+	it("lets explicit flavor arguments override the package-task default", () => {
+		const previous = process.env.ANTORA_MARKDOWN_EXPORT_DEFAULT_FLAVOR;
+		process.env.ANTORA_MARKDOWN_EXPORT_DEFAULT_FLAVOR = "multimarkdown";
+
+		try {
+			const options = parseArguments(["--flavor", "gfm"]);
+			expect(options.flavor).toBe("gfm");
+		} finally {
+			if (previous === undefined) {
+				delete process.env.ANTORA_MARKDOWN_EXPORT_DEFAULT_FLAVOR;
+			} else {
+				process.env.ANTORA_MARKDOWN_EXPORT_DEFAULT_FLAVOR = previous;
+			}
+		}
+	});
+
 	it("exports one assembled markdown document per documentation module", async () => {
 		const outputRoot = await mkdtemp(
 			resolve(tmpdir(), "antora-markdown-export-"),

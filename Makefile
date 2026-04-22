@@ -21,7 +21,7 @@ pdf: ## Build the assembled documentation PDF with the configured package manage
 	$(PM) run pdf:build
 
 markdown: ## Export Antora module pages to Markdown with the configured package manager.
-	$(PM) run export:modules -- $(if $(findstring --flavor,$(ARGS)),$(ARGS),--flavor multimarkdown $(ARGS))
+	ANTORA_MARKDOWN_EXPORT_DEFAULT_FLAVOR=multimarkdown $(PM) run export:modules -- $(ARGS)
 
 test: ## Run tests with the configured package manager.
 	$(PM) run test
