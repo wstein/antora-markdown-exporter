@@ -11,7 +11,7 @@ Download the module PDFs:
 
 Use the dedicated modules for the main documentation streams:
 
-- [Architecture](https://wstein.github.io/antora-markdown-exporter/antora-markdown-exporter/architecture/index.html)
-- [Manual](https://wstein.github.io/antora-markdown-exporter/antora-markdown-exporter/manual/index.html)
-- [Onboarding](https://wstein.github.io/antora-markdown-exporter/antora-markdown-exporter/onboarding/index.html)
+- [Architecture](architecture.md)
+- [Manual](manual.md)
+- [Onboarding](onboarding.md)
 
