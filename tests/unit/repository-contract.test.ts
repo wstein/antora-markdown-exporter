@@ -1,4 +1,4 @@
-import { existsSync, readFileSync } from "node:fs";
+import { existsSync, readdirSync, readFileSync } from "node:fs";
 import { resolve } from "node:path";
 import { describe, expect, it } from "vitest";
 import { describePackage } from "../../src/index.js";
@@ -48,6 +48,10 @@ const cliEntrypoint = readFileSync(
 );
 const cxConfig = readFileSync(resolve(root, "cx.toml"), "utf8");
 const readme = readFileSync(resolve(root, "README.md"), "utf8");
+const referenceManifest = readFileSync(
+	resolve(root, "tests/reference/manifest.json"),
+	"utf8",
+);
 const manualDoc = readFileSync(
 	resolve(root, "docs/modules/manual/pages/index.adoc"),
 	"utf8",
@@ -70,6 +74,27 @@ const qualityDoc = readFileSync(
 	),
 	"utf8",
 );
+const extensionUnitTests = readFileSync(
+	resolve(root, "tests/unit/extension.test.ts"),
+	"utf8",
+);
+
+function findExpectedMarkdownFiles(dir: string): string[] {
+	return readdirSync(dir, { withFileTypes: true }).flatMap((entry) => {
+		const childPath = resolve(dir, entry.name);
+		if (entry.isDirectory()) {
+			return findExpectedMarkdownFiles(childPath);
+		}
+
+		return entry.name.startsWith("expected.") && entry.name.endsWith(".md")
+			? [childPath]
+			: [];
+	});
+}
+
+const xrefExpectedMarkdownFiles = findExpectedMarkdownFiles(
+	resolve(root, "tests/fixtures"),
+).filter((path) => path.includes("/xrefs"));
 
 describe("repository contract", () => {
 	it("keeps referenced package files in the tree", () => {
@@ -376,5 +401,18 @@ describe("repository contract", () => {
 		);
 		expect(agentGuidance).not.toContain("scaffolded extension entrypoint");
 		expect(agentGuidance).not.toContain("not full Antora registration");
+	});
+
+	it("keeps standalone .md xref expectations isolated from fixture routing contracts", () => {
+		expect(extensionUnitTests).toContain("[setup](guide/setup.md)");
+		expect(extensionUnitTests).toContain("[setup](setup.md)");
+		expect(extensionUnitTests).toContain("[guide/setup](guide/setup.md)");
+
+		for (const file of xrefExpectedMarkdownFiles) {
+			expect(readFileSync(file, "utf8")).not.toContain(".md)");
+		}
+
+		expect(referenceManifest).not.toContain(".md)");
+		expect(referenceManifest).toContain("[install](docs/install.html)");
 	});
 });
