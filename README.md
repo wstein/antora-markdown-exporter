@@ -13,7 +13,7 @@ This repository uses a small claim-status grammar in its docs:
 - `CI-enforced`: executed or guarded by repository workflows
 - `Intended`: documented design direction that is not yet fully enforced
 
-The operator manual publishes the fuller proof matrix, support matrix, and prerequisites matrix.
+The operator manual publishes the fuller proof matrix, support matrix, evidence ledger, and prerequisites matrix.
 
 ## Install
 

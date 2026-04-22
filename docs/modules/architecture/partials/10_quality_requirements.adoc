@@ -56,6 +56,31 @@
 |Support matrix in the operator manual; note `Converter coverage should be published as a support matrix`
 |===
 
+=== Evidence Ledger
+
+[options="header",cols="1,1,1,2,2"]
+|===
+|Claim family |Implementation evidence |Test evidence |Workflow evidence |Boundary note
+
+|Semantic conversion stays explicit
+|`src/exporter/convert-assembly.ts`; `src/markdown/ir.ts`
+|`tests/unit/convert-assembly.test.ts`; `tests/unit/ir.test.ts`
+|`bun run check`
+|Semantic extensions should land in IR-aware code, not renderer-local rewrites.
+
+|Workflow claims stay auditable
+|`scripts/release-check.mjs`; `scripts/export-antora-modules.ts`
+|`tests/unit/repository-contract.test.ts`; `tests/unit/export-antora-modules.test.ts`
+|`.github/workflows/ci.yml`; `.github/workflows/release.yml`; `.github/workflows/pages.yml`
+|Release and publication claims require both local contract tests and workflow references.
+
+|Compatibility claims stay curated
+|`tests/reference/manifest.json`
+|`tests/integration/reference-antora.test.ts`
+|`make reference`
+|Coverage tags and provenance are part of the proof surface, not metadata garnish.
+|===
+
 === Quality Scenarios
 ==== QS-1 Deterministic Golden Rendering
 

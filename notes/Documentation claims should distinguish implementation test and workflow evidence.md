@@ -38,7 +38,7 @@ Explicit markers let the docs stay ambitious without overstating proof.
 
 Add the status grammar to contributor-facing and operator-facing docs.
 
-For major repository claims, include a compact proof matrix that links the claim to:
+For major repository claims, include a compact proof matrix or evidence ledger that links the claim to:
 
 - source files
 - tests
@@ -53,4 +53,4 @@ When a workflow file exists but its behavior is not yet contract-tested or routi
 - [[Testing relies on golden fixtures and deterministic snapshots]] - Determinism claims must state their proof surface.
 - docs/modules/manual/pages/index.adoc - Operator-facing claim status guidance.
 - docs/modules/onboarding/pages/index.adoc - Contributor-facing claim status guidance.
-- docs/modules/architecture/partials/10_quality_requirements.adoc - Architecture proof matrix.
+- docs/modules/architecture/partials/10_quality_requirements.adoc - Architecture proof matrix and evidence ledger.

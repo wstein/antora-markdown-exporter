@@ -135,6 +135,7 @@ describe("repository contract", () => {
 
 	it("documents claim status, evidence, and support boundaries explicitly", () => {
 		expect(readme).toContain("## Status Markers");
+		expect(readme).toContain("evidence ledger");
 		expect(readme).toContain("`Implemented`");
 		expect(readme).toContain("`Test-enforced`");
 		expect(readme).toContain("`CI-enforced`");
@@ -148,11 +149,15 @@ describe("repository contract", () => {
 		expect(onboardingDoc).toContain("one contract family");
 		expect(onboardingDoc).toContain(".github/workflows/release.yml");
 		expect(onboardingDoc).toContain(".github/workflows/pages.yml");
+		expect(onboardingDoc).toContain(
+			"support matrix, proof matrix, and evidence ledger",
+		);
 
 		expect(manualDoc).toContain("=== Read Status Markers First");
 		expect(manualDoc).toContain("=== Operator Prerequisites Matrix");
 		expect(manualDoc).toContain("=== Canonical Contract Family");
 		expect(manualDoc).toContain("=== Converter Support Matrix");
+		expect(manualDoc).toContain("=== Evidence Ledger");
 		expect(manualDoc).toContain("=== Proof Matrix");
 		expect(manualDoc).toContain(".github/workflows/release.yml");
 		expect(manualDoc).toContain(".github/workflows/pages.yml");
@@ -163,6 +168,7 @@ describe("repository contract", () => {
 
 		expect(introGoalsDoc).toContain("=== Claim Status Grammar");
 		expect(qualityDoc).toContain("=== Proof Matrix");
+		expect(qualityDoc).toContain("=== Evidence Ledger");
 		expect(qualityDoc).toContain(
 			"Broader converter coverage beyond the published matrix",
 		);

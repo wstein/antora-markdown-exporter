@@ -446,44 +446,84 @@ Troubleshooting guidance:
 
 The note `Converter coverage should be published as a support matrix` defines the honesty bar for feature coverage.
 
-[cols="1,1,2,2" options="header"]
+[cols="1,1,2,2,2" options="header"]
 |===
-|Construct family |Status |Current scope |Evidence
+|Construct family |Status |Semantic contract |Primary proof |Workflow and review surface
 
 |Section structure and headings
 |Supported
-|Assembled module exports, chapter/section numbering parity, and heading rendering are covered for the documentation modules.
-|`tests/integration/module-export-golden.test.ts`; `tests/integration/module-export-structure.test.ts`
+|Headings, section numbering metadata, and table-of-contents render options stay semantic until rendering.
+|`src/exporter/convert-assembly.ts`; `tests/unit/convert-assembly.test.ts`; `tests/integration/module-export-golden.test.ts`; `tests/integration/module-export-structure.test.ts`
+|`make markdown`; documentation module export review
 
 |Xrefs, anchors, and page aliases
 |Supported
-|Structured xref metadata, lowering, and rendering are part of the semantic pipeline and inspection surfaces.
-|`tests/unit/xref-resolution.test.ts`; `tests/unit/include-diagnostics.test.ts`; reference fixtures
+|Structured xref targets, anchor identifiers, and page aliases remain inspectable until lowering or rendering.
+|`src/markdown/xref-resolution.ts`; `tests/unit/xref-resolution.test.ts`; `tests/unit/include-diagnostics.test.ts`; reference fixtures
+|Inspection report review; rendered fixture review
 
 |Include directives and diagnostics
 |Supported
-|Recursive include handling, tagged-region selection, line ranges, and diagnostics are implemented and exposed through inspection helpers.
-|`tests/unit/include-metadata.test.ts`; `tests/unit/include-diagnostics.test.ts`; `tests/integration/reference-antora.test.ts`
+|Recursive include expansion, tagged-region selection, line ranges, diagnostics, and provenance stay visible in IR and reports.
+|`src/exporter/include-metadata.ts`; `src/markdown/include-diagnostics.ts`; `tests/unit/include-metadata.test.ts`; `tests/unit/include-diagnostics.test.ts`; `tests/integration/reference-antora.test.ts`
+|`scripts/inspection-report.ts`; CI annotation review
 
 |Admonitions, images, and tables
 |Supported
-|These constructs are converted and rendered through the semantic pipeline and appear in local and reference fixtures.
-|`tests/integration/fixture-golden.test.ts`; `tests/integration/reference-antora.test.ts`
+|These constructs map to dedicated semantic nodes instead of renderer-local string rewrites.
+|`src/markdown/ir.ts`; `tests/unit/convert-assembly.test.ts`; `tests/integration/fixture-golden.test.ts`; `tests/integration/reference-antora.test.ts`
+|Fixture diff review
 
 |Transparent fenced extensions such as `mermaid`
 |Supported
-|Valid fenced code blocks preserve authored language tags without falling into fallback.
+|Valid fenced code blocks preserve authored language tags as semantic `codeBlock` nodes and do not enter fallback.
 |`tests/integration/fenced-extension-policy.test.ts`; reference manifest entries
+|Fixture diff review; package usage examples
 
 |Raw HTML and unsupported degradation
 |Partial
-|The repository enforces explicit fallback policy, but support depends on flavor policy and visible degradation rules rather than blanket passthrough.
-|`tests/unit/fallback.test.ts`; `tests/integration/raw-html-policy.test.ts`
+|Fallback stays explicit and deterministic, but downstream allowance depends on flavor policy instead of blanket passthrough.
+|`src/markdown/fallback.ts`; `tests/unit/fallback.test.ts`; `tests/integration/raw-html-policy.test.ts`
+|Flavor policy review; release validation
 
 |Unmodeled AsciiDoc constructs outside the current IR
 |Unsupported
-|These must become explicit IR extensions or visible fallback; they are not silently normalized into “good enough” Markdown.
+|New constructs must become explicit IR extensions or visible fallback; they are not silently normalized into “good enough” Markdown.
 |`src/markdown/ir.ts`; `src/markdown/fallback.ts`; note `Strict architecture must be extended without weakening invariants`
+|Architecture review; support-matrix updates
+|===
+
+=== Evidence Ledger
+
+This ledger turns the architecture story into reviewable evidence. Use it when a claim spans code, tests, and workflows and you need the exact proof surface rather than a broad status marker.
+
+[cols="1,1,1,2,2" options="header"]
+|===
+|Claim family |Implementation evidence |Test evidence |Workflow evidence |Review note
+
+|Conversion semantics stay centralized
+|`src/exporter/convert-assembly.ts`; `src/exporter/include-metadata.ts`
+|`tests/unit/convert-assembly.test.ts`; `tests/unit/ir.test.ts`
+|`bun run check`
+|Refactors should change parser modules and parser tests together.
+
+|Rendered Markdown stays deterministic
+|`src/markdown/normalize.ts`; `src/markdown/render/**`
+|`tests/integration/fixture-golden.test.ts`; `tests/integration/module-export-golden.test.ts`
+|`make test`; `.github/workflows/ci.yml`
+|Golden diffs are the primary review artifact for rendering changes.
+
+|Inspection and diagnostics stay machine-readable
+|`src/markdown/include-diagnostics.ts`; `scripts/inspection-report.ts`
+|`tests/unit/include-diagnostics.test.ts`; `tests/unit/inspection-report-script.test.ts`
+|`bun run inspect:report`; CI annotation consumers
+|Prefer normalized report surfaces over ad-hoc traversal.
+
+|Release and publication claims stay bounded
+|`scripts/release-check.mjs`; `scripts/release.js`; `antora-playbook.yml`
+|`tests/unit/repository-contract.test.ts`
+|`.github/workflows/release.yml`; `.github/workflows/pages.yml`
+|Do not describe publication behavior without linking both workflow files and the contract test.
 |===
 
 === Common Failure Modes

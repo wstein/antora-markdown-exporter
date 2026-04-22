@@ -31,11 +31,12 @@
 - [Chapter 10. Quality Requirements](#chapter-10-quality-requirements)
   - [10.1. Quality Requirements Overview](#101-quality-requirements-overview)
   - [10.2. Proof Matrix](#102-proof-matrix)
-  - [10.3. Quality Scenarios](#103-quality-scenarios)
-    - [10.3.1. QS-1 Deterministic Golden Rendering](#1031-qs-1-deterministic-golden-rendering)
-    - [10.3.2. QS-2 Reference Compatibility With Locked Provenance](#1032-qs-2-reference-compatibility-with-locked-provenance)
-    - [10.3.3. QS-3 Valid Extensions Stay Out Of Fallback](#1033-qs-3-valid-extensions-stay-out-of-fallback)
-    - [10.3.4. QS-4 Repository Self-Consistency Before Release](#1034-qs-4-repository-self-consistency-before-release)
+  - [10.3. Evidence Ledger](#103-evidence-ledger)
+  - [10.4. Quality Scenarios](#104-quality-scenarios)
+    - [10.4.1. QS-1 Deterministic Golden Rendering](#1041-qs-1-deterministic-golden-rendering)
+    - [10.4.2. QS-2 Reference Compatibility With Locked Provenance](#1042-qs-2-reference-compatibility-with-locked-provenance)
+    - [10.4.3. QS-3 Valid Extensions Stay Out Of Fallback](#1043-qs-3-valid-extensions-stay-out-of-fallback)
+    - [10.4.4. QS-4 Repository Self-Consistency Before Release](#1044-qs-4-repository-self-consistency-before-release)
 - [Chapter 11. Risks and Technical Debts](#chapter-11-risks-and-technical-debts)
 - [Chapter 12. Reference Notes](#chapter-12-reference-notes)
 
@@ -297,9 +298,17 @@ These decisions are intentionally implementation-facing. They explain why the re
 | Release promotion and Pages publication | `CI-enforced` | Tag-triggered release workflow and follow-on Pages workflow | `.github/workflows/release.yml`; `.github/workflows/pages.yml`; `tests/unit/repository-contract.test.ts` |
 | Broader converter coverage beyond the published matrix | `Intended` | Future semantic extensions and fixtures | Support matrix in the operator manual; note `Converter coverage should be published as a support matrix` |
 
-## 10.3. Quality Scenarios
+## 10.3. Evidence Ledger
 
-### 10.3.1. QS-1 Deterministic Golden Rendering
+| Claim family | Implementation evidence | Test evidence | Workflow evidence | Boundary note |
+| --- | --- | --- | --- | --- |
+| Semantic conversion stays explicit | `src/exporter/convert-assembly.ts`; `src/markdown/ir.ts` | `tests/unit/convert-assembly.test.ts`; `tests/unit/ir.test.ts` | `bun run check` | Semantic extensions should land in IR-aware code, not renderer-local rewrites. |
+| Workflow claims stay auditable | `scripts/release-check.mjs`; `scripts/export-antora-modules.ts` | `tests/unit/repository-contract.test.ts`; `tests/unit/export-antora-modules.test.ts` | `.github/workflows/ci.yml`; `.github/workflows/release.yml`; `.github/workflows/pages.yml` | Release and publication claims require both local contract tests and workflow references. |
+| Compatibility claims stay curated | `tests/reference/manifest.json` | `tests/integration/reference-antora.test.ts` | `make reference` | Coverage tags and provenance are part of the proof surface, not metadata garnish. |
+
+## 10.4. Quality Scenarios
+
+### 10.4.1. QS-1 Deterministic Golden Rendering
 
 **Context/Background:** Local fixture tests exercise the canonical render contract.
 
@@ -313,7 +322,7 @@ These decisions are intentionally implementation-facing. They explain why the re
 
 Notes cited: `Golden tests require rendered output comparison`; `Testing relies on golden fixtures and deterministic snapshots`
 
-### 10.3.2. QS-2 Reference Compatibility With Locked Provenance
+### 10.4.2. QS-2 Reference Compatibility With Locked Provenance
 
 **Context/Background:** The project validates realistic Antora content without using live upstream documents as byte-exact truth.
 
@@ -327,7 +336,7 @@ Notes cited: `Golden tests require rendered output comparison`; `Testing relies 
 
 Notes cited: `Reference testing uses official Antora documentation as a compatibility corpus`; `Reference tests check semantic invariants not exact bytes`; `Reference fixtures are curated and provenance locked`; `Reference corpus should cover navigation xrefs includes and admonitions`
 
-### 10.3.3. QS-3 Valid Extensions Stay Out Of Fallback
+### 10.4.3. QS-3 Valid Extensions Stay Out Of Fallback
 
 **Context/Background:** A source document contains a fenced code block with an authored language tag such as `mermaid`.
 
@@ -341,7 +350,7 @@ Notes cited: `Reference testing uses official Antora documentation as a compatib
 
 Notes cited: `Transparent extensions are not fallback mechanisms`; `The architecture favors explicit extension over implicit degradation`
 
-### 10.3.4. QS-4 Repository Self-Consistency Before Release
+### 10.4.4. QS-4 Repository Self-Consistency Before Release
 
 **Context/Background:** A release or CI run validates packaging, scripts, and tracked files.
 

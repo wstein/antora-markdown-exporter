@@ -85,9 +85,12 @@ describe("export antora modules script", () => {
 			"utf8",
 		);
 		expect(onboardingMarkdown).toContain(
-			"- [Chapter 1. Mental Models](#chapter-1-mental-models)",
+			"- [Chapter 1. Reading Status Markers](#chapter-1-reading-status-markers)",
 		);
-		expect(onboardingMarkdown).toContain("# Chapter 2. Core Workflows");
+		expect(onboardingMarkdown).toContain("# Chapter 2. Mental Models");
+		expect(onboardingMarkdown).toContain(
+			"support matrix, proof matrix, and evidence ledger",
+		);
 	});
 
 	it("prints a human-readable summary by default", () => {

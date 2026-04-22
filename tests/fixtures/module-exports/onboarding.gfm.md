@@ -43,6 +43,8 @@ The docs now use a small claim-status grammar from the note `Documentation claim
 
 Use those markers whenever a contributor-facing document makes a strong claim about determinism, workflow automation, or supported converter behavior.
 
+When a claim matters operationally, trace it through the operator manual’s support matrix, proof matrix, and evidence ledger before treating it as settled.
+
 # Chapter 2. Mental Models
 
 ## 2.1. Start With The Real Boundary, Not The Marketing Boundary
