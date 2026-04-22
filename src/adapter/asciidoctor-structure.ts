@@ -48,6 +48,24 @@ export function extractAssemblyStructure(
 		children.push(...extractBlock(block, options));
 	}
 
+	document.convert();
+
+	for (const footnote of document.getFootnotes?.() ?? []) {
+		children.push({
+			type: "footnoteDefinition",
+			identifier: String(footnote.getIndex?.() ?? ""),
+			children: [
+				{
+					type: "paragraph",
+					children: parseInlineHtmlWithOptions(
+						footnote.getText?.() ?? "",
+						options,
+					),
+				},
+			],
+		});
+	}
+
 	const xrefFallbackLabelStyle =
 		options.xrefFallbackLabelStyle ?? "fragment-or-basename";
 

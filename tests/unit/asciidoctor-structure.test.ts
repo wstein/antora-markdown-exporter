@@ -237,6 +237,79 @@ describe("asciidoctor structure extraction", () => {
 		);
 	});
 
+	it("extracts document metadata, footnotes, citations, captions, and image attributes structurally", () => {
+		const document = extractAssemblyStructure(
+			[
+				"= Manual",
+				"Doc Writer",
+				":revdate: 2026-04-22",
+				"",
+				"A note footnote:[Body text] and [cite]#Doe2026#.",
+				"",
+				".Release table",
+				"|===",
+				"| Name | Value",
+				"| Alpha | 42",
+				"|===",
+				"",
+				".Architecture figure",
+				"image::diagram.png[Alt text,width=320,height=240]",
+			].join("\n"),
+		);
+
+		expect(document.metadata).toMatchObject({
+			attributes: expect.objectContaining({
+				doctitle: "Manual",
+				author: "Doc Writer",
+				revdate: "2026-04-22",
+			}),
+		});
+		expect(document.children).toEqual(
+			expect.arrayContaining([
+				expect.objectContaining({
+					type: "paragraph",
+					children: expect.arrayContaining([
+						expect.objectContaining({
+							type: "footnoteReference",
+							identifier: "1",
+							label: "1",
+						}),
+						expect.objectContaining({
+							type: "citation",
+							identifier: "Doe2026",
+							label: "Doe2026",
+						}),
+					]),
+				}),
+				expect.objectContaining({
+					type: "table",
+					caption: [{ type: "text", value: "Release table" }],
+				}),
+				expect.objectContaining({
+					type: "paragraph",
+					children: [
+						expect.objectContaining({
+							type: "image",
+							url: "diagram.png",
+							title: "Architecture figure",
+							attributes: { width: "320", height: "240" },
+						}),
+					],
+				}),
+				expect.objectContaining({
+					type: "footnoteDefinition",
+					identifier: "1",
+					children: [
+						expect.objectContaining({
+							type: "paragraph",
+							children: [{ type: "text", value: "Body text" }],
+						}),
+					],
+				}),
+			]),
+		);
+	});
+
 	it("preserves titled example blocks, verse blocks, and richer callout continuations", () => {
 		const document = extractAssemblyStructure(
 			[

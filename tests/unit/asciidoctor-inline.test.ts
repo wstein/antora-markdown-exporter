@@ -155,6 +155,7 @@ describe("asciidoctor inline helpers", () => {
 			{
 				type: "link",
 				url: "",
+				attributes: { id: "legacy" },
 				children: [{ type: "text", value: "broken anchor" }],
 			},
 		]);
@@ -163,6 +164,7 @@ describe("asciidoctor inline helpers", () => {
 			{
 				type: "link",
 				url: "",
+				attributes: { name: "legacy" },
 				children: [{ type: "text", value: "" }],
 			},
 		]);

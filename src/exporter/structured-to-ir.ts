@@ -53,6 +53,7 @@ function convertInline(node: AssemblyInline): MarkdownInline {
 				type: "link",
 				url: node.url,
 				title: node.title,
+				attributes: node.attributes,
 				children: node.children.map(convertInline),
 			};
 		case "xref":
@@ -68,6 +69,7 @@ function convertInline(node: AssemblyInline): MarkdownInline {
 				type: "image",
 				url: node.url,
 				title: node.title,
+				attributes: node.attributes,
 				alt: node.alt.map(convertInline),
 			};
 		case "hardBreak":
@@ -78,6 +80,18 @@ function convertInline(node: AssemblyInline): MarkdownInline {
 			return {
 				type: "htmlInline",
 				value: node.value,
+			};
+		case "footnoteReference":
+			return {
+				type: "footnoteReference",
+				identifier: node.identifier,
+				label: node.label,
+			};
+		case "citation":
+			return {
+				type: "citation",
+				identifier: node.identifier,
+				label: node.label,
 			};
 	}
 }
@@ -121,6 +135,7 @@ function convertTable(node: AssemblyTable): MarkdownTable {
 	return {
 		type: "table",
 		align: node.align,
+		caption: node.caption?.map(convertInline),
 		header: {
 			cells: node.header.cells.map((cell) => ({
 				children: cell.children.map(convertInline),
@@ -207,6 +222,12 @@ function convertBlock(node: AssemblyBlock): MarkdownBlock {
 			return convertCalloutList(node);
 		case "htmlBlock":
 			return convertHtmlBlock(node);
+		case "footnoteDefinition":
+			return {
+				type: "footnoteDefinition",
+				identifier: node.identifier,
+				children: node.children.map(convertBlock),
+			};
 		case "unsupported":
 			return {
 				type: "unsupported",
@@ -220,6 +241,7 @@ export function convertAssemblyStructureToMarkdownIR(
 ): MarkdownDocument {
 	return {
 		type: "document",
+		metadata: document.metadata,
 		renderOptions: document.renderOptions,
 		children: document.children.map(convertBlock),
 	};

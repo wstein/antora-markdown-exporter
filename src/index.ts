@@ -75,6 +75,7 @@ export {
 	renderGfm,
 	renderGitLab,
 	renderMarkdown,
+	renderMultiMarkdown,
 	renderStrict,
 } from "./markdown/render/index.js";
 

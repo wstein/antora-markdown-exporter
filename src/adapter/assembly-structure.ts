@@ -94,6 +94,20 @@ export type AssemblyHtmlInline = {
 	location?: AssemblySourceLocation;
 };
 
+export type AssemblyFootnoteReference = {
+	type: "footnoteReference";
+	identifier: string;
+	label?: string;
+	location?: AssemblySourceLocation;
+};
+
+export type AssemblyCitation = {
+	type: "citation";
+	identifier: string;
+	label?: string;
+	location?: AssemblySourceLocation;
+};
+
 export type AssemblyInline =
 	| AssemblyText
 	| AssemblyEmphasis
@@ -104,7 +118,9 @@ export type AssemblyInline =
 	| AssemblyImage
 	| AssemblyHardBreak
 	| AssemblySoftBreak
-	| AssemblyHtmlInline;
+	| AssemblyHtmlInline
+	| AssemblyFootnoteReference
+	| AssemblyCitation;
 
 export type AssemblyParagraph = {
 	type: "paragraph";
@@ -200,6 +216,7 @@ export type AssemblyTableRow = {
 export type AssemblyTable = {
 	type: "table";
 	align?: Array<"left" | "center" | "right" | null>;
+	caption?: AssemblyInline[];
 	header: AssemblyTableRow;
 	rows: AssemblyTableRow[];
 	location?: AssemblySourceLocation;
@@ -223,6 +240,13 @@ export type AssemblyHtmlBlock = {
 	location?: AssemblySourceLocation;
 };
 
+export type AssemblyFootnoteDefinition = {
+	type: "footnoteDefinition";
+	identifier: string;
+	children: AssemblyBlock[];
+	location?: AssemblySourceLocation;
+};
+
 export type AssemblyUnsupported = {
 	type: "unsupported";
 	reason: string;
@@ -243,6 +267,7 @@ export type AssemblyBlock =
 	| AssemblyTable
 	| AssemblyCalloutList
 	| AssemblyHtmlBlock
+	| AssemblyFootnoteDefinition
 	| AssemblyUnsupported;
 
 export type AssemblyHeadingNumberingMode = "book" | "section";

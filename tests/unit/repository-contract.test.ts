@@ -152,9 +152,7 @@ describe("repository contract", () => {
 	});
 
 	it("keeps packed repository evidence aligned with shipped workflow claims", () => {
-		expect(cxConfig).toContain(".github/workflows/ci.yml");
-		expect(cxConfig).toContain(".github/workflows/release.yml");
-		expect(cxConfig).toContain(".github/workflows/pages.yml");
+		expect(cxConfig).toContain(".github/workflows/**");
 	});
 
 	it("keeps package metadata wording aligned with the public package description", () => {

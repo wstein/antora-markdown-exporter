@@ -1,4 +1,6 @@
 import type {
+	AssemblyCitation,
+	AssemblyFootnoteReference,
 	AssemblyImage,
 	AssemblyInline,
 	AssemblyLink,
@@ -75,6 +77,29 @@ function parseInlineHtmlWithPolicy(
 			pushText(content.slice(cursor, nextTagIndex));
 		}
 
+		const footnoteOpen = content
+			.slice(nextTagIndex)
+			.match(/^<sup class="footnote(?:ref)?">/u)?.[0];
+		if (footnoteOpen !== undefined) {
+			const endIndex = content.indexOf("</sup>", nextTagIndex);
+			if (endIndex === -1) {
+				pushText(content.slice(nextTagIndex));
+				break;
+			}
+
+			const footnoteHtml = content.slice(nextTagIndex, endIndex + 6);
+			const hrefMatch = footnoteHtml.match(/href="#_footnotedef_(.+?)"/u);
+			const labelMatch = footnoteHtml.match(/>([^<]+)<\/a>/u);
+			const identifier = hrefMatch?.[1] ?? labelMatch?.[1] ?? "";
+			nodes.push(<AssemblyFootnoteReference>{
+				type: "footnoteReference",
+				identifier,
+				label: labelMatch?.[1],
+			});
+			cursor = endIndex + 6;
+			continue;
+		}
+
 		const strongOpen = content
 			.slice(nextTagIndex)
 			.match(/^<strong(?:\s[^>]*)?>/u)?.[0];
@@ -149,6 +174,9 @@ function parseInlineHtmlWithPolicy(
 			const inner = content.slice(openEndIndex + 1, endIndex);
 			const { attributes } = parseHtmlAttributes(openTag);
 			const href = attributes.href ?? "";
+			const linkAttributes = Object.fromEntries(
+				Object.entries(attributes).filter(([key]) => key !== "href"),
+			);
 			const children = parseInlineHtmlWithPolicy(inner, xrefFallbackLabelStyle);
 			if (isStructuredXrefHref(href)) {
 				const target = parseXrefTarget(href);
@@ -156,6 +184,8 @@ function parseInlineHtmlWithPolicy(
 					type: "xref",
 					url: href,
 					target,
+					attributes:
+						Object.keys(linkAttributes).length > 0 ? linkAttributes : undefined,
 					children: normalizeXrefChildren(
 						href,
 						target,
@@ -167,10 +197,33 @@ function parseInlineHtmlWithPolicy(
 				nodes.push(<AssemblyLink>{
 					type: "link",
 					url: href,
+					attributes:
+						Object.keys(linkAttributes).length > 0 ? linkAttributes : undefined,
 					children,
 				});
 			}
 			cursor = endIndex + 4;
+			continue;
+		}
+
+		const citeOpen = content
+			.slice(nextTagIndex)
+			.match(/^<span class="cite(?:\s[^"]*)?">/u)?.[0];
+		if (citeOpen !== undefined) {
+			const endIndex = content.indexOf("</span>", nextTagIndex);
+			if (endIndex === -1) {
+				pushText(content.slice(nextTagIndex));
+				break;
+			}
+
+			const inner = content.slice(nextTagIndex + citeOpen.length, endIndex);
+			const label = decodeHtmlEntities(inner);
+			nodes.push(<AssemblyCitation>{
+				type: "citation",
+				identifier: label,
+				label,
+			});
+			cursor = endIndex + 7;
 			continue;
 		}
 
@@ -185,10 +238,17 @@ function parseInlineHtmlWithPolicy(
 
 			const imgTag = content.slice(imgStartIndex, imgEndIndex + 1);
 			const { attributes } = parseHtmlAttributes(imgTag);
+			const imageAttributes = Object.fromEntries(
+				Object.entries(attributes).filter(
+					([key]) => !["src", "alt", "title"].includes(key),
+				),
+			);
 			nodes.push(<AssemblyImage>{
 				type: "image",
 				url: attributes.src ?? "",
 				title: attributes.title,
+				attributes:
+					Object.keys(imageAttributes).length > 0 ? imageAttributes : undefined,
 				alt: [{ type: "text", value: attributes.alt ?? "" }],
 			});
 			cursor = spanEndIndex + 7;

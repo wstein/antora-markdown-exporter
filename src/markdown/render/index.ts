@@ -12,6 +12,10 @@ export function renderGitLab(document: MarkdownDocument): string {
 	return renderMarkdown(document, "gitlab");
 }
 
+export function renderMultiMarkdown(document: MarkdownDocument): string {
+	return renderMarkdown(document, "multimarkdown");
+}
+
 export function renderStrict(document: MarkdownDocument): string {
 	return renderMarkdown(document, "strict");
 }

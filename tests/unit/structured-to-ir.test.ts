@@ -8,6 +8,13 @@ describe("structured assembly to markdown ir", () => {
 		const ir = convertAssemblyStructureToMarkdownIR(
 			defineAssemblyDocument({
 				type: "document",
+				metadata: {
+					attributes: {
+						doctitle: "Manual",
+						author: "Doc Writer",
+						revdate: "2026-04-22",
+					},
+				},
 				renderOptions: {
 					headingNumbering: { mode: "book" },
 				},
@@ -79,6 +86,7 @@ describe("structured assembly to markdown ir", () => {
 					{
 						type: "table",
 						align: ["left", "right"],
+						caption: [{ type: "text", value: "Release table" }],
 						header: {
 							cells: [
 								{ children: [{ type: "text", value: "Name" }] },
@@ -94,10 +102,44 @@ describe("structured assembly to markdown ir", () => {
 							},
 						],
 					},
+					{
+						type: "paragraph",
+						children: [
+							{ type: "text", value: "See note" },
+							{
+								type: "footnoteReference",
+								identifier: "1",
+								label: "1",
+							},
+							{ type: "text", value: " and " },
+							{
+								type: "citation",
+								identifier: "Doe2026",
+								label: "p. 23",
+							},
+						],
+					},
+					{
+						type: "footnoteDefinition",
+						identifier: "1",
+						children: [
+							{
+								type: "paragraph",
+								children: [{ type: "text", value: "Footnote body." }],
+							},
+						],
+					},
 				],
 			}),
 		);
 
+		expect(ir.metadata).toEqual({
+			attributes: {
+				doctitle: "Manual",
+				author: "Doc Writer",
+				revdate: "2026-04-22",
+			},
+		});
 		expect(ir.renderOptions).toEqual({
 			headingNumbering: { mode: "book" },
 		});
@@ -110,6 +152,8 @@ describe("structured assembly to markdown ir", () => {
 			"list",
 			"labeledGroup",
 			"table",
+			"paragraph",
+			"footnoteDefinition",
 		]);
 		expect(ir.children[3]).toMatchObject({
 			type: "paragraph",
@@ -122,6 +166,21 @@ describe("structured assembly to markdown ir", () => {
 						path: "install.adoc",
 						fragment: "cli",
 					}),
+				}),
+			]),
+		});
+		expect(ir.children[7]).toMatchObject({
+			type: "table",
+			caption: [{ type: "text", value: "Release table" }],
+		});
+		expect(ir.children[8]).toMatchObject({
+			type: "paragraph",
+			children: expect.arrayContaining([
+				expect.objectContaining({ type: "footnoteReference", identifier: "1" }),
+				expect.objectContaining({
+					type: "citation",
+					identifier: "Doe2026",
+					label: "p. 23",
 				}),
 			]),
 		});

@@ -73,7 +73,22 @@ function extractAdmonition(
 	};
 }
 
+function filterElementAttributes(
+	attributes: Record<string, string>,
+	keysToOmit: string[],
+): Record<string, string> | undefined {
+	const preserved = Object.fromEntries(
+		Object.entries(attributes).filter(
+			([key]) =>
+				!keysToOmit.includes(key) &&
+				!["attribute_entries", "$positional", "imagesdir"].includes(key),
+		),
+	);
+	return Object.keys(preserved).length > 0 ? preserved : undefined;
+}
+
 function extractImageBlock(block: AsciidoctorBlock): AssemblyParagraph {
+	const attributes = block.getAttributes?.() ?? {};
 	return {
 		type: "paragraph",
 		location: getSourceLocation(block),
@@ -82,6 +97,7 @@ function extractImageBlock(block: AsciidoctorBlock): AssemblyParagraph {
 				type: "image",
 				url: block.getAttribute("target") ?? "",
 				title: block.getTitle?.(),
+				attributes: filterElementAttributes(attributes, ["alt", "target"]),
 				alt: [
 					{
 						type: "text",
@@ -230,7 +246,7 @@ export function extractBlock(
 			extracted = [extractImageBlock(block)];
 			break;
 		case "table":
-			extracted = [extractTable(block)];
+			extracted = [extractTable(block, options)];
 			break;
 		case "colist":
 			extracted = [extractCalloutList(block, options, extractBlock)];

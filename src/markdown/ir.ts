@@ -22,6 +22,7 @@ export type MarkdownLink = {
 	type: "link";
 	url: string;
 	title?: string;
+	attributes?: Record<string, string>;
 	children: MarkdownInline[];
 };
 
@@ -60,6 +61,7 @@ export type MarkdownImage = {
 	type: "image";
 	url: string;
 	title?: string;
+	attributes?: Record<string, string>;
 	alt: MarkdownInline[];
 };
 
@@ -181,6 +183,7 @@ export type MarkdownTableRow = {
 export type MarkdownTable = {
 	type: "table";
 	align?: Array<"left" | "center" | "right" | null>;
+	caption?: MarkdownInline[];
 	header: MarkdownTableRow;
 	rows: MarkdownTableRow[];
 };
@@ -234,8 +237,19 @@ export type MarkdownRenderOptions = {
 	};
 };
 
+export type MarkdownDocumentMetadata = {
+	attributes?: Record<string, string>;
+	component?: string;
+	family?: string;
+	module?: string;
+	pageId?: string;
+	relativeSrcPath?: string;
+	version?: string;
+};
+
 export type MarkdownDocument = {
 	type: "document";
+	metadata?: MarkdownDocumentMetadata;
 	renderOptions?: MarkdownRenderOptions;
 	children: MarkdownBlock[];
 };

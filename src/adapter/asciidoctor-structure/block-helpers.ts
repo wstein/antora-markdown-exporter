@@ -135,7 +135,10 @@ export function extractRow(row: AsciidoctorTableCell[]): AssemblyTableRow {
 	};
 }
 
-export function extractTable(block: AsciidoctorBlock): AssemblyTable {
+export function extractTable(
+	block: AsciidoctorBlock,
+	options: ExtractAssemblyStructureOptions,
+): AssemblyTable {
 	const headRows = block.getHeadRows?.() ?? [];
 	const bodyRows = block.getBodyRows?.() ?? [];
 	const rows = headRows.length > 0 ? bodyRows : bodyRows.slice(1);
@@ -143,6 +146,10 @@ export function extractTable(block: AsciidoctorBlock): AssemblyTable {
 		type: "table",
 		location: getSourceLocation(block),
 		align: extractAlignment(block),
+		caption:
+			block.getTitle?.() === undefined
+				? undefined
+				: parseInlineHtmlWithOptions(block.getTitle?.() ?? "", options),
 		header: extractRow(
 			(headRows[0] ?? bodyRows[0] ?? []) as AsciidoctorTableCell[],
 		),

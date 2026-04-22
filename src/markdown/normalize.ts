@@ -56,6 +56,14 @@ function normalizeInline(node: MarkdownInline): MarkdownInline {
 				...node,
 				url: node.url.trim(),
 				title: node.title?.trim(),
+				attributes:
+					node.attributes === undefined
+						? undefined
+						: Object.fromEntries(
+								Object.entries(node.attributes)
+									.map(([key, value]) => [key.trim(), value.trim()])
+									.filter(([key, value]) => key.length > 0 && value.length > 0),
+							),
 				children: normalizeInlineChildren(node.children),
 			};
 		case "xref":
@@ -86,6 +94,14 @@ function normalizeInline(node: MarkdownInline): MarkdownInline {
 				...node,
 				url: node.url.trim(),
 				title: node.title?.trim(),
+				attributes:
+					node.attributes === undefined
+						? undefined
+						: Object.fromEntries(
+								Object.entries(node.attributes)
+									.map(([key, value]) => [key.trim(), value.trim()])
+									.filter(([key, value]) => key.length > 0 && value.length > 0),
+							),
 				alt: normalizeInlineChildren(node.alt),
 			};
 		case "htmlInline":
@@ -189,6 +205,10 @@ function normalizeBlock(block: MarkdownBlock): MarkdownBlock {
 		case "table":
 			return {
 				...block,
+				caption:
+					block.caption === undefined
+						? undefined
+						: normalizeInlineChildren(block.caption),
 				header: normalizeTableRow(block.header),
 				rows: block.rows.map(normalizeTableRow),
 			};
@@ -221,6 +241,27 @@ export function normalizeMarkdownIR(
 ): MarkdownDocument {
 	return {
 		...document,
+		metadata:
+			document.metadata === undefined
+				? undefined
+				: {
+						attributes:
+							document.metadata.attributes === undefined
+								? undefined
+								: Object.fromEntries(
+										Object.entries(document.metadata.attributes)
+											.map(([key, value]) => [key.trim(), String(value).trim()])
+											.filter(
+												([key, value]) => key.length > 0 && value.length > 0,
+											),
+									),
+						component: document.metadata.component?.trim(),
+						family: document.metadata.family?.trim(),
+						module: document.metadata.module?.trim(),
+						pageId: document.metadata.pageId?.trim(),
+						relativeSrcPath: document.metadata.relativeSrcPath?.trim(),
+						version: document.metadata.version?.trim(),
+					},
 		renderOptions:
 			document.renderOptions === undefined
 				? undefined

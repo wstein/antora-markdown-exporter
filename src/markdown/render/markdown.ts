@@ -153,22 +153,59 @@ function renderTableOfContents(document: MarkdownDocument): string | undefined {
 function renderInline(
 	node: MarkdownInline,
 	flavor: MarkdownFlavorSpec,
+	context: RenderContext,
 ): string {
 	switch (node.type) {
 		case "text":
 			return escapeMarkdownText(node.value);
 		case "emphasis":
-			return `*${node.children.map((child) => renderInline(child, flavor)).join("")}*`;
+			return `*${node.children.map((child) => renderInline(child, flavor, context)).join("")}*`;
 		case "strong":
-			return `**${node.children.map((child) => renderInline(child, flavor)).join("")}**`;
+			return `**${node.children.map((child) => renderInline(child, flavor, context)).join("")}**`;
 		case "code":
 			return `\`${node.value.replace(/`/g, "\\`")}\``;
-		case "link":
-			return `[${node.children.map((child) => renderInline(child, flavor)).join("")}](${renderLinkDestination(node.url, node.title)})`;
+		case "link": {
+			const label = node.children
+				.map((child) => renderInline(child, flavor, context))
+				.join("");
+			if (
+				flavor.name === "multimarkdown" &&
+				node.attributes !== undefined &&
+				Object.keys(node.attributes).length > 0
+			) {
+				const identifier = registerMultiMarkdownDefinition(
+					context,
+					"link",
+					node.url,
+					node.title,
+					node.attributes,
+				);
+				return `[${label}][${identifier}]`;
+			}
+			return `[${label}](${renderLinkDestination(node.url, node.title)})`;
+		}
 		case "xref":
-			return `[${node.children.map((child) => renderInline(child, flavor)).join("")}](${renderLinkDestination(resolveMarkdownXrefDestination(node, flavor), node.title)})`;
-		case "image":
-			return `![${node.alt.map((child) => renderInline(child, flavor)).join("")}](${renderLinkDestination(node.url, node.title)})`;
+			return `[${node.children.map((child) => renderInline(child, flavor, context)).join("")}](${renderLinkDestination(resolveMarkdownXrefDestination(node, flavor), node.title)})`;
+		case "image": {
+			const alt = node.alt
+				.map((child) => renderInline(child, flavor, context))
+				.join("");
+			if (
+				flavor.name === "multimarkdown" &&
+				node.attributes !== undefined &&
+				Object.keys(node.attributes).length > 0
+			) {
+				const identifier = registerMultiMarkdownDefinition(
+					context,
+					"image",
+					node.url,
+					node.title,
+					node.attributes,
+				);
+				return `![${alt}][${identifier}]`;
+			}
+			return `![${alt}](${renderLinkDestination(node.url, node.title)})`;
+		}
 		case "hardBreak":
 			return flavor.hardBreakStyle === "spaces" ? "  \n" : "\\\n";
 		case "softBreak":
@@ -186,6 +223,14 @@ function renderInline(
 		case "citation":
 			if (!flavor.supportsCitations) {
 				return `[cite:${node.label ?? node.identifier}]`;
+			}
+			if (flavor.name === "multimarkdown") {
+				const locator = node.label?.trim();
+				return locator === undefined ||
+					locator.length === 0 ||
+					locator === node.identifier
+					? `[][#${node.identifier}]`
+					: `[${escapeMarkdownText(locator)}][#${node.identifier}]`;
 			}
 
 			return flavor.citationStyle === "at"
@@ -220,7 +265,95 @@ function renderAdmonitionLabel(kind: string): string {
 
 type RenderContext = {
 	headingInfo: Map<MarkdownBlock, HeadingRenderInfo>;
+	multimarkdownDefinitions: string[];
+	nextMultimarkdownReference: number;
 };
+
+function formatMultiMarkdownAttributeValue(value: string): string {
+	return /\s/u.test(value) ? `"${value.replace(/"/g, '\\"')}"` : value;
+}
+
+function registerMultiMarkdownDefinition(
+	context: RenderContext,
+	prefix: "image" | "link",
+	url: string,
+	title: string | undefined,
+	attributes: Record<string, string> | undefined,
+): string {
+	const identifier = `${prefix}-${context.nextMultimarkdownReference}`;
+	context.nextMultimarkdownReference += 1;
+	const titleSegment =
+		title === undefined ? "" : ` "${escapeMarkdownTitle(title)}"`;
+	const attributeSuffix =
+		attributes === undefined
+			? ""
+			: Object.entries(attributes)
+					.map(
+						([key, value]) =>
+							` ${key}=${formatMultiMarkdownAttributeValue(value)}`,
+					)
+					.join("");
+	context.multimarkdownDefinitions.push(
+		`[${identifier}]: ${url}${titleSegment}${attributeSuffix}`,
+	);
+	return identifier;
+}
+
+function renderMultiMarkdownMetadata(
+	document: MarkdownDocument,
+): string | undefined {
+	const attributes = document.metadata?.attributes ?? {};
+	const title =
+		attributes.doctitle ??
+		document.children
+			.find((block) => block.type === "heading" && block.depth === 1)
+			?.children.map((child) => inlineText([child]))
+			.join("");
+	const metadataEntries = [
+		["Title", title],
+		["Author", attributes.author],
+		["Date", attributes.revdate ?? attributes.docdate],
+		["Component", document.metadata?.component],
+		["Version", document.metadata?.version],
+		["Module", document.metadata?.module],
+		["Page ID", document.metadata?.pageId],
+		["Source Path", document.metadata?.relativeSrcPath],
+	].filter((entry): entry is [string, string] => {
+		const [, value] = entry;
+		return value !== undefined && value.trim().length > 0;
+	});
+
+	if (metadataEntries.length === 0) {
+		return undefined;
+	}
+
+	return metadataEntries.map(([key, value]) => `${key}: ${value}`).join("\n");
+}
+
+function getRenderableBlocks(
+	document: MarkdownDocument,
+	flavor: MarkdownFlavorSpec,
+): MarkdownBlock[] {
+	if (!flavor.supportsMetadata) {
+		return document.children;
+	}
+
+	const metadataTitle = document.metadata?.attributes?.doctitle?.trim();
+	if (metadataTitle === undefined || metadataTitle.length === 0) {
+		return document.children;
+	}
+
+	const [first, ...rest] = document.children;
+	if (
+		first?.type === "heading" &&
+		first.depth === 1 &&
+		inlineText(first.children) === metadataTitle
+	) {
+		return rest;
+	}
+
+	return document.children;
+}
 
 function renderLabeledGroup(
 	block: Extract<MarkdownBlock, { type: "labeledGroup" }>,
@@ -228,12 +361,27 @@ function renderLabeledGroup(
 	context: RenderContext,
 ): string {
 	const label = block.label
-		.map((child) => renderInline(child, flavor))
+		.map((child) => renderInline(child, flavor, context))
 		.join("");
+	if (flavor.supportsDefinitionLists) {
+		const renderedChildren = block.children.map((child) =>
+			renderBlock(child, flavor, context),
+		);
+		const [firstRendered = "", ...restRendered] = renderedChildren;
+		const definitionLines = [
+			`:   ${firstRendered}`,
+			...restRendered.flatMap((value) =>
+				value.split("\n").map((line) => `    ${line}`),
+			),
+		];
+		return [`${label}`, ...definitionLines]
+			.filter((value) => value.length > 0)
+			.join("\n");
+	}
 	const [firstChild, ...restChildren] = block.children;
 	if (firstChild?.type === "paragraph") {
 		const firstParagraph = firstChild.children
-			.map((child) => renderInline(child, flavor))
+			.map((child) => renderInline(child, flavor, context))
 			.join("");
 		const rest = restChildren.map((child) =>
 			renderBlock(child, flavor, context),
@@ -261,12 +409,14 @@ function renderBlock(
 			const heading = context.headingInfo.get(block);
 			const text =
 				heading?.text ??
-				block.children.map((child) => renderInline(child, flavor)).join("");
+				block.children
+					.map((child) => renderInline(child, flavor, context))
+					.join("");
 			return `${"#".repeat(block.depth)} ${text}`;
 		}
 		case "paragraph":
 			return block.children
-				.map((child) => renderInline(child, flavor))
+				.map((child) => renderInline(child, flavor, context))
 				.join("");
 		case "anchor":
 			return resolveRawHtmlFallback(
@@ -373,7 +523,7 @@ function renderBlock(
 				);
 			}
 
-			const header = `| ${block.header.cells.map((cell) => cell.children.map((child) => renderInline(child, flavor)).join("")).join(" | ")} |`;
+			const header = `| ${block.header.cells.map((cell) => cell.children.map((child) => renderInline(child, flavor, context)).join("")).join(" | ")} |`;
 			const alignments = block.align ?? [];
 			const separator = `| ${block.header.cells
 				.map((_, index) => {
@@ -391,9 +541,19 @@ function renderBlock(
 				.join(" | ")} |`;
 			const rows = block.rows.map(
 				(row) =>
-					`| ${row.cells.map((cell) => cell.children.map((child) => renderInline(child, flavor)).join("")).join(" | ")} |`,
+					`| ${row.cells.map((cell) => cell.children.map((child) => renderInline(child, flavor, context)).join("")).join(" | ")} |`,
 			);
-			return [header, separator, ...rows].join("\n");
+			const table = [header, separator, ...rows].join("\n");
+			if (
+				flavor.supportsTableCaptions &&
+				block.caption !== undefined &&
+				block.caption.length > 0
+			) {
+				return `${table}\n[${block.caption
+					.map((child) => renderInline(child, flavor, context))
+					.join("")}]`;
+			}
+			return table;
 		}
 		case "htmlBlock":
 			return resolveRawHtmlFallback(block, flavor, {
@@ -411,7 +571,9 @@ function renderBlock(
 			const [first, ...rest] = block.children;
 			if (first?.type === "paragraph") {
 				const lines = [
-					`[^${block.identifier}]: ${first.children.map((child) => renderInline(child, flavor)).join("")}`,
+					`[^${block.identifier}]: ${first.children
+						.map((child) => renderInline(child, flavor, context))
+						.join("")}`,
 					...rest.flatMap((child) =>
 						renderBlock(child, flavor, context)
 							.split("\n")
@@ -440,25 +602,48 @@ export function renderMarkdown(
 	flavor: MarkdownFlavorName | MarkdownFlavorSpec = "gfm",
 ): string {
 	const resolvedFlavor = resolveMarkdownFlavor(flavor);
+	const renderableBlocks = getRenderableBlocks(document, resolvedFlavor);
 	const headingInfo = new Map(
-		collectHeadingRenderInfo(document).map(
-			(entry) => [entry.block, entry] as const,
-		),
+		collectHeadingRenderInfo({
+			...document,
+			children: renderableBlocks,
+		}).map((entry) => [entry.block, entry] as const),
 	);
-	const context: RenderContext = { headingInfo };
-	const renderedBlocks = document.children
+	const context: RenderContext = {
+		headingInfo,
+		multimarkdownDefinitions: [],
+		nextMultimarkdownReference: 1,
+	};
+	const renderedBlocks = renderableBlocks
 		.map((block) => renderBlock(block, resolvedFlavor, context))
 		.filter((block) => block.length > 0);
-	const toc = renderTableOfContents(document);
+	const toc = renderTableOfContents({
+		...document,
+		children: renderableBlocks,
+	});
+	const metadata =
+		resolvedFlavor.supportsMetadata && resolvedFlavor.name === "multimarkdown"
+			? renderMultiMarkdownMetadata(document)
+			: undefined;
+	const referenceDefinitions =
+		context.multimarkdownDefinitions.length > 0
+			? context.multimarkdownDefinitions.join("\n")
+			: undefined;
 
 	if (toc === undefined) {
-		return `${renderedBlocks.join("\n\n")}\n`;
+		return `${[metadata, renderedBlocks.join("\n\n"), referenceDefinitions]
+			.filter((value) => value !== undefined && value.length > 0)
+			.join("\n\n")}\n`;
 	}
 
 	const [firstBlock, ...restBlocks] = renderedBlocks;
 	if (firstBlock === undefined) {
-		return `${toc}\n`;
+		return `${[metadata, toc, referenceDefinitions]
+			.filter((value) => value !== undefined && value.length > 0)
+			.join("\n\n")}\n`;
 	}
 
-	return `${[firstBlock, toc, ...restBlocks].join("\n\n")}\n`;
+	return `${[metadata, firstBlock, toc, ...restBlocks, referenceDefinitions]
+		.filter((value) => value !== undefined && value.length > 0)
+		.join("\n\n")}\n`;
 }

@@ -106,6 +106,7 @@ describe("assembly structure contract", () => {
 				{
 					type: "table",
 					align: ["left", "right"],
+					caption: [{ type: "text", value: "Release table" }],
 					header: {
 						cells: [
 							{ children: [{ type: "text", value: "Name" }] },
@@ -118,6 +119,33 @@ describe("assembly structure contract", () => {
 								{ children: [{ type: "text", value: "Alpha" }] },
 								{ children: [{ type: "code", value: "42" }] },
 							],
+						},
+					],
+				},
+				{
+					type: "paragraph",
+					children: [
+						{ type: "text", value: "See note" },
+						{
+							type: "footnoteReference",
+							identifier: "1",
+							label: "1",
+						},
+						{ type: "text", value: " and " },
+						{
+							type: "citation",
+							identifier: "Doe2026",
+							label: "p. 23",
+						},
+					],
+				},
+				{
+					type: "footnoteDefinition",
+					identifier: "1",
+					children: [
+						{
+							type: "paragraph",
+							children: [{ type: "text", value: "Footnote body." }],
 						},
 					],
 				},
@@ -135,6 +163,8 @@ describe("assembly structure contract", () => {
 			"list",
 			"labeledGroup",
 			"table",
+			"paragraph",
+			"footnoteDefinition",
 		]);
 		expect(document.children[3]).toMatchObject({
 			type: "paragraph",

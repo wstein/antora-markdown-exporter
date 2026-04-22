@@ -7,6 +7,7 @@ import {
 	renderCommonMark,
 	renderGitLab,
 	renderMarkdown,
+	renderMultiMarkdown,
 	renderStrict,
 } from "../../src/markdown/render/index.js";
 
@@ -102,6 +103,106 @@ describe("flavor-aware markdown rendering", () => {
 
 		expect(rendered).toContain("[^note-1] [@cite-key]");
 		expect(rendered).toContain("| Name | Value |");
+	});
+
+	it("renders multimarkdown metadata, citations, definition lists, and captions", () => {
+		const rendered = renderMultiMarkdown({
+			type: "document",
+			metadata: {
+				attributes: {
+					doctitle: "Manual",
+					author: "Doc Writer",
+					revdate: "2026-04-22",
+				},
+				component: "docs",
+				module: "ROOT",
+				version: "2.0",
+			},
+			children: [
+				{
+					type: "heading" as const,
+					depth: 1,
+					children: [{ type: "text" as const, value: "Manual" }],
+				},
+				{
+					type: "labeledGroup" as const,
+					label: [{ type: "text" as const, value: "Apple" }],
+					children: [
+						{
+							type: "paragraph" as const,
+							children: [{ type: "text" as const, value: "Pomaceous fruit." }],
+						},
+					],
+				},
+				{
+					type: "paragraph" as const,
+					children: [
+						{ type: "text" as const, value: "Cite source " },
+						{
+							type: "citation" as const,
+							identifier: "Doe2026",
+							label: "p. 23",
+						},
+						{ type: "text" as const, value: " and note " },
+						{
+							type: "footnoteReference" as const,
+							identifier: "note-1",
+						},
+					],
+				},
+				{
+					type: "table" as const,
+					align: ["left"] as const,
+					caption: [{ type: "text" as const, value: "Release table" }],
+					header: {
+						cells: [{ children: [{ type: "text" as const, value: "Name" }] }],
+					},
+					rows: [
+						{
+							cells: [
+								{ children: [{ type: "text" as const, value: "Alpha" }] },
+							],
+						},
+					],
+				},
+				{
+					type: "paragraph" as const,
+					children: [
+						{
+							type: "image" as const,
+							url: "diagram.png",
+							title: "Architecture",
+							attributes: { width: "320", height: "240" },
+							alt: [{ type: "text" as const, value: "Diagram" }],
+						},
+					],
+				},
+				{
+					type: "footnoteDefinition" as const,
+					identifier: "note-1",
+					children: [
+						{
+							type: "paragraph" as const,
+							children: [{ type: "text" as const, value: "Footnote body." }],
+						},
+					],
+				},
+			],
+		});
+
+		expect(rendered).toContain("Title: Manual");
+		expect(rendered).toContain("Author: Doc Writer");
+		expect(rendered).toContain("Date: 2026-04-22");
+		expect(rendered).toContain("Apple\n:   Pomaceous fruit.");
+		expect(rendered).toContain(
+			"Cite source [p. 23][#Doe2026] and note [^note-1]",
+		);
+		expect(rendered).toContain("[Release table]");
+		expect(rendered).toContain("![Diagram][image-1]");
+		expect(rendered).toContain(
+			'[image-1]: diagram.png "Architecture" width=320 height=240',
+		);
+		expect(rendered).toContain("[^note-1]: Footnote body.");
 	});
 
 	it("uses strict fallback policy for raw html and soft breaks", () => {
