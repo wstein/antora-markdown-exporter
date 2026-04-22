@@ -174,6 +174,37 @@ describe("repository contract", () => {
 		);
 	});
 
+	it("keeps the structured assembly adapter as a first-class repository boundary", () => {
+		expect(existsSync(resolve(root, "src/adapter/assembly-structure.ts"))).toBe(
+			true,
+		);
+		expect(readme).toContain("semantic IR");
+		expect(packageJson.description).toContain("semantic IR");
+		expect(readFileSync(resolve(root, "src/index.ts"), "utf8")).toContain(
+			"./adapter/assembly-structure.js",
+		);
+		expect(
+			readFileSync(
+				resolve(
+					root,
+					"notes/Repository-owned assembly structure formalizes the exporter adapter boundary.md",
+				),
+				"utf8",
+			),
+		).toContain(
+			"Repository-owned assembly structure formalizes the exporter adapter boundary",
+		);
+		expect(
+			readFileSync(
+				resolve(
+					root,
+					"docs/modules/architecture/partials/05_building_block_view.adoc",
+				),
+				"utf8",
+			),
+		).toContain("Structured assembly adapter");
+	});
+
 	it("keeps CI and release workflows aligned with the develop/tag operating model", () => {
 		expect(ciWorkflow).toContain("branches: [develop]");
 		expect(ciWorkflow).toContain("ruby/setup-ruby@v1");
