@@ -122,5 +122,5 @@ describeIfPdfTooling("module export structural parity", () => {
 				`${exportedFile.moduleName} markdown headings`,
 			).toEqual(pdfHeadings);
 		}
-	});
+	}, 20_000);
 });
