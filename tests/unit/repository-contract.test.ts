@@ -28,6 +28,10 @@ const antoraPlaybook = readFileSync(
 	resolve(root, "antora-playbook.yml"),
 	"utf8",
 );
+const antoraAssemblerConfig = readFileSync(
+	resolve(root, "antora-assembler.yml"),
+	"utf8",
+);
 const agentGuidance = readFileSync(resolve(root, "AGENT.md"), "utf8");
 const exportScript = readFileSync(
 	resolve(root, "scripts/export-antora-modules.ts"),
@@ -85,6 +89,7 @@ describe("repository contract", () => {
 			true,
 		);
 		expect(existsSync(resolve(root, ".github/workflows/pages.yml"))).toBe(true);
+		expect(existsSync(resolve(root, "antora-assembler.yml"))).toBe(true);
 	});
 
 	it("keeps published file references aligned with tracked files", () => {
@@ -144,6 +149,12 @@ describe("repository contract", () => {
 		expect(exportScript).not.toContain('if (argument === "--format")');
 		expect(exportScript).toContain("Exported ");
 		expect(exportScript).toContain("Output root:");
+	});
+
+	it("pins the repository assembler default to root_level 1", () => {
+		expect(antoraAssemblerConfig).toContain("assembly:");
+		expect(antoraAssemblerConfig).toContain("root_level: 1");
+		expect(extensionEntrypoint).toContain("root_level: rootLevel");
 	});
 
 	it("keeps the lightweight CLI wrapper honest about its current scope", () => {
