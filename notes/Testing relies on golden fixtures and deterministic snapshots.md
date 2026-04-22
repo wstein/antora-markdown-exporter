@@ -20,6 +20,8 @@ The test suite separates concerns:
 - fixture golden tests for exact output
 - validation-helper tests for reusable inspection surfaces
 
+Not every exact-output surface should share the same link-shaping expectations. Generic xref fixtures under `tests/fixtures/xrefs/**` remain the authority for source- and site-routing semantics, while assembled export-local `.md` link expectations belong in the extension and module-export proof surfaces.
+
 
 ## Why
 
@@ -39,6 +41,8 @@ Place fixtures under `tests/fixtures/**` with `input.adoc` and `expected.<flavor
 Use `vitest.config.ts` with `@vitest/coverage-v8` and keep render tests stable enough to run in CI without regeneration side effects.
 
 When a fixture asserts diagnostics or validation metadata, keep those expectations explicit and separate from rendered Markdown snapshots so output stability and diagnosability are both reviewable.
+
+When an export flow rewrites assembled internal page links to sibling markdown artifacts, pin that behavior in export-specific tests and module-export goldens instead of changing the generic xref fixture corpus.
 
 
 Do not rely only on broad smoke tests.

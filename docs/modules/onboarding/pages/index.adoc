@@ -218,6 +218,7 @@ Example path:
 * you add or adjust a table-mapping rule in `src/adapter/asciidoctor-structure/block-helpers.ts`
 * you first pin that behavior in `tests/unit/asciidoctor-block-helpers.test.ts`
 * if the final markdown changes, you then review the relevant `tests/fixtures/**/expected.<flavor>.md` file or module-export golden snapshot
+* if the change is only about assembled review-export links, keep the `.md` expectation in extension or module-export tests rather than rewriting the generic xref fixture corpus
 
 That order matters. Start with the narrowest proof surface, then widen to end-to-end fixtures only when the semantic or rendered result really changed.
 
