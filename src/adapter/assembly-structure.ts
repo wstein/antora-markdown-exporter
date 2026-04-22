@@ -180,6 +180,13 @@ export type AssemblyList = {
 	location?: AssemblySourceLocation;
 };
 
+export type AssemblyLabeledGroup = {
+	type: "labeledGroup";
+	label: AssemblyInline[];
+	children: AssemblyBlock[];
+	location?: AssemblySourceLocation;
+};
+
 export type AssemblyTableCell = {
 	children: AssemblyInline[];
 	location?: AssemblySourceLocation;
@@ -220,6 +227,7 @@ export type AssemblyBlock =
 	| AssemblyBlockQuote
 	| AssemblyAdmonition
 	| AssemblyList
+	| AssemblyLabeledGroup
 	| AssemblyTable
 	| AssemblyHtmlBlock
 	| AssemblyUnsupported;

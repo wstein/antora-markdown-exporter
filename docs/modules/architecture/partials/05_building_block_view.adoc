@@ -43,6 +43,7 @@ The main building blocks are:
 |===
 
 The most important interfaces are:
+
 * `defineAssemblyDocument(document)` pins the repository-owned adapter contract for structured assembly input.
 * `extractAssemblyStructure(source, options)` extracts supported document structure into the repository-owned assembly adapter.
 * `convertAssemblyToMarkdownIR(source, options)` is the main converter entrypoint.

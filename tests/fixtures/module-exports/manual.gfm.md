@@ -81,11 +81,10 @@ That build now emits:
 
 - the static Antora site under `build/site`
 - downloadable module PDFs at `build/site/antora-markdown-exporter/architecture.pdf`, `build/site/antora-markdown-exporter/manual.pdf`, and `build/site/antora-markdown-exporter/onboarding.pdf`
-
-1. Export Antora module pages to Markdown when you need generated Markdown artifacts from the repository’s own pipeline:
-  ```bash
-  make markdown
-  ```
+  1. Export Antora module pages to Markdown when you need generated Markdown artifacts from the repository’s own pipeline:
+    ```bash
+    make markdown
+    ```
 
 That export emits:
 
@@ -93,11 +92,10 @@ That export emits:
 - one assembled `.md` file for each exported documentation module
 - output built from the same assembled module sources as the repository PDFs and rendered through the same conversion, normalization, and flavor pipeline used by the package API
 - no post-render Markdown cleanup layer; if the generated Markdown is wrong, the fix belongs in the converter or renderer
-
-1. Let the Pages workflow publish the static site only after a successful tag-triggered `Release` workflow:
-  - local docs validation happens on your working branch
-  - public publication to `https://wstein.github.io/antora-markdown-exporter` happens from `.github/workflows/pages.yml`
-  - the Pages workflow checks out `main`, which the release workflow has already promoted
+  1. Let the Pages workflow publish the static site only after a successful tag-triggered `Release` workflow:
+- local docs validation happens on your working branch
+- public publication to `https://wstein.github.io/antora-markdown-exporter` happens from `.github/workflows/pages.yml`
+- the Pages workflow checks out `main`, which the release workflow has already promoted
 
 Why this workflow exists:
 

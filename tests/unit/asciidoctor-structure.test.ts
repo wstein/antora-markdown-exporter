@@ -51,7 +51,7 @@ describe("asciidoctor structure extraction", () => {
 		]);
 		expect(document.children[2]).toMatchObject({
 			type: "heading",
-			depth: 2,
+			depth: 1,
 			identifier: "_overview",
 			children: [{ type: "text", value: "Overview" }],
 		});
@@ -129,6 +129,68 @@ describe("asciidoctor structure extraction", () => {
 		});
 	});
 
+	it("extracts description lists as labeled groups and preserves list continuations structurally", () => {
+		const document = extractAssemblyStructure(
+			[
+				"= Manual",
+				":sectnums:",
+				"",
+				"== Core Workflows",
+				"",
+				". Install dependencies:",
+				"+",
+				"[source,bash]",
+				"----",
+				"make install",
+				"----",
+				"",
+				"Motivation::",
+				"",
+				"The converter should emit final Markdown.",
+			].join("\n"),
+		);
+
+		expect(document.children[1]).toMatchObject({
+			type: "heading",
+			depth: 1,
+			children: [{ type: "text", value: "Core Workflows" }],
+		});
+		expect(document.children[2]).toMatchObject({
+			type: "list",
+			ordered: true,
+			items: [
+				{
+					children: [
+						{
+							type: "paragraph",
+							children: [{ type: "text", value: "Install dependencies:" }],
+						},
+						{
+							type: "codeBlock",
+							language: "bash",
+							value: "make install",
+						},
+						{
+							type: "labeledGroup",
+							label: [{ type: "text", value: "Motivation" }],
+							children: [
+								{
+									type: "paragraph",
+									children: [
+										{
+											type: "text",
+											value: "The converter should emit final Markdown.",
+										},
+									],
+								},
+							],
+						},
+					],
+				},
+			],
+		});
+	});
+
 	it("marks unsupported block contexts explicitly in the extracted structure", () => {
 		const document = extractAssemblyStructure(
 			[
@@ -150,6 +212,39 @@ describe("asciidoctor structure extraction", () => {
 			expect.objectContaining({
 				type: "unsupported",
 				reason: "structured extractor does not support block context: sidebar",
+			}),
+		]);
+	});
+
+	it("maps preambles and heading inline code without falling back to unsupported blocks", () => {
+		const document = extractAssemblyStructure(
+			[
+				"= Guide",
+				"",
+				"Intro paragraph.",
+				"",
+				"== Release Flow Uses `develop`, `main`, And Semver Tags",
+			].join("\n"),
+		);
+
+		expect(document.children).toEqual([
+			expect.objectContaining({
+				type: "heading",
+				children: [{ type: "text", value: "Guide" }],
+			}),
+			expect.objectContaining({
+				type: "paragraph",
+				children: [{ type: "text", value: "Intro paragraph." }],
+			}),
+			expect.objectContaining({
+				type: "heading",
+				children: [
+					{ type: "text", value: "Release Flow Uses " },
+					{ type: "code", value: "develop" },
+					{ type: "text", value: ", " },
+					{ type: "code", value: "main" },
+					{ type: "text", value: ", And Semver Tags" },
+				],
 			}),
 		]);
 	});

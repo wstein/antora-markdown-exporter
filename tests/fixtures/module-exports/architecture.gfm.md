@@ -190,7 +190,12 @@ These surfaces live in `src/markdown/include-diagnostics.ts`, `scripts/inspectio
 
 This scenario is based on the notes `Exporter pipeline uses Assembler and a direct TypeScript converter` and `Release and package identity use scoped npm publishing`.
 
-1. An upstream caller provides assembled AsciiDoc content to `convertAssemblyToMarkdownIR(source, { sourcePath })`. 2. The converter in `src/exporter/convert-assembly.ts` maps assembled content and preserved metadata into semantic IR nodes. 3. Include directives are inlined when source-path context is available; include metadata, diagnostics, and provenance are preserved as dedicated `includeDirective` nodes rather than being dropped. 4. The caller normalizes the document through `normalizeMarkdownIR`. 5. Xref targets remain structured until lowering in `src/markdown/xref-resolution.ts`. 6. A flavor renderer serializes the normalized document according to `src/markdown/flavor.ts` and `src/markdown/fallback.ts`.
+1. An upstream caller provides assembled AsciiDoc content to `convertAssemblyToMarkdownIR(source, { sourcePath })`.
+2. The converter in `src/exporter/convert-assembly.ts` maps assembled content and preserved metadata into semantic IR nodes.
+3. Include directives are inlined when source-path context is available; include metadata, diagnostics, and provenance are preserved as dedicated `includeDirective` nodes rather than being dropped.
+4. The caller normalizes the document through `normalizeMarkdownIR`.
+5. Xref targets remain structured until lowering in `src/markdown/xref-resolution.ts`.
+6. A flavor renderer serializes the normalized document according to `src/markdown/flavor.ts` and `src/markdown/fallback.ts`.
 
 The notable aspect is that the shipped runtime now spans both the Assembler-backed extension entrypoint and the repository-owned conversion boundary. The remaining work is to keep converter behavior, registration behavior, and tests aligned as coverage expands.
 
@@ -198,7 +203,11 @@ The notable aspect is that the shipped runtime now spans both the Assembler-back
 
 This scenario is based on the notes `Inspection helpers expose normalized validation surfaces` and `Release and package identity use scoped npm publishing`.
 
-1. A caller converts source to IR, typically with a real file-backed `sourcePath`. 2. `collectMarkdownInspectionReport(document)` normalizes the document before traversal. 3. The inspection layer walks nested blocks, callout lists, footnote definitions, tables, and inline containers to gather include directives, include diagnostics, xrefs, and xref targets in normalized document order. 4. `scripts/inspection-report.ts` serializes that report either as JSON or GitHub Actions annotations. 5. CI or release checks fail when diagnostics are present and `--fail-on-diagnostics` is used.
+1. A caller converts source to IR, typically with a real file-backed `sourcePath`.
+2. `collectMarkdownInspectionReport(document)` normalizes the document before traversal.
+3. The inspection layer walks nested blocks, callout lists, footnote definitions, tables, and inline containers to gather include directives, include diagnostics, xrefs, and xref targets in normalized document order.
+4. `scripts/inspection-report.ts` serializes that report either as JSON or GitHub Actions annotations.
+5. CI or release checks fail when diagnostics are present and `--fail-on-diagnostics` is used.
 
 The notable aspect is that validation uses one maintained normalized inspection surface instead of separate ad-hoc traversals in CI scripts.
 
@@ -374,7 +383,7 @@ The main currently documented risk is the one described by the note `Scaffold le
 
 | Priority | Risk and mitigation |
 | --- | --- |
-| 1 | The repository now ships a real extension entrypoint as well as the markdown kernel. The risk is no longer a missing registration path. It is drift between the extension entrypoint, the converter’s real coverage, and the way docs or package examples describe that coverage. |
+| 1 | The repository now ships a real extension entrypoint as well as the markdown kernel. The risk is no longer a missing registration path. It is drift between the extension entrypoint, the converter’s real coverage, and the way docs or package examples describe that coverage. Mitigation: \* keep the real extension entrypoint, README examples, and release checks aligned \* remove dead scaffolding artifacts when they linger in docs or tests \* treat repository self-consistency checks as release gates \* extend converter coverage and tests together whenever richer assembled AsciiDoc constructs are supported |
 
 # Chapter 12. Reference Notes
 

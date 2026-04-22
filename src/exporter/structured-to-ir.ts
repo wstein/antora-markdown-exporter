@@ -6,6 +6,7 @@ import type {
 	AssemblyDocument,
 	AssemblyHtmlBlock,
 	AssemblyInline,
+	AssemblyLabeledGroup,
 	AssemblyList,
 	AssemblyParagraph,
 	AssemblyTable,
@@ -98,6 +99,14 @@ function convertList(node: AssemblyList): MarkdownList {
 	};
 }
 
+function convertLabeledGroup(node: AssemblyLabeledGroup): MarkdownBlock {
+	return {
+		type: "labeledGroup",
+		label: node.label.map(convertInline),
+		children: node.children.map(convertBlock),
+	};
+}
+
 function convertAdmonition(node: AssemblyAdmonition): MarkdownBlock {
 	return {
 		type: "admonition",
@@ -178,6 +187,8 @@ function convertBlock(node: AssemblyBlock): MarkdownBlock {
 			return convertAdmonition(node);
 		case "list":
 			return convertList(node);
+		case "labeledGroup":
+			return convertLabeledGroup(node);
 		case "table":
 			return convertTable(node);
 		case "htmlBlock":

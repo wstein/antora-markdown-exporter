@@ -67,6 +67,16 @@ describe("structured assembly to markdown ir", () => {
 						],
 					},
 					{
+						type: "labeledGroup",
+						label: [{ type: "text", value: "Motivation" }],
+						children: [
+							{
+								type: "paragraph",
+								children: [{ type: "text", value: "Stay semantic." }],
+							},
+						],
+					},
+					{
 						type: "table",
 						align: ["left", "right"],
 						header: {
@@ -98,6 +108,7 @@ describe("structured assembly to markdown ir", () => {
 			"paragraph",
 			"admonition",
 			"list",
+			"labeledGroup",
 			"table",
 		]);
 		expect(ir.children[3]).toMatchObject({
@@ -132,34 +143,34 @@ describe("structured assembly to markdown ir", () => {
 		);
 		const ir = convertAssemblyStructureToMarkdownIR(structured);
 
-		expect(ir.children).toEqual(
-			expect.arrayContaining([
+		expect(ir.children[0]).toMatchObject({
+			type: "pageAliases",
+			aliases: ["legacy-home"],
+		});
+		expect(ir.children[1]).toMatchObject({
+			type: "heading",
+			children: [{ type: "text", value: "Manual" }],
+		});
+		expect(ir.children[2]).toMatchObject({
+			type: "heading",
+			children: [{ type: "text", value: "Overview" }],
+		});
+		expect(ir.children[3]).toMatchObject({
+			type: "paragraph",
+			children: expect.arrayContaining([
 				expect.objectContaining({
-					type: "pageAliases",
-					aliases: ["legacy-home"],
-				}),
-				expect.objectContaining({
-					type: "heading",
-					children: [{ type: "text", value: "Manual" }],
-				}),
-				expect.objectContaining({
-					type: "heading",
-					children: [{ type: "text", value: "Overview" }],
-				}),
-				expect.objectContaining({
-					type: "anchor",
-					identifier: "para-anchor",
-				}),
-				expect.objectContaining({
-					type: "paragraph",
-					children: expect.arrayContaining([
-						expect.objectContaining({
-							type: "xref",
-							url: "install.html#cli",
-						}),
-					]),
+					type: "xref",
+					url: "install.html#cli",
 				}),
 			]),
-		);
+		});
+		expect(ir.children[4]).toMatchObject({
+			type: "anchor",
+			identifier: "para-anchor",
+		});
+		expect(ir.children[5]).toMatchObject({
+			type: "paragraph",
+			children: [{ type: "text", value: "Paragraph with anchor." }],
+		});
 	});
 });

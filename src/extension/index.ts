@@ -2,7 +2,8 @@ import { mkdir, writeFile } from "node:fs/promises";
 import { basename, dirname, resolve } from "node:path";
 import { pathToFileURL } from "node:url";
 import { configure } from "@antora/assembler";
-import { convertAssemblyToMarkdownIR } from "../exporter/convert-assembly.js";
+import { extractAssemblyStructure } from "../adapter/asciidoctor-structure.js";
+import { convertAssemblyStructureToMarkdownIR } from "../exporter/structured-to-ir.js";
 import type { MarkdownFlavorName } from "../markdown/flavor.js";
 import { normalizeMarkdownIR } from "../markdown/normalize.js";
 import { renderMarkdown } from "../markdown/render/index.js";
@@ -45,13 +46,11 @@ export function renderAssemblyMarkdown(
 	flavor: MarkdownFlavorName = defaultFlavor,
 	sourcePath = "assembly.adoc",
 ): string {
+	const structured = extractAssemblyStructure(source, {
+		sourcePath,
+	});
 	return renderMarkdown(
-		normalizeMarkdownIR(
-			convertAssemblyToMarkdownIR(source, {
-				sourcePath,
-				includeRootDir: dirname(sourcePath),
-			}),
-		),
+		normalizeMarkdownIR(convertAssemblyStructureToMarkdownIR(structured)),
 		flavor,
 	);
 }

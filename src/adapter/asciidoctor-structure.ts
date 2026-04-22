@@ -10,6 +10,7 @@ import {
 	type AssemblyHtmlBlock,
 	type AssemblyImage,
 	type AssemblyInline,
+	type AssemblyLabeledGroup,
 	type AssemblyLink,
 	type AssemblyList,
 	type AssemblyParagraph,
@@ -57,6 +58,19 @@ type AsciidoctorListItem = {
 	getText: () => string;
 };
 
+type AsciidoctorDescriptionListTerm = {
+	getText: () => string;
+};
+
+type AsciidoctorDescriptionListDescription = {
+	getBlocks?: () => AsciidoctorBlock[];
+	getSourceLocation?: () => {
+		getLineNumber?: () => number;
+		getPath?: () => string;
+	};
+	getText?: () => string;
+};
+
 type AsciidoctorTableCell = {
 	getSource?: () => string;
 	getText: () => string;
@@ -98,6 +112,21 @@ function decodeHtmlEntities(value: string): string {
 		.replaceAll("&amp;", "&")
 		.replaceAll("&quot;", '"')
 		.replaceAll("&#39;", "'");
+}
+
+function decodeLiteralCode(value: string): string {
+	return decodeHtmlEntities(value)
+		.replace(/<a\s[^>]*>/gu, "")
+		.replaceAll("</a>", "")
+		.replaceAll("<strong>", "**")
+		.replaceAll("</strong>", "**")
+		.replaceAll("<em>", "_")
+		.replaceAll("</em>", "_")
+		.replaceAll("&#8230;", "...")
+		.replaceAll("&#8203;", "")
+		.replaceAll("&#8201;", " ")
+		.replaceAll("&#8212;", "--")
+		.replaceAll("&#8594;", "->");
 }
 
 function parseHtmlAttributes(value: string): {
@@ -152,7 +181,10 @@ function parseInlineHtml(content: string): AssemblyInline[] {
 			pushText(content.slice(cursor, nextTagIndex));
 		}
 
-		if (content.startsWith("<strong>", nextTagIndex)) {
+		const strongOpen = content
+			.slice(nextTagIndex)
+			.match(/^<strong(?:\s[^>]*)?>/u)?.[0];
+		if (strongOpen !== undefined) {
 			const endIndex = content.indexOf("</strong>", nextTagIndex);
 			if (endIndex === -1) {
 				pushText(content.slice(nextTagIndex));
@@ -161,13 +193,18 @@ function parseInlineHtml(content: string): AssemblyInline[] {
 
 			nodes.push({
 				type: "strong",
-				children: parseInlineHtml(content.slice(nextTagIndex + 8, endIndex)),
+				children: parseInlineHtml(
+					content.slice(nextTagIndex + strongOpen.length, endIndex),
+				),
 			});
 			cursor = endIndex + 9;
 			continue;
 		}
 
-		if (content.startsWith("<em>", nextTagIndex)) {
+		const emphasisOpen = content
+			.slice(nextTagIndex)
+			.match(/^<em(?:\s[^>]*)?>/u)?.[0];
+		if (emphasisOpen !== undefined) {
 			const endIndex = content.indexOf("</em>", nextTagIndex);
 			if (endIndex === -1) {
 				pushText(content.slice(nextTagIndex));
@@ -176,13 +213,18 @@ function parseInlineHtml(content: string): AssemblyInline[] {
 
 			nodes.push({
 				type: "emphasis",
-				children: parseInlineHtml(content.slice(nextTagIndex + 4, endIndex)),
+				children: parseInlineHtml(
+					content.slice(nextTagIndex + emphasisOpen.length, endIndex),
+				),
 			});
 			cursor = endIndex + 5;
 			continue;
 		}
 
-		if (content.startsWith("<code>", nextTagIndex)) {
+		const codeOpen = content
+			.slice(nextTagIndex)
+			.match(/^<code(?:\s[^>]*)?>/u)?.[0];
+		if (codeOpen !== undefined) {
 			const endIndex = content.indexOf("</code>", nextTagIndex);
 			if (endIndex === -1) {
 				pushText(content.slice(nextTagIndex));
@@ -191,7 +233,9 @@ function parseInlineHtml(content: string): AssemblyInline[] {
 
 			nodes.push({
 				type: "code",
-				value: decodeHtmlEntities(content.slice(nextTagIndex + 6, endIndex)),
+				value: decodeLiteralCode(
+					content.slice(nextTagIndex + codeOpen.length, endIndex),
+				),
 			});
 			cursor = endIndex + 7;
 			continue;
@@ -281,21 +325,18 @@ function extractParagraph(block: AsciidoctorBlock): AssemblyParagraph {
 	};
 }
 
-function extractHeading(
-	block: AsciidoctorBlock,
-	titleDepthOffset: number,
-): AssemblyHeading {
+function extractHeading(block: AsciidoctorBlock): AssemblyHeading {
 	return {
 		type: "heading",
-		depth: Math.max(1, (block.getLevel?.() ?? 1) + titleDepthOffset),
+		depth: Math.max(1, block.getLevel?.() ?? 1),
 		identifier: block.getId?.(),
 		location: getSourceLocation(block),
-		children: [{ type: "text", value: block.getTitle?.() ?? "" }],
+		children: parseInlineHtml(block.getTitle?.() ?? ""),
 	};
 }
 
 function extractList(block: AsciidoctorBlock): AssemblyList {
-	const items = block.getItems?.() ?? [];
+	const items = (block.getItems?.() ?? []) as AsciidoctorListItem[];
 	return {
 		type: "list",
 		ordered: block.getContext() === "olist",
@@ -305,12 +346,46 @@ function extractList(block: AsciidoctorBlock): AssemblyList {
 			children: [
 				{
 					type: "paragraph",
-					children: [{ type: "text", value: item.getText() }],
+					children: parseInlineHtml(item.getText()),
 				},
 				...(item.getBlocks?.().flatMap(extractBlock) ?? []),
 			],
 		})),
 	};
+}
+
+function extractLabeledGroups(block: AsciidoctorBlock): AssemblyLabeledGroup[] {
+	const items = (block.getItems?.() ?? []) as Array<
+		[AsciidoctorDescriptionListTerm[], AsciidoctorDescriptionListDescription]
+	>;
+
+	return items.map(([terms, description]) => {
+		const blocks = description.getBlocks?.() ?? [];
+		const label: AssemblyInline[] = [];
+		for (const [index, term] of terms.entries()) {
+			if (index > 0) {
+				label.push({ type: "text", value: "; " });
+			}
+			label.push(...parseInlineHtml(term.getText()));
+		}
+		const children =
+			blocks.length > 0
+				? blocks.flatMap((child) => extractBlock(child))
+				: [
+						<AssemblyParagraph>{
+							type: "paragraph",
+							children: parseInlineHtml(description.getText?.() ?? ""),
+							location: getSourceLocation(description),
+						},
+					];
+
+		return {
+			type: "labeledGroup",
+			label,
+			children,
+			location: getSourceLocation(description),
+		};
+	});
 }
 
 function extractAdmonition(block: AsciidoctorBlock): AssemblyAdmonition {
@@ -332,11 +407,24 @@ function extractAdmonition(block: AsciidoctorBlock): AssemblyAdmonition {
 }
 
 function extractAlignment(block: AsciidoctorBlock): AssemblyTable["align"] {
-	return block.getColumns?.().map((column) => {
+	const columnSpec = block
+		.getAttribute("cols")
+		?.split(",")
+		.map((entry) => entry.trim());
+	return block.getColumns?.().map((column, index) => {
+		const spec = columnSpec?.[index] ?? "";
+		if (spec.includes("<")) {
+			return "left";
+		}
+		if (spec.includes("^")) {
+			return "center";
+		}
+		if (spec.includes(">")) {
+			return "right";
+		}
+
 		const halign = column.getAttributes?.().halign;
 		switch (halign) {
-			case "left":
-				return "left";
 			case "center":
 				return "center";
 			case "right":
@@ -418,10 +506,7 @@ function attachBlockAnchor(
 	];
 }
 
-function extractBlock(
-	block: AsciidoctorBlock,
-	titleDepthOffset: number,
-): AssemblyBlock[] {
+function extractBlock(block: AsciidoctorBlock): AssemblyBlock[] {
 	let extracted: AssemblyBlock[];
 	switch (block.getContext()) {
 		case "paragraph":
@@ -429,15 +514,19 @@ function extractBlock(
 			break;
 		case "section":
 			extracted = [
-				extractHeading(block, titleDepthOffset),
-				...block
-					.getBlocks()
-					.flatMap((child) => extractBlock(child, titleDepthOffset)),
+				extractHeading(block),
+				...block.getBlocks().flatMap((child) => extractBlock(child)),
 			];
+			break;
+		case "preamble":
+			extracted = block.getBlocks().flatMap((child) => extractBlock(child));
 			break;
 		case "ulist":
 		case "olist":
 			extracted = [extractList(block)];
+			break;
+		case "dlist":
+			extracted = extractLabeledGroups(block);
 			break;
 		case "admonition":
 			extracted = [extractAdmonition(block)];
@@ -507,7 +596,6 @@ export function extractAssemblyStructure(
 	});
 	const pageAliases = document.getAttribute("page-aliases");
 	const hasDocumentTitle = document.hasHeader?.() === true;
-	const titleDepthOffset = hasDocumentTitle ? 1 : 0;
 	const children: AssemblyBlock[] = [];
 
 	if (pageAliases !== undefined) {
@@ -524,12 +612,12 @@ export function extractAssemblyStructure(
 		children.push({
 			type: "heading",
 			depth: 1,
-			children: [{ type: "text", value: document.getDocumentTitle?.() ?? "" }],
+			children: parseInlineHtml(document.getDocumentTitle?.() ?? ""),
 		});
 	}
 
 	for (const block of document.getBlocks()) {
-		children.push(...extractBlock(block, titleDepthOffset));
+		children.push(...extractBlock(block));
 	}
 
 	return defineAssemblyDocument({

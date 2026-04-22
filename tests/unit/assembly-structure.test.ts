@@ -91,6 +91,16 @@ describe("assembly structure contract", () => {
 					],
 				},
 				{
+					type: "labeledGroup",
+					label: [{ type: "text", value: "Motivation" }],
+					children: [
+						{
+							type: "paragraph",
+							children: [{ type: "text", value: "Keep the mapping semantic." }],
+						},
+					],
+				},
+				{
 					type: "table",
 					align: ["left", "right"],
 					header: {
@@ -120,6 +130,7 @@ describe("assembly structure contract", () => {
 			"paragraph",
 			"admonition",
 			"list",
+			"labeledGroup",
 			"table",
 		]);
 		expect(document.children[3]).toMatchObject({
