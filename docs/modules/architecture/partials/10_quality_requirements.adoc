@@ -63,10 +63,10 @@
 |Claim family |Implementation evidence |Test evidence |Workflow evidence |Boundary note
 
 |Semantic conversion stays explicit
-|`src/adapter/asciidoctor-structure.ts`; `src/exporter/structured-to-ir.ts`; `src/markdown/ir.ts`
-|`tests/unit/asciidoctor-structure.test.ts`; `tests/unit/structured-to-ir.test.ts`; `tests/unit/ir.test.ts`
+|`src/adapter/assembly-structure.ts`; `src/adapter/assembly-structure-spec.ts`; `src/adapter/asciidoctor-structure.ts`; `src/exporter/structured-to-ir.ts`; `src/markdown/ir.ts`
+|`tests/unit/assembly-structure.test.ts`; `tests/unit/asciidoctor-structure.test.ts`; `tests/unit/asciidoctor-block-helpers.test.ts`; `tests/unit/structured-to-ir.test.ts`; `tests/unit/ir.test.ts`
 |`bun run check`
-|Semantic extensions should land in structured extraction and IR-aware lowering, not renderer-local rewrites.
+|Semantic extensions should land in structured extraction and IR-aware lowering, not renderer-local rewrites. Adapter invariants, the published specification, and focused helper tests are part of the proof surface.
 
 |Workflow claims stay auditable
 |`scripts/release-check.mjs`; `scripts/export-antora-modules.ts`

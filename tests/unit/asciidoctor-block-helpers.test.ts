@@ -4,6 +4,7 @@ import {
 	extractCalloutList,
 	extractLabeledGroups,
 	extractList,
+	extractRow,
 	extractTable,
 } from "../../src/adapter/asciidoctor-structure/block-helpers.js";
 import type { AssemblyBlock } from "../../src/adapter/assembly-structure.js";
@@ -49,6 +50,38 @@ describe("asciidoctor block helpers", () => {
 					{
 						type: "paragraph",
 						children: [{ type: "text", value: "nested block" }],
+					},
+				],
+				location: undefined,
+			},
+		]);
+
+		expect(
+			extractLabeledGroups(
+				{
+					getItems: () => [
+						[
+							[{ getText: () => "fallback term" }],
+							{
+								getBlocks: () => undefined,
+								getText: () => "plain fallback",
+								getSourceLocation: () => undefined,
+							},
+						],
+					],
+				} as never,
+				{},
+				extractBlock,
+			),
+		).toEqual([
+			{
+				type: "labeledGroup",
+				label: [{ type: "text", value: "fallback term" }],
+				children: [
+					{
+						type: "paragraph",
+						children: [{ type: "text", value: "plain fallback" }],
+						location: undefined,
 					},
 				],
 				location: undefined,
@@ -359,6 +392,20 @@ describe("asciidoctor block helpers", () => {
 				cells: [{ children: [{ type: "text", value: "Header" }] }],
 			},
 			rows: [{ cells: [] }],
+		});
+
+		expect(extractRow([])).toEqual({ cells: [] });
+
+		expect(
+			extractRow([
+				{ getText: () => "" },
+				{ getText: () => "Alpha &lt; Beta" },
+			] as never[]),
+		).toEqual({
+			cells: [
+				{ children: [{ type: "text", value: "" }] },
+				{ children: [{ type: "text", value: "Alpha < Beta" }] },
+			],
 		});
 	});
 });
