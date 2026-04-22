@@ -1,6 +1,7 @@
 import asciidoctorFactory from "@asciidoctor/core";
 import {
 	type AssemblyAdmonition,
+	type AssemblyAnchor,
 	type AssemblyBlock,
 	type AssemblyBlockQuote,
 	type AssemblyCodeBlock,
@@ -394,43 +395,78 @@ function extractUnsupported(block: AsciidoctorBlock): AssemblyUnsupported {
 	};
 }
 
+function attachBlockAnchor(
+	block: AsciidoctorBlock,
+	extracted: AssemblyBlock[],
+): AssemblyBlock[] {
+	const identifier = block.getId?.();
+	if (
+		identifier === undefined ||
+		identifier.length === 0 ||
+		block.getContext() === "section"
+	) {
+		return extracted;
+	}
+
+	return [
+		<AssemblyAnchor>{
+			type: "anchor",
+			identifier,
+			location: getSourceLocation(block),
+		},
+		...extracted,
+	];
+}
+
 function extractBlock(
 	block: AsciidoctorBlock,
 	titleDepthOffset: number,
 ): AssemblyBlock[] {
+	let extracted: AssemblyBlock[];
 	switch (block.getContext()) {
 		case "paragraph":
-			return [extractParagraph(block)];
+			extracted = [extractParagraph(block)];
+			break;
 		case "section":
-			return [
+			extracted = [
 				extractHeading(block, titleDepthOffset),
 				...block
 					.getBlocks()
 					.flatMap((child) => extractBlock(child, titleDepthOffset)),
 			];
+			break;
 		case "ulist":
 		case "olist":
-			return [extractList(block)];
+			extracted = [extractList(block)];
+			break;
 		case "admonition":
-			return [extractAdmonition(block)];
+			extracted = [extractAdmonition(block)];
+			break;
 		case "table":
-			return [extractTable(block)];
+			extracted = [extractTable(block)];
+			break;
 		case "listing":
 		case "literal":
-			return [extractCodeBlock(block)];
+			extracted = [extractCodeBlock(block)];
+			break;
 		case "quote":
-			return [extractBlockQuote(block)];
+			extracted = [extractBlockQuote(block)];
+			break;
 		case "pass":
-			return [
+			extracted = [
 				<AssemblyHtmlBlock>{
 					type: "htmlBlock",
 					location: getSourceLocation(block),
 					value: block.getSource?.() ?? "",
 				},
 			];
+			break;
 		default:
-			return [extractUnsupported(block)];
+			extracted = [extractUnsupported(block)];
+			break;
 	}
+
+	return attachBlockAnchor(block, extracted);
 }
 
 function parseRenderOptions(
