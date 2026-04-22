@@ -49,6 +49,19 @@ function extractHeading(
 	};
 }
 
+function extractFloatingTitle(
+	block: AsciidoctorBlock,
+	options: ExtractAssemblyStructureOptions,
+): AssemblyHeading {
+	return {
+		type: "heading",
+		depth: Math.max(1, block.getLevel?.() ?? 1),
+		identifier: block.getId?.(),
+		location: getSourceLocation(block),
+		children: parseInlineHtmlWithOptions(block.getTitle?.() ?? "", options),
+	};
+}
+
 function extractAdmonition(
 	block: AsciidoctorBlock,
 	options: ExtractAssemblyStructureOptions,
@@ -165,7 +178,8 @@ function attachBlockAnchor(
 	if (
 		identifier === undefined ||
 		identifier.length === 0 ||
-		block.getContext() === "section"
+		block.getContext() === "section" ||
+		block.getContext() === "floating_title"
 	) {
 		return extracted;
 	}
@@ -231,6 +245,9 @@ export function extractBlock(
 				extractHeading(block, options),
 				...block.getBlocks().flatMap((child) => extractBlock(child, options)),
 			];
+			break;
+		case "floating_title":
+			extracted = [extractFloatingTitle(block, options)];
 			break;
 		case "ulist":
 		case "olist":
@@ -306,6 +323,9 @@ export function extractBlock(
 					location: getSourceLocation(block),
 				},
 			];
+			break;
+		case "page_break":
+			extracted = [];
 			break;
 		default:
 			extracted = [extractUnsupported(block)];

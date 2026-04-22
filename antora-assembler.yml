@@ -1,2 +1,9 @@
 assembly:
   root_level: 1
+  doctype: book
+  attributes:
+    toc: ''
+    toc-title: table of contents
+    toclevels: '3'
+    sectnums: ''
+    reproducible: ''

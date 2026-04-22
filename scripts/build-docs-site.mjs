@@ -1,13 +1,8 @@
 import { spawnSync } from "node:child_process";
-import { mkdirSync, mkdtempSync, rmSync, writeFileSync } from "node:fs";
+import { rmSync } from "node:fs";
 import { dirname, resolve } from "node:path";
 import { fileURLToPath } from "node:url";
-
-export {
-	createDocumentationModuleSource as createModulePdfSource,
-	getDocumentationModuleNames as getPdfModuleNames,
-	stripDocumentTitle,
-} from "./docs-module-sources.mjs";
+import { runAntoraAssembler } from "./antora-assembler.mjs";
 
 function runCommand(command, args, cwd) {
 	const result = spawnSync(command, args, {
@@ -21,39 +16,66 @@ function runCommand(command, args, cwd) {
 	}
 }
 
-export function getPdfOutputPath(rootDir, moduleName) {
+export function getPdfOutputPath(rootDir, exportName) {
 	return resolve(
 		rootDir,
 		"build/site/antora-markdown-exporter",
-		`${moduleName}.pdf`,
+		`${exportName}.pdf`,
 	);
 }
 
-export function buildDocsPdf(rootDir) {
-	const buildDir = resolve(rootDir, "build");
-	mkdirSync(buildDir, { recursive: true });
-	const tempDir = mkdtempSync(resolve(buildDir, "pdf-build-"));
-
-	try {
-		for (const moduleName of getPdfModuleNames()) {
-			const pdfSourcePath = resolve(tempDir, `${moduleName}.pdf.adoc`);
-			const pdfOutputPath = getPdfOutputPath(rootDir, moduleName);
-			writeFileSync(pdfSourcePath, createModulePdfSource(rootDir, moduleName));
-			mkdirSync(dirname(pdfOutputPath), { recursive: true });
-			runCommand(
-				"asciidoctor-pdf",
-				["-o", pdfOutputPath, pdfSourcePath],
-				rootDir,
+function createPdfConverter() {
+	return {
+		backend: "pdf",
+		extname: ".pdf",
+		mediaType: "application/pdf",
+		loggerName: "@wsmy/antora-markdown-exporter/pdf",
+		async convert(file, convertAttributes, buildConfig, helpers) {
+			const outputDir = buildConfig.dir ?? buildConfig.cwd ?? process.cwd();
+			const outputPath = resolve(
+				outputDir,
+				file.src.basename.replace(/\.adoc$/u, ".pdf"),
 			);
-		}
-	} finally {
-		rmSync(tempDir, { force: true, recursive: true });
-	}
+			convertAttributes.outdir = dirname(outputPath);
+			convertAttributes.outfile = outputPath;
+			convertAttributes.outfilesuffix = ".pdf";
+			helpers.logCommand("asciidoctor-pdf", file, convertAttributes, "-a");
+			return helpers.runCommand(
+				"asciidoctor-pdf",
+				[
+					...convertAttributes.toArgs("-a", "asciidoctor-pdf"),
+					"-o",
+					outputPath,
+					convertAttributes.docfile,
+				],
+				{
+					cwd: buildConfig.cwd,
+					stderr: "print",
+					stdout: "ignore",
+				},
+			);
+		},
+	};
 }
 
-export function buildDocsSite(rootDir) {
-	runCommand("antora", ["antora-playbook.yml"], rootDir);
-	buildDocsPdf(rootDir);
+export async function buildDocsPdf(rootDir) {
+	const outputDir = resolve(rootDir, "build/site/antora-markdown-exporter");
+	await runAntoraAssembler({
+		buildDir: outputDir,
+		converter: createPdfConverter(),
+		keepSource: true,
+		playbookPath: resolve(rootDir, "antora-playbook.yml"),
+		rootLevel: 1,
+	});
+	rmSync(resolve(outputDir, "antora-markdown-exporter"), {
+		force: true,
+		recursive: true,
+	});
+}
+
+export async function buildDocsSite(rootDir) {
+	await runCommand("antora", ["antora-playbook.yml"], rootDir);
+	await buildDocsPdf(rootDir);
 }
 
 function isDirectExecution() {
@@ -68,7 +90,7 @@ function isDirectExecution() {
 if (isDirectExecution()) {
 	try {
 		const rootDir = resolve(dirname(fileURLToPath(import.meta.url)), "..");
-		buildDocsSite(rootDir);
+		await buildDocsSite(rootDir);
 	} catch (error) {
 		console.error(String(error instanceof Error ? error.message : error));
 		process.exit(1);

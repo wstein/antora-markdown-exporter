@@ -20,6 +20,7 @@ describe("module export golden tests", () => {
 			});
 
 		expect(exportedFiles.map((entry) => entry.relativeOutputPath)).toEqual([
+			"documentation.md",
 			"architecture.md",
 			"manual.md",
 			"onboarding.md",

@@ -5,6 +5,7 @@ This section is the landing page for the Antora documentation set.
 
 Download the module PDFs:
 
+* link:documentation.pdf[documentation.pdf]
 * link:architecture.pdf[architecture.pdf]
 * link:manual.pdf[manual.pdf]
 * link:onboarding.pdf[onboarding.pdf]

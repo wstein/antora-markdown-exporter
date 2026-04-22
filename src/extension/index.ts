@@ -62,10 +62,12 @@ export function renderAssemblyMarkdown(
 	flavor: MarkdownFlavorName = defaultFlavor,
 	sourcePath = "assembly.adoc",
 	options: {
+		attributes?: Record<string, unknown>;
 		xrefFallbackLabelStyle?: XrefFallbackLabelStyle;
 	} = {},
 ): string {
 	const structured = extractAssemblyStructure(source, {
+		attributes: options.attributes,
 		sourcePath,
 		xrefFallbackLabelStyle: options.xrefFallbackLabelStyle,
 	});
@@ -105,7 +107,10 @@ export function createMarkdownConverter(
 				file.contents.toString("utf8"),
 				flavor,
 				convertAttributes.docfile,
-				{ xrefFallbackLabelStyle },
+				{
+					attributes: convertAttributes,
+					xrefFallbackLabelStyle,
+				},
 			);
 			await writeFile(outputPath, `${markdown}\n`);
 		},

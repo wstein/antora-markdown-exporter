@@ -237,6 +237,58 @@ describe("asciidoctor structure extraction", () => {
 		);
 	});
 
+	it("maps floating titles to headings and drops page breaks from the structured output", () => {
+		const document = extractAssemblyStructure(
+			[
+				"= Manual",
+				":toc:",
+				":sectnums:",
+				"",
+				"[discrete]",
+				"== Overview",
+				"",
+				"Text under overview.",
+				"",
+				"<<<",
+				"",
+				"== Next",
+				"",
+				"Next section.",
+			].join("\n"),
+		);
+
+		expect(document.renderOptions).toMatchObject({
+			headingNumbering: { mode: "section" },
+			tableOfContents: {},
+		});
+		expect(document.children).toEqual(
+			expect.arrayContaining([
+				expect.objectContaining({
+					type: "heading",
+					identifier: "_overview",
+					children: [{ type: "text", value: "Overview" }],
+				}),
+				expect.objectContaining({
+					type: "heading",
+					identifier: "_next",
+					children: [{ type: "text", value: "Next" }],
+				}),
+			]),
+		);
+		expect(document.children).not.toEqual(
+			expect.arrayContaining([
+				expect.objectContaining({
+					type: "unsupported",
+					reason: expect.stringContaining("floating_title"),
+				}),
+				expect.objectContaining({
+					type: "unsupported",
+					reason: expect.stringContaining("page_break"),
+				}),
+			]),
+		);
+	});
+
 	it("extracts document metadata, footnotes, citations, captions, and image attributes structurally", () => {
 		const document = extractAssemblyStructure(
 			[

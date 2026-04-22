@@ -50,8 +50,6 @@ Do not add a second markdown conversion path for repository exports.
 
 Do not patch rendered Markdown after the renderer has emitted it. If the output is wrong, fix the semantic conversion or the renderer.
 
-Treat any repository-local module-source helper as transitional glue, not as the intended architecture boundary.
-
 ## Links
 
 - [[Exporter pipeline uses Assembler and a direct TypeScript converter]] - The export command must remain inside the repository-owned conversion boundary.

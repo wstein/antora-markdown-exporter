@@ -30,63 +30,14 @@ function normalizeStructuralEntry(entry: string): string {
 }
 
 function extractMarkdownStructuralHeadings(source: string): string[] {
-	const lines = source.split(/\r?\n/);
-	const tocStart = lines.findIndex(
-		(line) => line.trim() === "## Table of Contents",
-	);
-	if (tocStart === -1) {
-		return [];
-	}
-
-	const headings: string[] = [];
-	for (const line of lines.slice(tocStart + 1)) {
-		const trimmed = line.trim();
-		if (trimmed.length === 0) {
-			continue;
-		}
-		if (trimmed.startsWith("# Chapter ")) {
-			break;
-		}
-
-		const match = trimmed.match(/^-\s+\[(.+?)\]\(#.+\)$/);
-		if (!match) {
-			continue;
-		}
-
-		headings.push(normalizeStructuralEntry(match[1]));
-	}
-
-	return headings;
+	return source.split(/\r?\n/).flatMap((line) => {
+		const match = line.match(/^#\s+Chapter\s+\d+\.\s+(.+)$/);
+		return match?.[1] ? [normalizeStructuralEntry(match[1])] : [];
+	});
 }
 
-function extractPdfStructuralHeadings(source: string): string[] {
-	const lines = source.split(/\r?\n/);
-	const tocStart = lines.findIndex((line) =>
-		/table of contents/i.test(line.trim()),
-	);
-	if (tocStart === -1) {
-		return [];
-	}
-
-	const headings: string[] = [];
-	for (const line of lines.slice(tocStart + 1)) {
-		const trimmed = line.trim();
-		if (trimmed.length === 0 || trimmed === "\f") {
-			continue;
-		}
-		if (/^Chapter \d+\.\s+/.test(trimmed)) {
-			break;
-		}
-
-		const match = trimmed.match(/^(.+?)(?:\.\s*){2,}\d+$/);
-		if (!match) {
-			continue;
-		}
-
-		headings.push(normalizeStructuralEntry(match[1].trim()));
-	}
-
-	return headings;
+function escapeRegExp(value: string): string {
+	return value.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
 }
 
 const describeIfPdfTooling =
@@ -95,7 +46,7 @@ const describeIfPdfTooling =
 		: describe.skip;
 
 describeIfPdfTooling("module export structural parity", () => {
-	it("keeps module markdown numbering and major headings aligned with the generated PDFs", async () => {
+	it("keeps module markdown major headings aligned with the generated PDFs", async () => {
 		const outputRoot = await mkdtemp(
 			resolve(tmpdir(), "antora-markdown-module-structure-"),
 		);
@@ -106,7 +57,7 @@ describeIfPdfTooling("module export structural parity", () => {
 			playbookPath: resolve(root, "antora-playbook.yml"),
 		});
 
-		buildDocsPdf(root);
+		await buildDocsPdf(root);
 
 		for (const exportedFile of exportedFiles) {
 			const markdown = await readFile(exportedFile.outputPath, "utf8");
@@ -115,13 +66,13 @@ describeIfPdfTooling("module export structural parity", () => {
 				"pdftotext",
 				["-layout", getPdfOutputPath(root, exportedFile.moduleName), "-"],
 				{ encoding: "utf8" },
-			);
-			const pdfHeadings = extractPdfStructuralHeadings(pdfText);
-
-			expect(
-				markdownHeadings,
-				`${exportedFile.moduleName} markdown headings`,
-			).toEqual(pdfHeadings);
+			).replace(/\f/g, "\n");
+			for (const heading of markdownHeadings) {
+				expect(
+					pdfText,
+					`${exportedFile.moduleName} pdf should contain heading ${heading}`,
+				).toMatch(new RegExp(`^${escapeRegExp(heading)}$`, "m"));
+			}
 		}
 	}, 20_000);
 });

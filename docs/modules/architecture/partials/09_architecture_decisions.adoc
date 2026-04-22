@@ -23,7 +23,7 @@
 
 |Prefer Assembler-owned assembly partitioning over repository-local export rules
 |Antora navigation and Assembler configuration should decide where exports begin.
-|`antora-assembler.yml` pins the repository default to `root_level: 1`, `src/extension/index.ts` applies the same default when no explicit config source is provided, and script-side assembly helpers remain transitional rather than architectural.
+|`antora-assembler.yml` pins the repository default to `root_level: 1`, `src/extension/index.ts` applies the same default when no explicit config source is provided, and the repository scripts run through the real Antora generator and Assembler path.
 
 |Use `develop` for integration and `main` for published history
 |The release path needs one certified integration state and one published history branch.

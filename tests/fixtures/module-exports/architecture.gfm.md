@@ -1,4 +1,4 @@
-# Architecture
+# Antora Markdown Exporter: Architecture
 
 ## Table of Contents
 
@@ -278,7 +278,7 @@ This concept cuts across the exporter, markdown kernel, inspection layer, packag
 | Keep the Markdown IR as the canonical semantic boundary | Semantic decisions should stay centralized and testable. | Conversion changes must land in the exporter, IR, normalization, lowering, or renderer layers rather than as ad-hoc string rewrites. |
 | Centralize fallback policy instead of flavor-local degradation | Valid semantic preservation and controlled degradation must stay distinct. | Unsupported constructs and raw HTML policy are owned by `src/markdown/fallback.ts`, while valid semantic constructs remain ordinary IR nodes. |
 | Use one semantic export path for package APIs, module Markdown export, and inspection tooling | Repository exports should stay on the same converter path as the package API. | `make markdown`, inspection scripts, and library consumers all depend on the same `extractAssemblyStructure -> convertAssemblyStructureToMarkdownIR -> normalizeMarkdownIR -> renderMarkdown` contract. |
-| Prefer Assembler-owned assembly partitioning over repository-local export rules | Antora navigation and Assembler configuration should decide where exports begin. | `antora-assembler.yml` pins the repository default to `root_level: 1`, `src/extension/index.ts` applies the same default when no explicit config source is provided, and script-side assembly helpers remain transitional rather than architectural. |
+| Prefer Assembler-owned assembly partitioning over repository-local export rules | Antora navigation and Assembler configuration should decide where exports begin. | `antora-assembler.yml` pins the repository default to `root_level: 1`, `src/extension/index.ts` applies the same default when no explicit config source is provided, and the repository scripts run through the real Antora generator and Assembler path. |
 | Use `develop` for integration and `main` for published history | The release path needs one certified integration state and one published history branch. | Release automation can verify one certified input state, then promote `main` and Pages publication only after successful publication steps. |
 
 These decisions are intentionally implementation-facing. They explain why the repository keeps resisting shortcut conversions, flavor-local semantics, and duplicated export paths even when those shortcuts might appear simpler in the short term.

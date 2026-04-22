@@ -6,11 +6,7 @@ import {
 	type MarkdownFlavorName,
 	type XrefFallbackLabelStyle,
 } from "../src/extension/index.ts";
-import {
-	createDocumentationModuleSource,
-	createDocumentationRootSource,
-	getDocumentationModuleNames,
-} from "./docs-module-sources.mjs";
+import { runAntoraAssembler } from "./antora-assembler.mjs";
 
 export type ExportAntoraModulesOptions = {
 	flavor: MarkdownFlavorName;
@@ -187,37 +183,17 @@ export async function exportAntoraModulesToMarkdown(
 	await mkdir(options.outputRoot, { recursive: true });
 	await mkdir(reviewBundleRoot, { recursive: true });
 
-	const moduleNames =
-		options.rootLevel === 0
-			? ["antora-markdown-exporter"]
-			: getDocumentationModuleNames(rootDir);
+	const files = await runAntoraAssembler({
+		buildDir: options.outputRoot,
+		converter,
+		playbookPath: options.playbookPath,
+		rootLevel: options.rootLevel,
+	});
 
-	for (const moduleName of moduleNames) {
-		const relativeOutputPath = `${moduleName}.md`;
+	for (const file of files) {
+		const relativeOutputPath = file.src.relative;
 		const outputPath = resolve(options.outputRoot, relativeOutputPath);
-		const assembledSource =
-			options.rootLevel === 0
-				? createDocumentationRootSource(rootDir)
-				: createDocumentationModuleSource(rootDir, moduleName);
-		const docfile = resolve(rootDir, `${moduleName}.assembled.adoc`);
-
-		await converter.convert(
-			{
-				contents: Buffer.from(assembledSource, "utf8"),
-				path: docfile,
-			},
-			{
-				docfile,
-				outdir: options.outputRoot,
-				outfile: outputPath,
-				outfilesuffix: ".md",
-			},
-			{
-				cwd: rootDir,
-				dir: options.outputRoot,
-			},
-		);
-
+		const moduleName = relativeOutputPath.replace(/\.md$/u, "");
 		exportedFiles.push({
 			moduleName,
 			outputPath,

@@ -73,7 +73,7 @@ describe("export antora modules script", () => {
 		expect(options.packageTaskMarkdown).toBe(true);
 	});
 
-	it("exports one assembled markdown document per documentation module", async () => {
+	it("exports one assembled markdown document per Antora root-level assembly", async () => {
 		const outputRoot = await mkdtemp(
 			resolve(tmpdir(), "antora-markdown-export-"),
 		);
@@ -88,6 +88,7 @@ describe("export antora modules script", () => {
 			});
 
 		expect(exportedFiles.map((entry) => entry.relativeOutputPath)).toEqual([
+			"documentation.md",
 			"architecture.md",
 			"manual.md",
 			"onboarding.md",
@@ -97,6 +98,15 @@ describe("export antora modules script", () => {
 			".github/workflows/release.yml",
 			".github/workflows/pages.yml",
 		]);
+
+		const documentationMarkdown = await readFile(
+			resolve(outputRoot, "documentation.md"),
+			"utf8",
+		);
+		expect(documentationMarkdown).toContain(
+			"# Antora Markdown Exporter: Documentation",
+		);
+		expect(documentationMarkdown).toContain("Antora Markdown Exporter");
 
 		const architectureMarkdown = await readFile(
 			resolve(outputRoot, "architecture.md"),
@@ -151,13 +161,14 @@ describe("export antora modules script", () => {
 		);
 
 		expect(output).toContain(
-			"Exported 3 documentation modules as gfm Markdown.",
+			"Exported 4 documentation modules as gfm Markdown.",
 		);
 		expect(output).toContain("Assembly root level: 1");
 		expect(output).toContain("Review bundle:");
 		expect(output).toContain("Xref fallback labels: fragment-or-basename");
 		expect(output).toContain("- review bundle: .github/workflows/release.yml");
 		expect(output).toContain("- review bundle: .github/workflows/pages.yml");
+		expect(output).toContain("- documentation: documentation.md");
 		expect(output).toContain("- architecture: architecture.md");
 		expect(output).toContain("- manual: manual.md");
 		expect(output).toContain("- onboarding: onboarding.md");
@@ -188,7 +199,7 @@ describe("export antora modules script", () => {
 			xrefFallbackLabelStyle: string;
 		};
 
-		expect(result.count).toBe(3);
+		expect(result.count).toBe(4);
 		expect(result.flavor).toBe("gfm");
 		expect(result.reviewBundleRoot).toBe(
 			resolve("build/markdown/review-bundle"),
@@ -200,6 +211,7 @@ describe("export antora modules script", () => {
 		expect(result.rootLevel).toBe(1);
 		expect(result.xrefFallbackLabelStyle).toBe("fragment-or-basename");
 		expect(result.files).toEqual([
+			{ moduleName: "documentation", outputPath: "documentation.md" },
 			{ moduleName: "architecture", outputPath: "architecture.md" },
 			{ moduleName: "manual", outputPath: "manual.md" },
 			{ moduleName: "onboarding", outputPath: "onboarding.md" },
@@ -221,6 +233,7 @@ describe("export antora modules script", () => {
 			});
 
 		expect(exportedFiles.map((entry) => entry.relativeOutputPath)).toEqual([
+			"documentation.md",
 			"architecture.md",
 			"manual.md",
 			"onboarding.md",
@@ -265,7 +278,7 @@ describe("export antora modules script", () => {
 		});
 
 		expect(exportedFiles.map((entry) => entry.relativeOutputPath)).toEqual([
-			"antora-markdown-exporter.md",
+			"index.md",
 		]);
 	});
 });

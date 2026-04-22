@@ -1,10 +1,56 @@
-import asciidoctorFactory from "@asciidoctor/core";
+import { createRequire } from "node:module";
+import { dirname, resolve } from "node:path";
 import type { AssemblySourceLocation } from "../assembly-structure.js";
 import type { AsciidoctorBlock, AsciidoctorListItem } from "./types.js";
 
-export const createAsciidoctor = asciidoctorFactory as unknown as () => {
+const require = createRequire(import.meta.url);
+
+type AsciidoctorInstance = {
 	load: (source: string, options: Record<string, unknown>) => AsciidoctorBlock;
 };
+
+let cachedAsciidoctor: AsciidoctorInstance | undefined;
+
+function loadAntoraAsciidoctor(): AsciidoctorInstance | undefined {
+	try {
+		const loaderPackagePath = require.resolve(
+			"@antora/asciidoc-loader/package.json",
+		);
+		return require(
+			resolve(dirname(loaderPackagePath), "lib/asciidoctor.js"),
+		) as AsciidoctorInstance;
+	} catch {
+		return undefined;
+	}
+}
+
+function loadStandaloneAsciidoctor(): AsciidoctorInstance {
+	const asciidoctorFactory = require("@asciidoctor/core") as
+		| (() => AsciidoctorInstance)
+		| { default?: () => AsciidoctorInstance };
+
+	if (typeof asciidoctorFactory === "function") {
+		return asciidoctorFactory();
+	}
+
+	if (typeof asciidoctorFactory.default === "function") {
+		return asciidoctorFactory.default();
+	}
+
+	throw new Error("Unable to initialize Asciidoctor runtime");
+}
+
+export function createAsciidoctor(): AsciidoctorInstance {
+	if (cachedAsciidoctor !== undefined) {
+		return cachedAsciidoctor;
+	}
+
+	cachedAsciidoctor =
+		globalThis.Opal !== undefined
+			? (loadAntoraAsciidoctor() ?? loadStandaloneAsciidoctor())
+			: loadStandaloneAsciidoctor();
+	return cachedAsciidoctor;
+}
 
 export function getSourceLocation(
 	node: Pick<AsciidoctorBlock, "getSourceLocation"> | AsciidoctorListItem,

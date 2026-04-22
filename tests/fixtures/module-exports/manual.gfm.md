@@ -1,4 +1,4 @@
-# Manual
+# Antora Markdown Exporter: Manual
 
 ## Table of Contents
 
@@ -67,7 +67,7 @@ Recommended operator loop:
 That build now emits:
 
 - the static Antora site under `build/site`
-- downloadable module PDFs at `build/site/antora-markdown-exporter/architecture.pdf`, `build/site/antora-markdown-exporter/manual.pdf`, and `build/site/antora-markdown-exporter/onboarding.pdf`
+- downloadable module PDFs at `build/site/antora-markdown-exporter/documentation.pdf`, `build/site/antora-markdown-exporter/architecture.pdf`, `build/site/antora-markdown-exporter/manual.pdf`, and `build/site/antora-markdown-exporter/onboarding.pdf`
   1. Export Antora module pages to Markdown when you need generated Markdown artifacts from the repository’s own pipeline:
     ```bash
     make markdown
@@ -75,9 +75,9 @@ That build now emits:
 
 That export emits:
 
-- flat module documents at `build/markdown/architecture.md`, `build/markdown/manual.md`, and `build/markdown/onboarding.md`
+- flat module documents at `build/markdown/documentation.md`, `build/markdown/architecture.md`, `build/markdown/manual.md`, and `build/markdown/onboarding.md`
 - one assembled `.md` file for each exported documentation module
-- output built from the same assembled module sources as the repository PDFs and rendered through the same conversion, normalization, and flavor pipeline used by the package API
+- output built from the same Assembler-driven export model as the repository PDFs and rendered through the same conversion, normalization, and flavor pipeline used by the package API
 - no post-render Markdown cleanup layer; if the generated Markdown is wrong, the fix belongs in the converter or renderer
   1. Let the Pages workflow publish the static site only after a successful tag-triggered `Release` workflow:
 - local docs validation happens on your working branch
@@ -206,12 +206,12 @@ Important conflict to preserve:
 | `make integration` | Runs integration tests only. |
 | `make reference` | Runs the reference compatibility suite in `tests/integration/reference-antora.test.ts`. |
 | `make inspect-report INPUT=...` | Emits a machine-readable inspection report for one input file by delegating to `bun run inspect:report`. |
-| `make markdown` | Exports assembled module documents to `build/markdown/architecture.md`, `build/markdown/manual.md`, and `build/markdown/onboarding.md` through the dedicated package `markdown:build` task, which runs `scripts/export-antora-modules.ts` in explicit `--package-task-markdown` mode. The direct script still defaults to `gfm`, but the package task emits `multimarkdown`. Both modes keep the `.md` extension. The default CLI output is a human-readable summary; use `bun run export:modules -- --json` when automation needs machine-readable output. The export uses the same assembled module sources as the repository PDFs and the same converter path as the package API. It also materializes a review bundle under `build/markdown/review-bundle/.github/workflows/` so release and publication claims always ship with `release.yml` and `pages.yml` evidence. Pass `bun run export:modules -- --flavor gfm` to force GFM output or `bun run export:modules -- --xref-fallback-label-style fragment-or-path` when nested unlabeled xrefs should render as full repository-style paths instead of basenames. |
-| `make pdf` | Builds the assembled architecture, manual, and onboarding PDFs at `build/site/antora-markdown-exporter/*.pdf` without rebuilding the full Antora HTML site. |
+| `make markdown` | Exports Assembler-driven module documents to `build/markdown/documentation.md`, `build/markdown/architecture.md`, `build/markdown/manual.md`, and `build/markdown/onboarding.md` through the dedicated package `markdown:build` task, which runs `scripts/export-antora-modules.ts` in explicit `--package-task-markdown` mode. The direct script still defaults to `gfm`, but the package task emits `multimarkdown`. Both modes keep the `.md` extension. The default CLI output is a human-readable summary; use `bun run export:modules -- --json` when automation needs machine-readable output. The export uses the same Assembler-driven partitioning model as the repository PDFs and the same converter path as the package API. It also materializes a review bundle under `build/markdown/review-bundle/.github/workflows/` so release and publication claims always ship with `release.yml` and `pages.yml` evidence. Pass `bun run export:modules -- --flavor gfm` to force GFM output or `bun run export:modules -- --xref-fallback-label-style fragment-or-path` when nested unlabeled xrefs should render as full repository-style paths instead of basenames. |
+| `make pdf` | Builds the Assembler-driven documentation, architecture, manual, and onboarding PDFs at `build/site/antora-markdown-exporter/*.pdf` without rebuilding the full Antora HTML site. |
 | `bun run check` | Runs Biome checks and the full coverage-enabled Vitest suite. |
 | `bun run release:check` | Runs pre-publish package integrity checks against built artifacts and `npm pack --dry-run`. |
 | `make release VERSION=vX.Y.Z` | Runs the release wizard on `develop`. A new version starts a release candidate; the current untagged version finalizes by creating and pushing the release tag. |
-| `make docs` | Builds the Antora docs site locally into `build/site` and emits downloadable module PDFs at `build/site/antora-markdown-exporter/architecture.pdf`, `build/site/antora-markdown-exporter/manual.pdf`, and `build/site/antora-markdown-exporter/onboarding.pdf`. Public publication is handled separately by the GitHub Pages workflow after successful tag-triggered release completion. |
+| `make docs` | Builds the Antora docs site locally into `build/site` and emits downloadable module PDFs at `build/site/antora-markdown-exporter/documentation.pdf`, `build/site/antora-markdown-exporter/architecture.pdf`, `build/site/antora-markdown-exporter/manual.pdf`, and `build/site/antora-markdown-exporter/onboarding.pdf`. Public publication is handled separately by the GitHub Pages workflow after successful tag-triggered release completion. |
 
 ## 2.2. Inspection Script Behavior
 
