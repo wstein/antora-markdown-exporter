@@ -1,5 +1,6 @@
 import { describe, expect, it } from "vitest";
 import {
+	collectMarkdownInspectionRagDocument,
 	collectMarkdownInspectionReport,
 	collectXrefs,
 	collectXrefTargets,
@@ -277,5 +278,84 @@ describe("inspection helpers", () => {
 			expect.objectContaining({ path: "footnotes.adoc" }),
 			expect.objectContaining({ path: "rows.adoc" }),
 		]);
+	});
+
+	it("builds a deterministic rag-oriented inspection document from normalized xrefs", () => {
+		const rag = collectMarkdownInspectionRagDocument({
+			type: "document",
+			children: [
+				{
+					type: "paragraph",
+					children: [
+						{ type: "text", value: "See " },
+						{
+							type: "xref",
+							url: "docs/install.adoc",
+							target: {
+								raw: "docs:ROOT:install.adoc",
+								component: "docs",
+								module: "ROOT",
+								family: {
+									kind: "page" as const,
+									name: "page",
+								},
+								path: "install.adoc",
+							},
+							children: [
+								{
+									type: "strong",
+									children: [{ type: "text", value: "Install" }],
+								},
+							],
+						},
+						{ type: "text", value: " and " },
+						{
+							type: "xref",
+							url: "docs/api/index.adoc#overview",
+							target: {
+								raw: "docs:api:index.adoc#overview",
+								component: "docs",
+								module: "api",
+								family: {
+									kind: "page" as const,
+									name: "page",
+								},
+								path: "index.adoc",
+								fragment: "overview",
+							},
+							children: [{ type: "text", value: "overview" }],
+						},
+					],
+				},
+			],
+		});
+
+		expect(rag).toEqual({
+			xrefCount: 2,
+			xrefTargetCount: 2,
+			entries: [
+				{
+					index: 0,
+					label: "Install",
+					destination: "docs/install.adoc",
+					rawTarget: "docs:ROOT:install.adoc",
+					path: "install.adoc",
+					family: "page",
+					component: "docs",
+					module: "ROOT",
+				},
+				{
+					index: 1,
+					label: "overview",
+					destination: "docs/api/index.adoc#overview",
+					rawTarget: "docs:api:index.adoc#overview",
+					path: "index.adoc",
+					family: "page",
+					component: "docs",
+					module: "api",
+					fragment: "overview",
+				},
+			],
+		});
 	});
 });

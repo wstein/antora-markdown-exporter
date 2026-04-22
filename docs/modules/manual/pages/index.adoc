@@ -154,14 +154,23 @@ bun run inspect:report -- tests/fixtures/xrefs/input.adoc \
   --format github-actions
 ----
 
+Emit deterministic agent-oriented JSON for retrieval and prompt assembly:
+
+[source,bash]
+----
+bun run inspect:report -- tests/fixtures/xrefs/input.adoc \
+  --format rag-json
+----
+
 Inputs:
 
 * one input file path, or `--stdin`
 * optional `--source-path` to preserve source identity in the output
-* optional `--format json|github-actions`
+* optional `--format json|github-actions|rag-json`
 Outputs:
 
 * JSON payload with `inputPath`, `sourcePath`, and a normalized inspection report
+* or a deterministic RAG-oriented JSON payload with ordered xref entries
 * or a GitHub Actions `::notice` annotation
 
 Operator rule:

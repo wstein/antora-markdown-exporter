@@ -87,6 +87,57 @@ describe("inspection report script", () => {
 		expect(report.report.xrefs).toEqual([]);
 	});
 
+	it("emits a deterministic rag-oriented JSON payload when requested", () => {
+		const inputPath = resolve(root, "tests/fixtures/xrefs/input.adoc");
+		const output = execFileSync(
+			"bun",
+			["scripts/inspection-report.ts", inputPath, "--format", "rag-json"],
+			{
+				cwd: root,
+				encoding: "utf8",
+			},
+		);
+		const payload = JSON.parse(output) as {
+			inputPath: string;
+			rag: {
+				entries: Array<{
+					destination: string;
+					index: number;
+					label: string;
+					path: string;
+					rawTarget: string;
+				}>;
+				xrefCount: number;
+				xrefTargetCount: number;
+			};
+			sourcePath: string;
+		};
+
+		expect(payload.inputPath).toBe(inputPath);
+		expect(payload.sourcePath).toBe(inputPath);
+		expect(payload.rag.xrefCount).toBe(2);
+		expect(payload.rag.xrefTargetCount).toBe(2);
+		expect(payload.rag.entries).toEqual([
+			{
+				index: 0,
+				label: "Install guide",
+				destination: "install.adoc",
+				rawTarget: "install.html",
+				path: "install.adoc",
+				family: "page",
+			},
+			{
+				index: 1,
+				label: "Overview",
+				destination: "#overview",
+				rawTarget: "#overview",
+				path: "",
+				family: "page",
+				fragment: "overview",
+			},
+		]);
+	});
+
 	it("rejects mixed stdin and file inputs with a usage message", () => {
 		const inputPath = resolve(root, "tests/fixtures/sample/input.adoc");
 		const result = spawnSync(

@@ -94,6 +94,7 @@ This keeps valid author intent separate from fallback. A preserved ` ```mermaid 
 ```ts
 import {
   collectMarkdownInspectionReport,
+  collectMarkdownInspectionRagDocument,
   collectXrefTargets,
   convertAssemblyStructureToMarkdownIR,
   extractAssemblyStructure,
@@ -115,10 +116,13 @@ for (const target of collectXrefTargets(document)) {
 }
 
 const report = collectMarkdownInspectionReport(document);
+const rag = collectMarkdownInspectionRagDocument(document);
 console.log(report.xrefs.length, report.xrefTargets.length);
+console.log(rag.entries);
 ```
 
 Inspection helpers normalize before traversal and return entries in document order, so the combined report is stable enough for CI, release validation, and snapshot-style contract tests.
+`collectMarkdownInspectionRagDocument(document)` narrows that same normalized surface into deterministic ordered entries for agentic retrieval and prompt assembly without reparsing rendered Markdown.
 
 When unlabeled xrefs need a different display form, the structured extractor and extension runtime also accept `xrefFallbackLabelStyle`. Use `fragment-or-basename` for labels like `setup`, or `fragment-or-path` for labels like `guide/setup`.
 
@@ -141,7 +145,7 @@ for (const target of report.xrefTargets) {
 }
 ```
 
-For machine-readable CI output, the repository also ships a Bun-native example script. JSON and GitHub Actions modes are alternate serializations of the same normalized inspection report.
+For machine-readable CI output, the repository also ships a Bun-native example script. JSON and GitHub Actions modes serialize the normalized inspection report directly, and `rag-json` emits the agent-oriented inspection shape.
 
 ```bash
 bun run inspect:report -- tests/fixtures/xrefs/input.adoc > inspection-report.json
@@ -160,6 +164,13 @@ When a workflow wants GitHub Actions annotations instead of JSON, use the altern
 ```bash
 bun run inspect:report -- tests/fixtures/xrefs/input.adoc \
   --format github-actions
+```
+
+For deterministic agent-oriented JSON instead of the full validation report:
+
+```bash
+bun run inspect:report -- tests/fixtures/xrefs/input.adoc \
+  --format rag-json
 ```
 
 Current GitHub Actions mode emits one summary annotation with normalized report counts.

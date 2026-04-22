@@ -127,12 +127,20 @@ bun run inspect:report -- tests/fixtures/xrefs/input.adoc \
   --format github-actions
 ```
 
+Emit deterministic agent-oriented JSON for retrieval and prompt assembly:
+
+```bash
+bun run inspect:report -- tests/fixtures/xrefs/input.adoc \
+  --format rag-json
+```
+
 Inputs:
 
 - one input file path, or `--stdin`
 - optional `--source-path` to preserve source identity in the output
-- optional `--format json|github-actions` Outputs:
+- optional `--format json|github-actions|rag-json` Outputs:
 - JSON payload with `inputPath`, `sourcePath`, and a normalized inspection report
+- or a deterministic RAG-oriented JSON payload with ordered xref entries
 - or a GitHub Actions `::notice` annotation
 
 Operator rule:
@@ -260,6 +268,12 @@ Where to look:
 
 - `tests/integration/fixture-golden.test.ts`
 - `tests/fixtures/**`
+
+Operator direction to keep in mind:
+
+- widen provenance-locked reference coverage deliberately when the published support matrix grows
+- keep MultiMarkdown-specific compatibility pressure in curated reference fixtures instead of relying only on local synthetic render tests
+- move export-policy controls toward Antora-native playbook or Assembler configuration rather than accumulating wrapper-only script flags
 
 Troubleshooting guidance:
 

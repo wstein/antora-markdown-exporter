@@ -266,6 +266,7 @@ These docs have different jobs:
 - the manual is task-first operator guidance
 - architecture is the canonical home for invariants, proof surfaces, and formal rationale
 - notes are canonical inputs when a design rule needs durable provenance
+- future work on Antora-native export controls, MultiMarkdown provenance coverage, and agent-ready inspection surfaces should land in notes first, then in code and tests
 
 When docs disagree, prefer code for what is implemented today and architecture for the formal contract.
 

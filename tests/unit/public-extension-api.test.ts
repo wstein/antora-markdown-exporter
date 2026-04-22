@@ -1,5 +1,6 @@
 import { describe, expect, it } from "vitest";
 import {
+	collectMarkdownInspectionRagDocument,
 	createMarkdownConverter,
 	describePackage,
 	PACKAGE_NAME,
@@ -17,5 +18,9 @@ describe("public extension API", () => {
 	it("exports the real Antora extension entrypoints", () => {
 		expect(typeof createMarkdownConverter).toBe("function");
 		expect(typeof register).toBe("function");
+	});
+
+	it("exports the agent-ready inspection helper from the root entrypoint", () => {
+		expect(typeof collectMarkdownInspectionRagDocument).toBe("function");
 	});
 });

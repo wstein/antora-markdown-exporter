@@ -65,6 +65,7 @@ export {
 	resolveMarkdownFlavor,
 } from "./markdown/flavor.js";
 export {
+	collectMarkdownInspectionRagDocument,
 	collectMarkdownInspectionReport,
 	collectXrefs,
 	collectXrefTargets,

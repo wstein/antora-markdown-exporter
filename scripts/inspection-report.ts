@@ -1,12 +1,13 @@
 import { readFile } from "node:fs/promises";
 import { resolve } from "node:path";
 import {
+	collectMarkdownInspectionRagDocument,
 	collectMarkdownInspectionReport,
 	convertAssemblyStructureToMarkdownIR,
 	extractAssemblyStructure,
 } from "../src/index.js";
 
-type InspectionCliFormat = "github-actions" | "json";
+type InspectionCliFormat = "github-actions" | "json" | "rag-json";
 type InspectionCliOptions = {
 	format: InspectionCliFormat;
 	inputPath: string;
@@ -17,6 +18,12 @@ type InspectionCliOptions = {
 type InspectionReportPayload = {
 	inputPath: string;
 	report: ReturnType<typeof collectMarkdownInspectionReport>;
+	sourcePath: string;
+};
+
+type InspectionRagPayload = {
+	inputPath: string;
+	rag: ReturnType<typeof collectMarkdownInspectionRagDocument>;
 	sourcePath: string;
 };
 
@@ -34,7 +41,11 @@ function parseArguments(argv: string[]): InspectionCliOptions {
 
 		if (argument === "--format") {
 			const value = argv[index + 1];
-			if (value !== "json" && value !== "github-actions") {
+			if (
+				value !== "json" &&
+				value !== "github-actions" &&
+				value !== "rag-json"
+			) {
 				throw new Error("Missing or invalid value for --format");
 			}
 
@@ -90,8 +101,8 @@ function parseArguments(argv: string[]): InspectionCliOptions {
 
 function usage(): string {
 	return [
-		"Usage: bun scripts/inspection-report.ts <input.adoc> [--source-path <path>] [--format <json|github-actions>]",
-		"   or: bun scripts/inspection-report.ts --stdin [--source-path <path>] [--format <json|github-actions>]",
+		"Usage: bun scripts/inspection-report.ts <input.adoc> [--source-path <path>] [--format <json|github-actions|rag-json>]",
+		"   or: bun scripts/inspection-report.ts --stdin [--source-path <path>] [--format <json|github-actions|rag-json>]",
 		"",
 		"Emit a machine-readable JSON inspection report for one AsciiDoc source file.",
 	].join("\n");
@@ -134,6 +145,21 @@ function buildInspectionReportPayload(
 	};
 }
 
+function buildInspectionRagPayload(
+	options: InspectionCliOptions,
+	source: string,
+): InspectionRagPayload {
+	const structured = extractAssemblyStructure(source, {
+		sourcePath: options.sourcePath,
+	});
+	const document = convertAssemblyStructureToMarkdownIR(structured);
+	return {
+		inputPath: options.inputPath,
+		sourcePath: options.sourcePath,
+		rag: collectMarkdownInspectionRagDocument(document),
+	};
+}
+
 function emitGitHubActionsAnnotations(payload: InspectionReportPayload): void {
 	const { report, sourcePath } = payload;
 
@@ -149,14 +175,23 @@ async function main(): Promise<void> {
 	const source = options.readFromStdin
 		? await readStdin()
 		: await readFile(options.inputPath, "utf8");
-	const payload = buildInspectionReportPayload(options, source);
 
 	if (options.format === "github-actions") {
+		const payload = buildInspectionReportPayload(options, source);
 		emitGitHubActionsAnnotations(payload);
 		return;
 	}
 
-	console.log(JSON.stringify(payload, null, 2));
+	if (options.format === "rag-json") {
+		console.log(
+			JSON.stringify(buildInspectionRagPayload(options, source), null, 2),
+		);
+		return;
+	}
+
+	console.log(
+		JSON.stringify(buildInspectionReportPayload(options, source), null, 2),
+	);
 }
 
 try {

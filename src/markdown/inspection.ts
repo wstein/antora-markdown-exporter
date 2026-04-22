@@ -12,6 +12,56 @@ export type MarkdownInspectionReport = {
 	xrefs: MarkdownXref[];
 };
 
+export type MarkdownInspectionRagEntry = {
+	component?: string;
+	destination: string;
+	family: string;
+	fragment?: string;
+	index: number;
+	label: string;
+	module?: string;
+	path: string;
+	rawTarget: string;
+	version?: string;
+};
+
+export type MarkdownInspectionRagDocument = {
+	entries: MarkdownInspectionRagEntry[];
+	xrefCount: number;
+	xrefTargetCount: number;
+};
+
+function joinInlineText(children: MarkdownInline[]): string {
+	return children
+		.map((child) => {
+			switch (child.type) {
+				case "text":
+				case "code":
+				case "htmlInline":
+					return child.value;
+				case "emphasis":
+				case "strong":
+				case "link":
+				case "xref":
+					return joinInlineText(child.children);
+				case "image":
+					return joinInlineText(child.alt);
+				case "hardBreak":
+				case "softBreak":
+					return " ";
+				case "footnoteReference":
+					return child.label ?? child.identifier;
+				case "citation":
+					return child.label ?? child.identifier;
+				default:
+					return "";
+			}
+		})
+		.join("")
+		.replace(/\s+/gu, " ")
+		.trim();
+}
+
 function collectXrefsFromInlineChildren(
 	children: MarkdownInline[],
 ): MarkdownXref[] {
@@ -100,4 +150,26 @@ export function collectMarkdownInspectionReport(
 	document: MarkdownDocument,
 ): MarkdownInspectionReport {
 	return collectNormalizedInspectionReport(document);
+}
+
+export function collectMarkdownInspectionRagDocument(
+	document: MarkdownDocument,
+): MarkdownInspectionRagDocument {
+	const report = collectNormalizedInspectionReport(document);
+	return {
+		xrefCount: report.xrefs.length,
+		xrefTargetCount: report.xrefTargets.length,
+		entries: report.xrefs.map((xref, index) => ({
+			index,
+			label: joinInlineText(xref.children),
+			destination: xref.url,
+			rawTarget: xref.target.raw,
+			path: xref.target.path,
+			family: xref.target.family?.kind ?? "page",
+			component: xref.target.component,
+			module: xref.target.module,
+			version: xref.target.version,
+			fragment: xref.target.fragment,
+		})),
+	};
 }
