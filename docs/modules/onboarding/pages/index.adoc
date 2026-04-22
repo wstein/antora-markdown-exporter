@@ -105,7 +105,7 @@ The repository currently ships explicit `gfm`, `commonmark`, `gitlab`, `multimar
 Operator default policy is split intentionally:
 
 * `bun run export:modules` defaults to `gfm`
-* `make markdown` sets `ANTORA_MARKDOWN_EXPORT_DEFAULT_FLAVOR=multimarkdown`, which the script uses unless `ARGS` already supplies `--flavor`
+* `make markdown` runs the dedicated package `markdown:build` task, which invokes the exporter in explicit `--package-task-markdown` mode
 * both keep `.md` as the output extension
 
 That means:

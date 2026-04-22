@@ -51,36 +51,22 @@ describe("export antora modules script", () => {
 		expect(options.flavor).toBe("gfm");
 	});
 
-	it("accepts a package-task default flavor from the environment", () => {
-		const previous = process.env.ANTORA_MARKDOWN_EXPORT_DEFAULT_FLAVOR;
-		process.env.ANTORA_MARKDOWN_EXPORT_DEFAULT_FLAVOR = "multimarkdown";
+	it("uses multimarkdown for the dedicated package-task mode", () => {
+		const options = parseArguments(["--package-task-markdown"]);
 
-		try {
-			const options = parseArguments(["--output-root", "tmp/out"]);
-			expect(options.flavor).toBe("multimarkdown");
-		} finally {
-			if (previous === undefined) {
-				delete process.env.ANTORA_MARKDOWN_EXPORT_DEFAULT_FLAVOR;
-			} else {
-				process.env.ANTORA_MARKDOWN_EXPORT_DEFAULT_FLAVOR = previous;
-			}
-		}
+		expect(options.flavor).toBe("multimarkdown");
+		expect(options.packageTaskMarkdown).toBe(true);
 	});
 
-	it("lets explicit flavor arguments override the package-task default", () => {
-		const previous = process.env.ANTORA_MARKDOWN_EXPORT_DEFAULT_FLAVOR;
-		process.env.ANTORA_MARKDOWN_EXPORT_DEFAULT_FLAVOR = "multimarkdown";
+	it("lets explicit flavor arguments override the package-task markdown mode", () => {
+		const options = parseArguments([
+			"--package-task-markdown",
+			"--flavor",
+			"gfm",
+		]);
 
-		try {
-			const options = parseArguments(["--flavor", "gfm"]);
-			expect(options.flavor).toBe("gfm");
-		} finally {
-			if (previous === undefined) {
-				delete process.env.ANTORA_MARKDOWN_EXPORT_DEFAULT_FLAVOR;
-			} else {
-				process.env.ANTORA_MARKDOWN_EXPORT_DEFAULT_FLAVOR = previous;
-			}
-		}
+		expect(options.flavor).toBe("gfm");
+		expect(options.packageTaskMarkdown).toBe(true);
 	});
 
 	it("exports one assembled markdown document per documentation module", async () => {
@@ -91,6 +77,7 @@ describe("export antora modules script", () => {
 			await exportAntoraModulesToMarkdown({
 				flavor: "gfm",
 				outputRoot,
+				packageTaskMarkdown: false,
 				playbookPath: resolve("antora-playbook.yml"),
 				xrefFallbackLabelStyle: "fragment-or-basename",
 			});
@@ -219,6 +206,7 @@ describe("export antora modules script", () => {
 			await exportAntoraModulesToMarkdown({
 				flavor: "gfm",
 				outputRoot,
+				packageTaskMarkdown: false,
 				playbookPath: resolve("antora-playbook.yml"),
 				xrefFallbackLabelStyle: "fragment-or-path",
 			});

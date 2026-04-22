@@ -102,6 +102,7 @@ describeIfPdfTooling("module export structural parity", () => {
 		const { exportedFiles } = await exportAntoraModulesToMarkdown({
 			flavor: "gfm",
 			outputRoot,
+			packageTaskMarkdown: false,
 			playbookPath: resolve(root, "antora-playbook.yml"),
 		});
 

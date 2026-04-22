@@ -15,6 +15,7 @@ export type ExportAntoraModulesOptions = {
 	flavor: MarkdownFlavorName;
 	format: "human" | "json";
 	outputRoot: string;
+	packageTaskMarkdown: boolean;
 	playbookPath: string;
 	xrefFallbackLabelStyle: XrefFallbackLabelStyle;
 };
@@ -39,35 +40,20 @@ const markdownFlavors = new Set<MarkdownFlavorName>([
 	"strict",
 ]);
 
-const packageTaskDefaultFlavorEnvVar = "ANTORA_MARKDOWN_EXPORT_DEFAULT_FLAVOR";
-
-function resolveDefaultFlavor(): MarkdownFlavorName {
-	const configured = process.env[packageTaskDefaultFlavorEnvVar];
-	if (
-		configured === "gfm" ||
-		configured === "commonmark" ||
-		configured === "gitlab" ||
-		configured === "multimarkdown" ||
-		configured === "strict"
-	) {
-		return configured;
-	}
-
-	return "gfm";
-}
-
 function usage(): string {
 	return [
-		"Usage: bun scripts/export-antora-modules.ts [--playbook <file>] [--output-root <dir>] [--flavor <gfm|commonmark|gitlab|multimarkdown|strict>] [--xref-fallback-label-style <fragment-or-basename|fragment-or-path>] [--json]",
+		"Usage: bun scripts/export-antora-modules.ts [--playbook <file>] [--output-root <dir>] [--flavor <gfm|commonmark|gitlab|multimarkdown|strict>] [--xref-fallback-label-style <fragment-or-basename|fragment-or-path>] [--package-task-markdown] [--json]",
 		"",
 		"Export assembled documentation modules to Markdown using the repository's Antora Markdown converter.",
 	].join("\n");
 }
 
 export function parseArguments(argv: string[]): ExportAntoraModulesOptions {
-	let flavor: MarkdownFlavorName = resolveDefaultFlavor();
+	let flavor: MarkdownFlavorName = "gfm";
+	let flavorExplicitlySet = false;
 	let format: "human" | "json" = "human";
 	let outputRoot = resolve("build/markdown");
+	let packageTaskMarkdown = false;
 	let playbookPath = resolve("antora-playbook.yml");
 	let xrefFallbackLabelStyle: XrefFallbackLabelStyle = "fragment-or-basename";
 
@@ -108,6 +94,7 @@ export function parseArguments(argv: string[]): ExportAntoraModulesOptions {
 			}
 
 			flavor = value;
+			flavorExplicitlySet = true;
 			index += 1;
 			continue;
 		}
@@ -130,13 +117,23 @@ export function parseArguments(argv: string[]): ExportAntoraModulesOptions {
 			continue;
 		}
 
+		if (argument === "--package-task-markdown") {
+			packageTaskMarkdown = true;
+			continue;
+		}
+
 		throw new Error(`Unknown option: ${argument}`);
+	}
+
+	if (packageTaskMarkdown && !flavorExplicitlySet) {
+		flavor = "multimarkdown";
 	}
 
 	return {
 		flavor,
 		format,
 		outputRoot,
+		packageTaskMarkdown,
 		playbookPath,
 		xrefFallbackLabelStyle,
 	};

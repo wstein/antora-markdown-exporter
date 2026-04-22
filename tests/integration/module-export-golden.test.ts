@@ -15,6 +15,7 @@ describe("module export golden tests", () => {
 			await exportAntoraModulesToMarkdown({
 				flavor: "gfm",
 				outputRoot,
+				packageTaskMarkdown: false,
 				playbookPath: resolve("antora-playbook.yml"),
 			});
 

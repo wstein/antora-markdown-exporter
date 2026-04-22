@@ -115,6 +115,9 @@ describe("repository contract", () => {
 		expect(packageJson.scripts["export:modules"]).toBe(
 			"bun scripts/export-antora-modules.ts",
 		);
+		expect(packageJson.scripts["markdown:build"]).toBe(
+			"bun scripts/export-antora-modules.ts --package-task-markdown",
+		);
 		expect(packageJson.scripts["inspect:report"]).toBe(
 			"bun scripts/inspection-report.ts",
 		);
