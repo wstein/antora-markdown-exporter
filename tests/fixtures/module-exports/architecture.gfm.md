@@ -196,7 +196,7 @@ These surfaces live in `src/markdown/inspection.ts`, `scripts/inspection-report.
 5. Xref targets remain structured until lowering in `src/markdown/xref-resolution.ts`.
 6. A flavor renderer serializes the normalized document according to `src/markdown/flavor.ts` and `src/markdown/fallback.ts`.
 
-The notable aspect is that the shipped runtime now spans both the Assembler-backed extension entrypoint and the repository-owned structured conversion boundary. The remaining work is to keep coverage, docs, and CLI-facing policy controls aligned with that structured runtime rather than letting legacy wording creep back in.
+The shipped runtime spans both the Assembler-backed extension entrypoint and the repository-owned structured conversion boundary. Coverage, docs, and CLI-facing policy controls must stay aligned with that structured runtime.
 
 ## 6.2. Collect Inspection Data For CI Or Release Validation
 
@@ -205,7 +205,7 @@ The notable aspect is that the shipped runtime now spans both the Assembler-back
 3. The inspection layer walks nested blocks, callout lists, footnote definitions, tables, and inline containers to gather xrefs and xref targets in normalized document order.
 4. `scripts/inspection-report.ts` serializes that report either as JSON or GitHub Actions annotations.
 
-The notable aspect is that validation uses one maintained normalized inspection surface instead of separate ad-hoc traversals in CI scripts.
+Validation uses one maintained normalized inspection surface instead of separate ad-hoc traversals in CI scripts.
 
 # Chapter 7. Deployment View
 

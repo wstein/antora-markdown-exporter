@@ -339,7 +339,13 @@ function getRenderableBlocks(
 		return document.children;
 	}
 
-	const metadataTitle = document.metadata?.attributes?.doctitle?.trim();
+	const titleHeading = document.children.find(
+		(block): block is Extract<MarkdownBlock, { type: "heading" }> =>
+			block.type === "heading" && block.depth === 1,
+	);
+	const metadataTitle =
+		document.metadata?.attributes?.doctitle?.trim() ??
+		titleHeading?.children.map((child) => inlineText([child])).join("");
 	if (metadataTitle === undefined || metadataTitle.length === 0) {
 		return document.children;
 	}

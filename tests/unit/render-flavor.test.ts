@@ -205,6 +205,33 @@ describe("flavor-aware markdown rendering", () => {
 		expect(rendered).toContain("[^note-1]: Footnote body.");
 	});
 
+	it("falls back to heading-derived metadata and suppresses duplicated title headings in multimarkdown", () => {
+		const rendered = renderMultiMarkdown({
+			type: "document",
+			metadata: {
+				attributes: {
+					author: "Doc Writer",
+				},
+			},
+			children: [
+				{
+					type: "heading" as const,
+					depth: 1,
+					children: [{ type: "text" as const, value: "Runtime Guide" }],
+				},
+				{
+					type: "paragraph" as const,
+					children: [{ type: "text" as const, value: "Body text." }],
+				},
+			],
+		});
+
+		expect(rendered).toContain("Title: Runtime Guide");
+		expect(rendered).toContain("Author: Doc Writer");
+		expect(rendered).not.toContain("# Runtime Guide");
+		expect(rendered).toContain("Body text.");
+	});
+
 	it("uses strict fallback policy for raw html and soft breaks", () => {
 		const rendered = renderStrict(richDocument);
 
@@ -231,6 +258,27 @@ describe("flavor-aware markdown rendering", () => {
 		expect(rendered).toBe(
 			"[Unsupported: raw HTML inline is not allowed in this flavor]\n",
 		);
+	});
+
+	it("falls back for citations and footnote references in flavors without direct support", () => {
+		const rendered = renderCommonMark({
+			type: "document",
+			children: [
+				{
+					type: "paragraph" as const,
+					children: [
+						{ type: "footnoteReference" as const, identifier: "note-1" },
+						{ type: "text" as const, value: " " },
+						{
+							type: "citation" as const,
+							identifier: "Doe2026",
+						},
+					],
+				},
+			],
+		});
+
+		expect(rendered).toBe("[note-1] [cite:Doe2026]\n");
 	});
 
 	it("falls back for anchor and page alias metadata in strict mode", () => {
