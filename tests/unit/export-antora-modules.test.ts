@@ -43,17 +43,23 @@ describe("export antora modules script", () => {
 		const outputRoot = await mkdtemp(
 			resolve(tmpdir(), "antora-markdown-export-"),
 		);
-		const exportedFiles = await exportAntoraModulesToMarkdown({
-			flavor: "gfm",
-			outputRoot,
-			playbookPath: resolve("antora-playbook.yml"),
-			xrefFallbackLabelStyle: "fragment-or-basename",
-		});
+		const { exportedFiles, reviewBundleFiles, reviewBundleRoot } =
+			await exportAntoraModulesToMarkdown({
+				flavor: "gfm",
+				outputRoot,
+				playbookPath: resolve("antora-playbook.yml"),
+				xrefFallbackLabelStyle: "fragment-or-basename",
+			});
 
 		expect(exportedFiles.map((entry) => entry.relativeOutputPath)).toEqual([
 			"architecture.md",
 			"manual.md",
 			"onboarding.md",
+		]);
+		expect(reviewBundleRoot).toBe(resolve(outputRoot, "review-bundle"));
+		expect(reviewBundleFiles.map((entry) => entry.relativeOutputPath)).toEqual([
+			".github/workflows/release.yml",
+			".github/workflows/pages.yml",
 		]);
 
 		const architectureMarkdown = await readFile(
@@ -111,7 +117,10 @@ describe("export antora modules script", () => {
 		expect(output).toContain(
 			"Exported 3 documentation modules as gfm Markdown.",
 		);
+		expect(output).toContain("Review bundle:");
 		expect(output).toContain("Xref fallback labels: fragment-or-basename");
+		expect(output).toContain("- review bundle: .github/workflows/release.yml");
+		expect(output).toContain("- review bundle: .github/workflows/pages.yml");
 		expect(output).toContain("- architecture: architecture.md");
 		expect(output).toContain("- manual: manual.md");
 		expect(output).toContain("- onboarding: onboarding.md");
@@ -136,11 +145,20 @@ describe("export antora modules script", () => {
 			count: number;
 			flavor: string;
 			files: { moduleName: string; outputPath: string }[];
+			reviewBundleFiles: { outputPath: string }[];
+			reviewBundleRoot: string;
 			xrefFallbackLabelStyle: string;
 		};
 
 		expect(result.count).toBe(3);
 		expect(result.flavor).toBe("gfm");
+		expect(result.reviewBundleRoot).toBe(
+			resolve("build/markdown/review-bundle"),
+		);
+		expect(result.reviewBundleFiles).toEqual([
+			{ outputPath: ".github/workflows/release.yml" },
+			{ outputPath: ".github/workflows/pages.yml" },
+		]);
 		expect(result.xrefFallbackLabelStyle).toBe("fragment-or-basename");
 		expect(result.files).toEqual([
 			{ moduleName: "architecture", outputPath: "architecture.md" },
@@ -153,17 +171,19 @@ describe("export antora modules script", () => {
 		const outputRoot = await mkdtemp(
 			resolve(tmpdir(), "antora-markdown-export-"),
 		);
-		const exportedFiles = await exportAntoraModulesToMarkdown({
-			flavor: "gfm",
-			outputRoot,
-			playbookPath: resolve("antora-playbook.yml"),
-			xrefFallbackLabelStyle: "fragment-or-path",
-		});
+		const { exportedFiles, reviewBundleFiles } =
+			await exportAntoraModulesToMarkdown({
+				flavor: "gfm",
+				outputRoot,
+				playbookPath: resolve("antora-playbook.yml"),
+				xrefFallbackLabelStyle: "fragment-or-path",
+			});
 
 		expect(exportedFiles.map((entry) => entry.relativeOutputPath)).toEqual([
 			"architecture.md",
 			"manual.md",
 			"onboarding.md",
 		]);
+		expect(reviewBundleFiles).toHaveLength(2);
 	});
 });

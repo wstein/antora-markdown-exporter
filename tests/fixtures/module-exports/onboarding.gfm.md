@@ -7,12 +7,13 @@
   - [2.1. Start With The Real Boundary, Not The Marketing Boundary](#21-start-with-the-real-boundary-not-the-marketing-boundary)
   - [2.2. Think In Pipeline Stages](#22-think-in-pipeline-stages)
   - [2.3. The Markdown IR Is The Contract](#23-the-markdown-ir-is-the-contract)
-  - [2.4. Renderers Adapt Syntax, They Do Not Redefine Meaning](#24-renderers-adapt-syntax-they-do-not-redefine-meaning)
-  - [2.5. Fallback Is A Policy Layer](#25-fallback-is-a-policy-layer)
-  - [2.6. Transparent Extensions Are Not Fallback](#26-transparent-extensions-are-not-fallback)
-  - [2.7. Include Metadata Is Private, Include Semantics Are Public](#27-include-metadata-is-private-include-semantics-are-public)
-  - [2.8. Xref Routing Is Lowering, Not Rendering](#28-xref-routing-is-lowering-not-rendering)
-  - [2.9. One Toolchain Path Is Primary](#29-one-toolchain-path-is-primary)
+  - [2.4. Changed Responsibilities After Structured Extraction](#24-changed-responsibilities-after-structured-extraction)
+  - [2.5. Renderers Adapt Syntax, They Do Not Redefine Meaning](#25-renderers-adapt-syntax-they-do-not-redefine-meaning)
+  - [2.6. Fallback Is A Policy Layer](#26-fallback-is-a-policy-layer)
+  - [2.7. Transparent Extensions Are Not Fallback](#27-transparent-extensions-are-not-fallback)
+  - [2.8. Includes Are Mostly Assembler-Owned](#28-includes-are-mostly-assembler-owned)
+  - [2.9. Xref Routing Is Lowering, Not Rendering](#29-xref-routing-is-lowering-not-rendering)
+  - [2.10. One Toolchain Path Is Primary](#210-one-toolchain-path-is-primary)
 - [Chapter 3. Core Workflows](#chapter-3-core-workflows)
   - [3.1. First-Day Development Loop](#31-first-day-development-loop)
   - [3.2. Release Flow Uses develop, main, And Semver Tags](#32-release-flow-uses-develop-main-and-semver-tags)
@@ -92,7 +93,7 @@ If you are touching behavior after conversion starts, your change should usually
 
 The note `Markdown IR is the canonical render boundary` is the main architectural rule for contributors.
 
-The repository does not treat markdown as a string-formatting exercise. It converts content into a semantic intermediate representation first, then normalizes it, then renders it. That IR carries meaning such as headings, admonitions, xrefs, include directives, anchors, aliases, tables, and explicit unsupported nodes.
+The repository does not treat markdown as a string-formatting exercise. It converts structured assembly content into a semantic intermediate representation first, then normalizes it, then renders it. That IR carries meaning such as headings, admonitions, xrefs, anchors, aliases, tables, and explicit unsupported nodes.
 
 Contributor rule of thumb:
 
@@ -102,7 +103,26 @@ Contributor rule of thumb:
 
 This separation is what keeps regressions explainable and testable.
 
-## 2.4. Renderers Adapt Syntax, They Do Not Redefine Meaning
+## 2.4. Changed Responsibilities After Structured Extraction
+
+The biggest contributor trap right now is assuming old exporter responsibilities still exist after the structured rewrite. They do not.
+
+Current responsibility split:
+
+- Antora Assembler resolves include expansion, most low-level inline interpretation, and block formation before repository lowering starts
+- `src/adapter/asciidoctor-structure.ts` and its helper modules convert assembled content into the repository-owned adapter contract
+- `src/exporter/structured-to-ir.ts` lowers that contract into Markdown IR
+- `src/markdown/inspection.ts` inspects normalized Markdown semantics such as xrefs rather than reviving include-directive transport
+
+Practical consequences:
+
+- includes are now primarily assembler-owned semantics, not a live exporter-side directive subsystem
+- inspection is xref- and semantic-node-focused, not a hidden parser or renderer pass
+- exporter scope is structural mapping and lowering, not low-level AsciiDoc reparsing
+
+When in doubt, check the operator manual’s support matrix first. It is the clearest statement of what the repository currently supports, what is partial, and what remains intentionally unsupported.
+
+## 2.5. Renderers Adapt Syntax, They Do Not Redefine Meaning
 
 The note `Flavor renderers are syntax adapters over one semantic layer` explains how to think about flavors.
 
@@ -116,7 +136,7 @@ That means:
 
 When adding or changing a flavor, keep the semantic layer shared and the syntax surface explicit.
 
-## 2.5. Fallback Is A Policy Layer
+## 2.6. Fallback Is A Policy Layer
 
 The note `Fallback selection is centralized across markdown flavors` defines a contributor boundary that prevents subtle regressions.
 
@@ -130,7 +150,7 @@ This matters because fallback behavior is part of the contract:
 
 If you are about to add a one-off renderer branch for unsupported behavior, stop and check whether the change belongs in the fallback layer instead.
 
-## 2.6. Transparent Extensions Are Not Fallback
+## 2.7. Transparent Extensions Are Not Fallback
 
 Several notes reinforce the same point:
 
@@ -146,20 +166,19 @@ For contributors, this distinction is critical:
 - fallback is for controlled degradation, not for every unfamiliar feature
 - strictness should lead to explicit extension points, not silent lossy rewrites
 
-## 2.7. Include Metadata Is Private, Include Semantics Are Public
+## 2.8. Includes Are Mostly Assembler-Owned
 
-The note `Preserved include metadata uses private transport details` tells contributors what to preserve during refactors.
+The note `Preserved include metadata uses private transport details` still matters, but only for narrow inspection or evidence scenarios.
 
-The converter currently moves include metadata through an HTML-comment transport until it is rehydrated as semantic IR nodes. The transport format itself is private. The public contract is the semantics: include directives remain inspectable, diagnostics survive, and provenance remains available when the exporter is asked to preserve or report on include behavior that the assembler would otherwise have already resolved.
+The default structured runtime no longer treats includes as a first-class exporter subsystem. Antora Assembler normally resolves include content before extraction. Any preserved include metadata is optional evidence transport, not the main converter path.
 
 When touching includes:
 
-- preserve diagnostics
-- preserve provenance
-- preserve inspectability
-- do not leak the raw marker format into unrelated parser or renderer code
+- do not reintroduce exporter-side include parsing
+- keep preserved metadata narrow and explicitly private
+- document any diagnostic or provenance retention in the support matrix and evidence ledger
 
-## 2.8. Xref Routing Is Lowering, Not Rendering
+## 2.9. Xref Routing Is Lowering, Not Rendering
 
 The note `Xref target resolution is a separate lowering phase` defines another important boundary.
 
@@ -173,7 +192,7 @@ If you need to change xref behavior, start by deciding whether you are changing:
 
 Mixing those layers makes xref regressions much harder to reason about.
 
-## 2.9. One Toolchain Path Is Primary
+## 2.10. One Toolchain Path Is Primary
 
 Two notes set the contributor workflow expectation:
 

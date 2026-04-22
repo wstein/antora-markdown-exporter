@@ -64,7 +64,7 @@ If you are touching behavior after conversion starts, your change should usually
 
 The note `Markdown IR is the canonical render boundary` is the main architectural rule for contributors.
 
-The repository does not treat markdown as a string-formatting exercise. It converts content into a semantic intermediate representation first, then normalizes it, then renders it. That IR carries meaning such as headings, admonitions, xrefs, include directives, anchors, aliases, tables, and explicit unsupported nodes.
+The repository does not treat markdown as a string-formatting exercise. It converts structured assembly content into a semantic intermediate representation first, then normalizes it, then renders it. That IR carries meaning such as headings, admonitions, xrefs, anchors, aliases, tables, and explicit unsupported nodes.
 
 Contributor rule of thumb:
 
@@ -73,6 +73,25 @@ Contributor rule of thumb:
 * if a feature cannot be represented semantically yet, do not hide that fact behind loose renderer behavior
 
 This separation is what keeps regressions explainable and testable.
+
+=== Changed Responsibilities After Structured Extraction
+
+The biggest contributor trap right now is assuming old exporter responsibilities still exist after the structured rewrite. They do not.
+
+Current responsibility split:
+
+* Antora Assembler resolves include expansion, most low-level inline interpretation, and block formation before repository lowering starts
+* `src/adapter/asciidoctor-structure.ts` and its helper modules convert assembled content into the repository-owned adapter contract
+* `src/exporter/structured-to-ir.ts` lowers that contract into Markdown IR
+* `src/markdown/inspection.ts` inspects normalized Markdown semantics such as xrefs rather than reviving include-directive transport
+
+Practical consequences:
+
+* includes are now primarily assembler-owned semantics, not a live exporter-side directive subsystem
+* inspection is xref- and semantic-node-focused, not a hidden parser or renderer pass
+* exporter scope is structural mapping and lowering, not low-level AsciiDoc reparsing
+
+When in doubt, check the operator manual’s support matrix first. It is the clearest statement of what the repository currently supports, what is partial, and what remains intentionally unsupported.
 
 === Renderers Adapt Syntax, They Do Not Redefine Meaning
 
@@ -118,18 +137,17 @@ For contributors, this distinction is critical:
 * fallback is for controlled degradation, not for every unfamiliar feature
 * strictness should lead to explicit extension points, not silent lossy rewrites
 
-=== Include Metadata Is Private, Include Semantics Are Public
+=== Includes Are Mostly Assembler-Owned
 
-The note `Preserved include metadata uses private transport details` tells contributors what to preserve during refactors.
+The note `Preserved include metadata uses private transport details` still matters, but only for narrow inspection or evidence scenarios.
 
-The converter currently moves include metadata through an HTML-comment transport until it is rehydrated as semantic IR nodes. The transport format itself is private. The public contract is the semantics: include directives remain inspectable, diagnostics survive, and provenance remains available when the exporter is asked to preserve or report on include behavior that the assembler would otherwise have already resolved.
+The default structured runtime no longer treats includes as a first-class exporter subsystem. Antora Assembler normally resolves include content before extraction. Any preserved include metadata is optional evidence transport, not the main converter path.
 
 When touching includes:
 
-* preserve diagnostics
-* preserve provenance
-* preserve inspectability
-* do not leak the raw marker format into unrelated parser or renderer code
+* do not reintroduce exporter-side include parsing
+* keep preserved metadata narrow and explicitly private
+* document any diagnostic or provenance retention in the support matrix and evidence ledger
 
 === Xref Routing Is Lowering, Not Rendering
 

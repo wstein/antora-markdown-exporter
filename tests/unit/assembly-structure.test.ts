@@ -1,6 +1,7 @@
 import { describe, expect, it } from "vitest";
 import {
 	type AssemblyDocument,
+	assemblyStructureInvariants,
 	defineAssemblyDocument,
 } from "../../src/adapter/assembly-structure.js";
 
@@ -183,5 +184,37 @@ describe("assembly structure contract", () => {
 			type: "unsupported",
 			reason: expect.stringContaining("index generation"),
 		});
+	});
+
+	it("publishes explicit invariants for loss, provenance, and unsupported behavior", () => {
+		expect(
+			assemblyStructureInvariants.map((invariant) => invariant.id),
+		).toEqual([
+			"repository-owned-boundary",
+			"structured-loss",
+			"source-location",
+			"unsupported-nodes",
+			"inline-fallback",
+		]);
+		const structuredLoss = assemblyStructureInvariants.find(
+			(invariant) => invariant.id === "structured-loss",
+		);
+		const sourceLocation = assemblyStructureInvariants.find(
+			(invariant) => invariant.id === "source-location",
+		);
+		const unsupportedNodes = assemblyStructureInvariants.find(
+			(invariant) => invariant.id === "unsupported-nodes",
+		);
+
+		expect(structuredLoss?.requirements.join(" ")).toContain("unsupported");
+		expect(structuredLoss?.requirements.join(" ")).toContain("fallback");
+		expect(sourceLocation?.summary).toContain("best-effort");
+		expect(sourceLocation?.requirements.join(" ")).toContain(
+			"assembled source position",
+		);
+		expect(unsupportedNodes?.requirements.join(" ")).toContain("visible");
+		expect(unsupportedNodes?.requirements.join(" ")).toContain(
+			"semantic support",
+		);
 	});
 });

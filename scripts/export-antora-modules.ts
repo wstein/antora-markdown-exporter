@@ -1,4 +1,4 @@
-import { mkdir, rm, stat } from "node:fs/promises";
+import { copyFile, mkdir, rm, stat } from "node:fs/promises";
 import { dirname, resolve } from "node:path";
 import { pathToFileURL } from "node:url";
 import {
@@ -23,6 +23,12 @@ export type ExportedMarkdownFile = {
 	moduleName: string;
 	outputPath: string;
 	relativeOutputPath: string;
+};
+
+export type ReviewBundleFile = {
+	outputPath: string;
+	relativeOutputPath: string;
+	sourcePath: string;
 };
 
 const markdownFlavors = new Set<MarkdownFlavorName>([
@@ -119,7 +125,11 @@ export function parseArguments(argv: string[]): ExportAntoraModulesOptions {
 
 export async function exportAntoraModulesToMarkdown(
 	options: ExportAntoraModulesOptions,
-): Promise<ExportedMarkdownFile[]> {
+): Promise<{
+	exportedFiles: ExportedMarkdownFile[];
+	reviewBundleFiles: ReviewBundleFile[];
+	reviewBundleRoot: string;
+}> {
 	const playbookStats = await stat(options.playbookPath).catch(() => undefined);
 	if (playbookStats === undefined || !playbookStats.isFile()) {
 		throw new Error(`Antora playbook does not exist: ${options.playbookPath}`);
@@ -135,9 +145,16 @@ export async function exportAntoraModulesToMarkdown(
 		xrefFallbackLabelStyle: options.xrefFallbackLabelStyle,
 	});
 	const exportedFiles: ExportedMarkdownFile[] = [];
+	const reviewBundleRoot = resolve(options.outputRoot, "review-bundle");
+	const reviewBundleFiles: ReviewBundleFile[] = [];
+	const workflowBundleEntries = [
+		".github/workflows/release.yml",
+		".github/workflows/pages.yml",
+	];
 
 	await rm(options.outputRoot, { force: true, recursive: true });
 	await mkdir(options.outputRoot, { recursive: true });
+	await mkdir(reviewBundleRoot, { recursive: true });
 
 	for (const moduleName of getDocumentationModuleNames()) {
 		const relativeOutputPath = `${moduleName}.md`;
@@ -172,12 +189,29 @@ export async function exportAntoraModulesToMarkdown(
 		});
 	}
 
-	return exportedFiles;
+	for (const relativeSourcePath of workflowBundleEntries) {
+		const sourcePath = resolve(rootDir, relativeSourcePath);
+		const bundledPath = resolve(reviewBundleRoot, relativeSourcePath);
+		await mkdir(dirname(bundledPath), { recursive: true });
+		await copyFile(sourcePath, bundledPath);
+		reviewBundleFiles.push({
+			sourcePath,
+			outputPath: bundledPath,
+			relativeOutputPath: relativeSourcePath,
+		});
+	}
+
+	return {
+		exportedFiles,
+		reviewBundleFiles,
+		reviewBundleRoot,
+	};
 }
 
 async function main(): Promise<void> {
 	const options = parseArguments(process.argv.slice(2));
-	const exportedFiles = await exportAntoraModulesToMarkdown(options);
+	const { exportedFiles, reviewBundleFiles, reviewBundleRoot } =
+		await exportAntoraModulesToMarkdown(options);
 
 	if (options.format === "json") {
 		console.log(
@@ -187,6 +221,10 @@ async function main(): Promise<void> {
 					flavor: options.flavor,
 					outputRoot: options.outputRoot,
 					playbookPath: options.playbookPath,
+					reviewBundleRoot,
+					reviewBundleFiles: reviewBundleFiles.map((entry) => ({
+						outputPath: entry.relativeOutputPath,
+					})),
 					xrefFallbackLabelStyle: options.xrefFallbackLabelStyle,
 					files: exportedFiles.map((entry) => ({
 						moduleName: entry.moduleName,
@@ -204,9 +242,13 @@ async function main(): Promise<void> {
 		[
 			`Exported ${exportedFiles.length} documentation modules as ${options.flavor} Markdown.`,
 			`Output root: ${options.outputRoot}`,
+			`Review bundle: ${reviewBundleRoot}`,
 			`Xref fallback labels: ${options.xrefFallbackLabelStyle}`,
 			...exportedFiles.map(
 				(entry) => `- ${entry.moduleName}: ${entry.relativeOutputPath}`,
+			),
+			...reviewBundleFiles.map(
+				(entry) => `- review bundle: ${entry.relativeOutputPath}`,
 			),
 		].join("\n"),
 	);

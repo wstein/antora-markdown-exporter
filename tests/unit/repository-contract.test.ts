@@ -129,7 +129,13 @@ describe("repository contract", () => {
 		expect(exportScript).toContain(
 			'if (argument === "--xref-fallback-label-style")',
 		);
+		expect(exportScript).toContain(
+			'const reviewBundleRoot = resolve(options.outputRoot, "review-bundle")',
+		);
+		expect(exportScript).toContain('".github/workflows/release.yml"');
+		expect(exportScript).toContain('".github/workflows/pages.yml"');
 		expect(exportScript).toContain("Xref fallback labels:");
+		expect(exportScript).toContain("Review bundle:");
 		expect(exportScript).toContain('if (options.format === "json")');
 		expect(exportScript).not.toContain('if (argument === "--format")');
 		expect(exportScript).toContain("Exported ");
@@ -174,15 +180,22 @@ describe("repository contract", () => {
 		expect(onboardingDoc).toContain(
 			"support matrix, proof matrix, and evidence ledger",
 		);
+		expect(onboardingDoc).toContain(
+			"=== Changed Responsibilities After Structured Extraction",
+		);
 
 		expect(manualDoc).toContain("=== Read Status Markers First");
 		expect(manualDoc).toContain("=== Operator Prerequisites Matrix");
 		expect(manualDoc).toContain("=== Canonical Contract Family");
 		expect(manualDoc).toContain("=== Converter Support Matrix");
+		expect(manualDoc).toContain("=== Changed Responsibilities");
 		expect(manualDoc).toContain("=== Evidence Ledger");
 		expect(manualDoc).toContain("=== Proof Matrix");
 		expect(manualDoc).toContain(".github/workflows/release.yml");
 		expect(manualDoc).toContain(".github/workflows/pages.yml");
+		expect(manualDoc).toContain(
+			"build/markdown/review-bundle/.github/workflows/**",
+		);
 		expect(manualDoc).toContain("`Implemented`");
 		expect(manualDoc).toContain("`Test-enforced`");
 		expect(manualDoc).toContain("`CI-enforced`");
@@ -203,11 +216,20 @@ describe("repository contract", () => {
 		expect(
 			existsSync(resolve(root, "src/adapter/asciidoctor-structure.ts")),
 		).toBe(true);
-		expect(packageJson.dependencies?.["@asciidoctor/core"]).toBe("~3.0.4");
+		expect(
+			existsSync(resolve(root, "src/adapter/asciidoctor-structure/blocks.ts")),
+		).toBe(true);
+		expect(
+			existsSync(resolve(root, "src/adapter/asciidoctor-structure/inline.ts")),
+		).toBe(true);
+		expect(
+			existsSync(resolve(root, "src/adapter/asciidoctor-structure/xref.ts")),
+		).toBe(true);
 		expect(readme).toContain("semantic IR");
 		expect(packageJson.description).toContain("semantic IR");
 		expect(packageIndex).toContain("./adapter/asciidoctor-structure.js");
 		expect(packageIndex).toContain("./adapter/assembly-structure.js");
+		expect(packageIndex).toContain("assemblyStructureInvariants");
 		expect(
 			readFileSync(
 				resolve(

@@ -289,7 +289,7 @@ Important conflict to preserve:
 |Emits a machine-readable inspection report for one input file by delegating to `bun run inspect:report`.
 
 |`make markdown`
-|Exports assembled module documents to `build/markdown/architecture.md`, `build/markdown/manual.md`, and `build/markdown/onboarding.md` by delegating to `bun run export:modules`. The default CLI output is a human-readable summary; use `bun run export:modules -- --json` when automation needs machine-readable output. The export uses the same assembled module sources as the repository PDFs and the same converter path as the package API. Pass `ARGS="--xref-fallback-label-style fragment-or-path"` when nested unlabeled xrefs should render as full repository-style paths instead of basenames.
+|Exports assembled module documents to `build/markdown/architecture.md`, `build/markdown/manual.md`, and `build/markdown/onboarding.md` by delegating to `bun run export:modules`. The default CLI output is a human-readable summary; use `bun run export:modules -- --json` when automation needs machine-readable output. The export uses the same assembled module sources as the repository PDFs and the same converter path as the package API. It also materializes a review bundle under `build/markdown/review-bundle/.github/workflows/` so release and publication claims always ship with `release.yml` and `pages.yml` evidence. Pass `ARGS="--xref-fallback-label-style fragment-or-path"` when nested unlabeled xrefs should render as full repository-style paths instead of basenames.
 
 |`make pdf`
 |Builds the assembled architecture, manual, and onboarding PDFs at `build/site/antora-markdown-exporter/*.pdf` without rebuilding the full Antora HTML site.
@@ -430,6 +430,8 @@ Troubleshooting guidance:
 
 The note `Converter coverage should be published as a support matrix` defines the honesty bar for feature coverage.
 
+Treat this section as the primary honesty surface for converter behavior. If a prose claim elsewhere sounds stronger than this matrix, the matrix wins until proof is updated.
+
 [cols="1,1,2,2,2" options="header"]
 |===
 |Construct family |Status |Semantic contract |Primary proof |Workflow and review surface
@@ -477,6 +479,31 @@ The note `Converter coverage should be published as a support matrix` defines th
 |Architecture review; support-matrix updates
 |===
 
+=== Changed Responsibilities
+
+The structured rewrite changed what the exporter owns.
+
+[cols="1,2,2" options="header"]
+|===
+|Concern |Current owner |Contributor expectation
+
+|Include expansion and most low-level block formation
+|Antora Assembler plus Asciidoctor loading
+|Do not rebuild exporter-side include parsing or low-level block parsing.
+
+|Structured semantic mapping
+|`src/adapter/asciidoctor-structure.ts` and helper modules
+|Keep mapping behavior aligned with `assemblyStructureInvariants` and the support matrix.
+
+|Markdown IR lowering
+|`src/exporter/structured-to-ir.ts`
+|Change this layer when semantic structure is already present but the IR mapping is wrong or incomplete.
+
+|Inspection surfaces
+|`src/markdown/inspection.ts`
+|Prefer normalized semantic inspection over ad-hoc renderer traversal or dormant include transport assumptions.
+|===
+
 === Evidence Ledger
 
 This ledger turns the architecture story into reviewable evidence. Use it when a claim spans code, tests, and workflows and you need the exact proof surface rather than a broad status marker.
@@ -506,7 +533,7 @@ This ledger turns the architecture story into reviewable evidence. Use it when a
 |Release and publication claims stay bounded
 |`scripts/release-check.mjs`; `scripts/release.js`; `antora-playbook.yml`
 |`tests/unit/repository-contract.test.ts`
-|`.github/workflows/release.yml`; `.github/workflows/pages.yml`
+|`.github/workflows/release.yml`; `.github/workflows/pages.yml`; `build/markdown/review-bundle/.github/workflows/**`
 |Do not describe publication behavior without linking both workflow files and the contract test.
 |===
 

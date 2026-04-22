@@ -11,16 +11,21 @@ describe("module export golden tests", () => {
 		const outputRoot = await mkdtemp(
 			resolve(tmpdir(), "antora-markdown-module-export-"),
 		);
-		const exportedFiles = await exportAntoraModulesToMarkdown({
-			flavor: "gfm",
-			outputRoot,
-			playbookPath: resolve("antora-playbook.yml"),
-		});
+		const { exportedFiles, reviewBundleFiles } =
+			await exportAntoraModulesToMarkdown({
+				flavor: "gfm",
+				outputRoot,
+				playbookPath: resolve("antora-playbook.yml"),
+			});
 
 		expect(exportedFiles.map((entry) => entry.relativeOutputPath)).toEqual([
 			"architecture.md",
 			"manual.md",
 			"onboarding.md",
+		]);
+		expect(reviewBundleFiles.map((entry) => entry.relativeOutputPath)).toEqual([
+			".github/workflows/release.yml",
+			".github/workflows/pages.yml",
 		]);
 
 		for (const exportedFile of exportedFiles) {

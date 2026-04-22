@@ -29,6 +29,7 @@ export {
 	type AssemblySoftBreak,
 	type AssemblySourceLocation,
 	type AssemblyStrong,
+	type AssemblyStructureInvariant,
 	type AssemblyTable,
 	type AssemblyTableCell,
 	type AssemblyTableRow,
@@ -39,6 +40,7 @@ export {
 	type AssemblyXrefFamily,
 	type AssemblyXrefFamilyKind,
 	type AssemblyXrefTarget,
+	assemblyStructureInvariants,
 	defineAssemblyDocument,
 } from "./adapter/assembly-structure.js";
 export { convertAssemblyStructureToMarkdownIR } from "./exporter/structured-to-ir.js";

@@ -17,8 +17,9 @@
   - [3.2. Use Inspection Helpers Instead Of Ad-Hoc Traversal](#32-use-inspection-helpers-instead-of-ad-hoc-traversal)
   - [3.3. Reference Fixtures: Coverage, Provenance, And Scope](#33-reference-fixtures-coverage-provenance-and-scope)
   - [3.4. Converter Support Matrix](#34-converter-support-matrix)
-  - [3.5. Evidence Ledger](#35-evidence-ledger)
-  - [3.6. Common Failure Modes](#36-common-failure-modes)
+  - [3.5. Changed Responsibilities](#35-changed-responsibilities)
+  - [3.6. Evidence Ledger](#36-evidence-ledger)
+  - [3.7. Common Failure Modes](#37-common-failure-modes)
 - [Chapter 4. Release And Integrity](#chapter-4-release-and-integrity)
   - [4.1. Package Identity And Publish Checks](#41-package-identity-and-publish-checks)
   - [4.2. Proof Matrix](#42-proof-matrix)
@@ -231,7 +232,7 @@ Important conflict to preserve:
 | `make integration` | Runs integration tests only. |
 | `make reference` | Runs the reference compatibility suite in `tests/integration/reference-antora.test.ts`. |
 | `make inspect-report INPUT=...` | Emits a machine-readable inspection report for one input file by delegating to `bun run inspect:report`. |
-| `make markdown` | Exports assembled module documents to `build/markdown/architecture.md`, `build/markdown/manual.md`, and `build/markdown/onboarding.md` by delegating to `bun run export:modules`. The default CLI output is a human-readable summary; use `bun run export:modules -- --json` when automation needs machine-readable output. The export uses the same assembled module sources as the repository PDFs and the same converter path as the package API. Pass `ARGS="--xref-fallback-label-style fragment-or-path"` when nested unlabeled xrefs should render as full repository-style paths instead of basenames. |
+| `make markdown` | Exports assembled module documents to `build/markdown/architecture.md`, `build/markdown/manual.md`, and `build/markdown/onboarding.md` by delegating to `bun run export:modules`. The default CLI output is a human-readable summary; use `bun run export:modules -- --json` when automation needs machine-readable output. The export uses the same assembled module sources as the repository PDFs and the same converter path as the package API. It also materializes a review bundle under `build/markdown/review-bundle/.github/workflows/` so release and publication claims always ship with `release.yml` and `pages.yml` evidence. Pass `ARGS="--xref-fallback-label-style fragment-or-path"` when nested unlabeled xrefs should render as full repository-style paths instead of basenames. |
 | `make pdf` | Builds the assembled architecture, manual, and onboarding PDFs at `build/site/antora-markdown-exporter/*.pdf` without rebuilding the full Antora HTML site. |
 | `bun run check` | Runs Biome checks and the full coverage-enabled Vitest suite. |
 | `bun run release:check` | Runs pre-publish package integrity checks against built artifacts and `npm pack --dry-run`. |
@@ -347,6 +348,8 @@ Troubleshooting guidance:
 
 The note `Converter coverage should be published as a support matrix` defines the honesty bar for feature coverage.
 
+Treat this section as the primary honesty surface for converter behavior. If a prose claim elsewhere sounds stronger than this matrix, the matrix wins until proof is updated.
+
 | Construct family | Status | Semantic contract | Primary proof | Workflow and review surface |
 | --- | --- | --- | --- | --- |
 | Section structure and headings | Supported | Headings, section numbering metadata, and table-of-contents render options stay semantic until rendering. | `src/adapter/asciidoctor-structure.ts`; `src/exporter/structured-to-ir.ts`; `tests/unit/asciidoctor-structure.test.ts`; `tests/integration/module-export-golden.test.ts`; `tests/integration/module-export-structure.test.ts` | `make markdown`; documentation module export review |
@@ -357,7 +360,18 @@ The note `Converter coverage should be published as a support matrix` defines th
 | Raw HTML and unsupported degradation | Partial | Fallback stays explicit and deterministic, but downstream allowance depends on flavor policy instead of blanket passthrough. | `src/markdown/fallback.ts`; `tests/unit/fallback.test.ts`; `tests/integration/raw-html-policy.test.ts` | Flavor policy review; release validation |
 | Unmodeled AsciiDoc constructs outside the current IR | Unsupported | New constructs must become explicit IR extensions or visible fallback; they are not silently normalized into “good enough” Markdown. | `src/markdown/ir.ts`; `src/markdown/fallback.ts`; note `Strict architecture must be extended without weakening invariants` | Architecture review; support-matrix updates |
 
-## 3.5. Evidence Ledger
+## 3.5. Changed Responsibilities
+
+The structured rewrite changed what the exporter owns.
+
+| Concern | Current owner | Contributor expectation |
+| --- | --- | --- |
+| Include expansion and most low-level block formation | Antora Assembler plus Asciidoctor loading | Do not rebuild exporter-side include parsing or low-level block parsing. |
+| Structured semantic mapping | `src/adapter/asciidoctor-structure.ts` and helper modules | Keep mapping behavior aligned with `assemblyStructureInvariants` and the support matrix. |
+| Markdown IR lowering | `src/exporter/structured-to-ir.ts` | Change this layer when semantic structure is already present but the IR mapping is wrong or incomplete. |
+| Inspection surfaces | `src/markdown/inspection.ts` | Prefer normalized semantic inspection over ad-hoc renderer traversal or dormant include transport assumptions. |
+
+## 3.6. Evidence Ledger
 
 This ledger turns the architecture story into reviewable evidence. Use it when a claim spans code, tests, and workflows and you need the exact proof surface rather than a broad status marker.
 
@@ -366,9 +380,9 @@ This ledger turns the architecture story into reviewable evidence. Use it when a
 | Conversion semantics stay centralized | `src/adapter/asciidoctor-structure.ts`; `src/exporter/structured-to-ir.ts` | `tests/unit/asciidoctor-structure.test.ts`; `tests/unit/structured-to-ir.test.ts`; `tests/unit/ir.test.ts` | `bun run check` | Refactors should change structural extraction, lowering, and tests together. |
 | Rendered Markdown stays deterministic | `src/markdown/normalize.ts`; `src/markdown/render/**` | `tests/integration/fixture-golden.test.ts`; `tests/integration/module-export-golden.test.ts` | `make test`; `.github/workflows/ci.yml` | Golden diffs are the primary review artifact for rendering changes. |
 | Inspection stays machine-readable | `src/markdown/inspection.ts`; `scripts/inspection-report.ts` | `tests/unit/inspection.test.ts`; `tests/unit/inspection-report-script.test.ts` | `bun run inspect:report`; CI annotation consumers | Prefer normalized report surfaces over ad-hoc traversal. |
-| Release and publication claims stay bounded | `scripts/release-check.mjs`; `scripts/release.js`; `antora-playbook.yml` | `tests/unit/repository-contract.test.ts` | `.github/workflows/release.yml`; `.github/workflows/pages.yml` | Do not describe publication behavior without linking both workflow files and the contract test. |
+| Release and publication claims stay bounded | `scripts/release-check.mjs`; `scripts/release.js`; `antora-playbook.yml` | `tests/unit/repository-contract.test.ts` | `.github/workflows/release.yml`; `.github/workflows/pages.yml`; `build/markdown/review-bundle/.github/workflows/**` | Do not describe publication behavior without linking both workflow files and the contract test. |
 
-## 3.6. Common Failure Modes
+## 3.7. Common Failure Modes
 
 | Failure mode | What to check |
 | --- | --- |
