@@ -48,7 +48,7 @@
 
 ## 1.2. Claim Status Grammar
 
-This architecture document uses the claim-status grammar from the note `Documentation claims should distinguish implementation test and workflow evidence`.
+This architecture document is the canonical home for claim-status markers.
 
 **`Implemented`:** The behavior exists in repository code.
 
@@ -66,7 +66,7 @@ The main architectural goals are:
 - expose stable inspection APIs for CI, release validation, and downstream tooling
 - keep package naming and extension entrypoints honest about current implementation maturity
 
-The notes `Exporter pipeline uses Assembler and a direct TypeScript converter`, `Markdown IR is the canonical render boundary`, `Flavor renderers are syntax adapters over one semantic layer`, `Fallback selection is centralized across markdown flavors`, `Transparent extensions are not fallback mechanisms`, `The architecture favors explicit extension over implicit degradation`, `Strict architecture must be extended without weakening invariants`, `Preserved include metadata uses private transport details`, `Xref target resolution is a separate lowering phase`, and `Antora extension entrypoints must reflect actual integration maturity` describe this architecture. The codebase now implements both the real Assembler-backed extension entrypoint in `src/extension/index.ts` and the repository-owned markdown kernel in `src/exporter/**`, `src/markdown/**`, `scripts/inspection-report.ts`, and the test suite.
+The architecture is built around a real Assembler-backed extension entrypoint in `src/extension/index.ts` and a repository-owned markdown kernel in `src/exporter/**`, `src/markdown/**`, `scripts/inspection-report.ts`, and the test suite. Semantic meaning stays centralized, fallback stays explicit, transparent extensions stay semantic where safe, and xref routing remains a lowering concern rather than a renderer concern.
 
 The main uncertainty is no longer whether a real Antora registration path exists. It does. The remaining architectural concern is keeping that outer registration path, its converter coverage, and the public documentation aligned as the pipeline evolves.
 
@@ -74,10 +74,10 @@ The main uncertainty is no longer whether a real Antora registration path exists
 
 | Priority | Quality goal | Why it matters |
 | --- | --- | --- |
-| 1 | Deterministic, reviewable output | The notes `Markdown IR is the canonical render boundary`, `Flavor renderers are syntax adapters over one semantic layer`, and `Testing relies on golden fixtures and deterministic snapshots` all assume that semantic decisions are centralized and that rendered output is stable enough for golden tests and release validation. |
-| 2 | Semantic fidelity with explicit escape hatches | The notes `Transparent extensions are not fallback mechanisms`, `The architecture favors explicit extension over implicit degradation`, and `Strict architecture must be extended without weakening invariants` require the system to preserve valid author intent where safe and to degrade visibly only through explicit policy. |
-| 3 | Inspectable validation surfaces | The note `Inspection helpers expose normalized validation surfaces` requires reusable inspection results for xref metadata so CI, release checks, and tooling do not reimplement recursive IR traversal. |
-| 4 | Honest public maturity signaling | The note `Antora extension entrypoints must reflect actual integration maturity` requires naming and public examples to match what the package actually ships today. |
+| 1 | Deterministic, reviewable output | Semantic decisions stay centralized and rendered output stays stable enough for golden tests, release checks, and review. |
+| 2 | Semantic fidelity with explicit escape hatches | The system should preserve valid author intent where safe and degrade visibly only through explicit policy. |
+| 3 | Inspectable validation surfaces | Reusable inspection results should keep CI, release checks, and tooling off ad-hoc recursive traversal. |
+| 4 | Honest public maturity signaling | Names, examples, and public docs must match the package surface the repository actually ships today. |
 
 ## 1.4. Stakeholders
 
@@ -136,7 +136,7 @@ That toolchain strategy supports the broader architectural strategy:
 
 ## 5.1. Whitebox Overall System
 
-The decomposition follows the notes `Exporter pipeline uses Assembler and a direct TypeScript converter`, `Markdown IR is the canonical render boundary`, `Flavor renderers are syntax adapters over one semantic layer`, `Preserved include metadata uses private transport details`, `Xref target resolution is a separate lowering phase`, and `Inspection helpers expose normalized validation surfaces`. The repository therefore separates the outer Antora integration boundary from the inner markdown kernel instead of blending assembly, conversion, rendering, and validation into one opaque stage.
+The repository separates the outer Antora integration boundary from the inner markdown kernel. Assembly, structural extraction, lowering, normalization, rendering, inspection, and release validation stay visible as distinct stages rather than collapsing into one opaque export step.
 
 The main building blocks are:
 
@@ -173,7 +173,7 @@ The remaining risk is not the absence of an outer Antora integration boundary. I
 
 ### 5.1.2. Conversion And Include Handling
 
-The exporter converts assembled content into IR and keeps include semantics, provenance, and diagnostics available when they are intentionally preserved, without making the private marker format part of the public contract.
+The exporter converts assembled content into IR and keeps include semantics, provenance, and diagnostics available only when they are intentionally preserved. Private transport details are not part of the public contract.
 
 Its shipped structured runtime lives in `src/extension/index.ts`, `src/adapter/asciidoctor-structure.ts`, `src/exporter/structured-to-ir.ts`, and `src/markdown/**`. Structured extraction and lowering are now the maintained runtime path.
 
@@ -280,12 +280,12 @@ This concept cuts across the exporter, markdown kernel, inspection layer, packag
 
 | Decision | Rationale | Current consequence |
 | --- | --- | --- |
-| Use Antora Assembler as the export boundary | The notes `Exporter pipeline uses Assembler and a direct TypeScript converter` and `Antora extension entrypoints must reflect actual integration maturity` define the outer integration contract. The repository should expose a real Antora exporter extension, not a metadata-only helper. | `src/extension/index.ts` registers through `@antora/assembler.configure()` and keeps assembly outside renderer-local logic. |
-| Keep the Markdown IR as the canonical semantic boundary | The notes `Markdown IR is the canonical render boundary` and `Flavor renderers are syntax adapters over one semantic layer` require semantic decisions to stay centralized and testable. | Conversion changes must land in the exporter, IR, normalization, lowering, or renderer layers rather than as ad-hoc string rewrites. |
-| Centralize fallback policy instead of flavor-local degradation | The notes `Fallback selection is centralized across markdown flavors` and `Transparent extensions are not fallback mechanisms` distinguish valid semantic preservation from controlled degradation. | Unsupported constructs and raw HTML policy are owned by `src/markdown/fallback.ts`, while valid semantic constructs remain ordinary IR nodes. |
-| Use one semantic export path for package APIs, module Markdown export, and inspection tooling | The note `Antora module markdown export should use the canonical repository pipeline` requires repository exports to stay on the same converter path as the package API. | `make markdown`, inspection scripts, and library consumers all depend on the same `extractAssemblyStructure -> convertAssemblyStructureToMarkdownIR -> normalizeMarkdownIR -> renderMarkdown` contract. |
+| Use Antora Assembler as the export boundary | The repository should expose a real Antora exporter extension, not a metadata-only helper. | `src/extension/index.ts` registers through `@antora/assembler.configure()` and keeps assembly outside renderer-local logic. |
+| Keep the Markdown IR as the canonical semantic boundary | Semantic decisions should stay centralized and testable. | Conversion changes must land in the exporter, IR, normalization, lowering, or renderer layers rather than as ad-hoc string rewrites. |
+| Centralize fallback policy instead of flavor-local degradation | Valid semantic preservation and controlled degradation must stay distinct. | Unsupported constructs and raw HTML policy are owned by `src/markdown/fallback.ts`, while valid semantic constructs remain ordinary IR nodes. |
+| Use one semantic export path for package APIs, module Markdown export, and inspection tooling | Repository exports should stay on the same converter path as the package API. | `make markdown`, inspection scripts, and library consumers all depend on the same `extractAssemblyStructure -> convertAssemblyStructureToMarkdownIR -> normalizeMarkdownIR -> renderMarkdown` contract. |
 | Use shared assembled module sources for module PDF and module Markdown outputs | Documentation artifacts should differ by renderer, not by upstream assembly logic. | `scripts/docs-module-sources.mjs` is now the maintained source builder for both per-module PDF output and flat module Markdown output. |
-| Use `develop` for integration and `main` for published history | The notes `Develop should be the integration branch while main tracks published history` and `Tag pushes should publish only certified develop commits` define the release operating model. | Release automation can verify one certified input state, then promote `main` and Pages publication only after successful publication steps. |
+| Use `develop` for integration and `main` for published history | The release path needs one certified integration state and one published history branch. | Release automation can verify one certified input state, then promote `main` and Pages publication only after successful publication steps. |
 
 These decisions are intentionally implementation-facing. They explain why the repository keeps resisting shortcut conversions, flavor-local semantics, and duplicated export paths even when those shortcuts might appear simpler in the short term.
 
@@ -333,7 +333,7 @@ These decisions are intentionally implementation-facing. They explain why the re
 
 **Response Measure:** Any unexpected byte-level output drift fails the golden test.
 
-Notes cited: `Golden tests require rendered output comparison`; `Testing relies on golden fixtures and deterministic snapshots`
+**Traceability:** `Golden tests require rendered output comparison`; `Testing relies on golden fixtures and deterministic snapshots`
 
 ### 10.4.2. QS-2 Reference Compatibility With Locked Provenance
 
@@ -347,7 +347,7 @@ Notes cited: `Golden tests require rendered output comparison`; `Testing relies 
 
 **Response Measure:** A changed snapshot without manifest alignment, or a semantic regression in links, includes, admonitions, tables, images, or visible fallback markers, fails the reference test.
 
-Notes cited: `Reference testing uses official Antora documentation as a compatibility corpus`; `Reference tests check semantic invariants not exact bytes`; `Reference fixtures are curated and provenance locked`; `Reference corpus should cover navigation xrefs includes and admonitions`
+**Traceability:** `Reference testing uses official Antora documentation as a compatibility corpus`; `Reference tests check semantic invariants not exact bytes`; `Reference fixtures are curated and provenance locked`; `Reference corpus should cover navigation xrefs includes and admonitions`
 
 ### 10.4.3. QS-3 Valid Extensions Stay Out Of Fallback
 
@@ -361,7 +361,7 @@ Notes cited: `Reference testing uses official Antora documentation as a compatib
 
 **Response Measure:** Rendered output retains the original fence language and contains no `Unsupported` fallback marker for that block.
 
-Notes cited: `Transparent extensions are not fallback mechanisms`; `The architecture favors explicit extension over implicit degradation`
+**Traceability:** `Transparent extensions are not fallback mechanisms`; `The architecture favors explicit extension over implicit degradation`
 
 ### 10.4.4. QS-4 Repository Self-Consistency Before Release
 
@@ -375,7 +375,7 @@ Notes cited: `Transparent extensions are not fallback mechanisms`; `The architec
 
 **Response Measure:** Missing referenced files, stale scaffold paths, or misaligned package metadata fail the repository-contract suite or release checks.
 
-Notes cited: `Repository scripts and referenced files must stay in lockstep`; `Golden tests require rendered output comparison`
+**Traceability:** `Repository scripts and referenced files must stay in lockstep`; `Golden tests require rendered output comparison`
 
 # Chapter 11. Risks and Technical Debts
 

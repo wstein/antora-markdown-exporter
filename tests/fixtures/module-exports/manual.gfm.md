@@ -3,11 +3,10 @@
 ## Table of Contents
 
 - [Chapter 1. Core Workflows](#chapter-1-core-workflows)
-  - [1.1. Read Status Markers First](#11-read-status-markers-first)
-  - [1.2. Run The Standard Repository Loop](#12-run-the-standard-repository-loop)
-  - [1.3. Operator Prerequisites Matrix](#13-operator-prerequisites-matrix)
-  - [1.4. Generate An Inspection Report](#14-generate-an-inspection-report)
-  - [1.5. Start And Finalize A Release](#15-start-and-finalize-a-release)
+  - [1.1. Run The Standard Repository Loop](#11-run-the-standard-repository-loop)
+  - [1.2. Operator Prerequisites Matrix](#12-operator-prerequisites-matrix)
+  - [1.3. Generate An Inspection Report](#13-generate-an-inspection-report)
+  - [1.4. Start And Finalize A Release](#14-start-and-finalize-a-release)
 - [Chapter 2. Commands And Behavior](#chapter-2-commands-and-behavior)
   - [2.1. Primary Commands](#21-primary-commands)
   - [2.2. Inspection Script Behavior](#22-inspection-script-behavior)
@@ -28,24 +27,11 @@
 
 This manual is for operators and maintainers who need to run, validate, and release `@wsmy/antora-markdown-exporter`, the Antora Assembler based Markdown exporter with semantic IR, inspection surfaces, and explicit Markdown flavor rendering.
 
-The manual is task-oriented on purpose. For contributor-first explanations, see the onboarding guide. For the most precise architectural statements, prefer the cited notes and the implementation files they point to.
-
-When notes describe a broader intended system than the code currently ships, this manual preserves that uncertainty explicitly. In particular, the repository now exposes both a real markdown conversion and validation kernel and a real Assembler-backed Antora extension entrypoint.
+Use this document for prerequisites, commands, troubleshooting, validation, and release operations. For first-contributor guidance, see the onboarding guide. For invariants, proof surfaces, and full rationale, use the architecture document.
 
 # Chapter 1. Core Workflows
 
-## 1.1. Read Status Markers First
-
-This manual uses the claim-status grammar from the note `Documentation claims should distinguish implementation test and workflow evidence`.
-
-| Marker | Meaning |
-| --- | --- |
-| `Implemented` | The behavior exists in repository code today. |
-| `Test-enforced` | The behavior is pinned by automated tests in `tests/**`. |
-| `CI-enforced` | The behavior is executed or guarded by `.github/workflows/**`. |
-| `Intended` | The behavior is the documented design direction, but the proof surface is still incomplete. |
-
-## 1.2. Run The Standard Repository Loop
+## 1.1. Run The Standard Repository Loop
 
 The repository’s primary execution path is Bun-first through `make` and `package.json` scripts.
 
@@ -98,19 +84,7 @@ That export emits:
 - public publication to `https://wstein.github.io/antora-markdown-exporter` happens from `.github/workflows/pages.yml`
 - the Pages workflow checks out `main`, which the release workflow has already promoted
 
-Why this workflow exists:
-
-- the note `Release and package identity use scoped npm publishing` expects the repository to behave like a publishable TypeScript package
-- the notes `Repository scripts and referenced files must stay in lockstep` and `Testing relies on golden fixtures and deterministic snapshots` require stable, explicit validation entrypoints
-- Bun is the primary development runtime, while npm remains the publish transport
-
-Current uncertainty to preserve:
-
-- the package and docs describe an Antora exporter pipeline
-- the repository clearly implements conversion, rendering, inspection, testing, and release checks
-- the extension boundary in `src/extension/index.ts` is now part of the supported runtime path
-
-## 1.3. Operator Prerequisites Matrix
+## 1.2. Operator Prerequisites Matrix
 
 Use this matrix before troubleshooting local environment failures.
 
@@ -123,7 +97,7 @@ Use this matrix before troubleshooting local environment failures.
 | Poppler `pdftotext` | PDF-versus-Markdown structural parity tests | `Test-enforced`, `CI-enforced` | `tests/integration/module-export-structure.test.ts`; `.github/workflows/ci.yml` |
 | GitHub Actions runners | Release publishing and Pages publication | `CI-enforced` | `.github/workflows/release.yml`; `.github/workflows/pages.yml`; `tests/unit/repository-contract.test.ts` |
 
-## 1.4. Generate An Inspection Report
+## 1.3. Generate An Inspection Report
 
 Use the inspection script when you need machine-readable validation for xref metadata.
 
@@ -166,7 +140,7 @@ Operator rule:
 - use this script for validation and reporting
 - do not reimplement IR traversal in CI or release scripts unless the library API cannot express the needed behavior
 
-## 1.5. Start And Finalize A Release
+## 1.4. Start And Finalize A Release
 
 The release operating model uses `develop` as the integration branch, `main` as published history, and semver tags as the publish trigger.
 
@@ -346,9 +320,14 @@ Troubleshooting guidance:
 
 ## 3.4. Converter Support Matrix
 
-The note `Converter coverage should be published as a support matrix` defines the honesty bar for feature coverage.
-
 Treat this section as the primary honesty surface for converter behavior. If a prose claim elsewhere sounds stronger than this matrix, the matrix wins until proof is updated.
+
+Status legend used in this and later proof sections:
+
+- `Implemented`: behavior exists in repository code
+- `Test-enforced`: behavior is pinned by automated tests
+- `CI-enforced`: behavior is exercised or guarded by workflows
+- `Intended`: design direction is documented, but proof is not complete
 
 | Construct family | Status | Semantic contract | Primary proof | Workflow and review surface |
 | --- | --- | --- | --- | --- |
@@ -397,8 +376,6 @@ This ledger turns the architecture story into reviewable evidence. Use it when a
 
 ## 4.1. Package Identity And Publish Checks
 
-The note `Release and package identity use scoped npm publishing` is the release anchor.
-
 The repository publishes as `@wsmy/antora-markdown-exporter` and is expected to behave like a publishable TypeScript package.
 
 Release integrity checks should confirm:
@@ -426,8 +403,6 @@ Current conflict to preserve:
 | GitHub Pages publication after successful release promotion | `CI-enforced` | Workflow handoff from `Release` to `Pages` | `.github/workflows/release.yml`; `.github/workflows/pages.yml`; `tests/unit/repository-contract.test.ts` |
 
 ## 4.3. Keep Scripts, Docs, And Files In Lockstep
-
-The note `Repository scripts and referenced files must stay in lockstep` is the repository integrity rule.
 
 Before considering a release or operational change complete, verify that:
 

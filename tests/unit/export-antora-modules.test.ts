@@ -127,11 +127,11 @@ describe("export antora modules script", () => {
 			"utf8",
 		);
 		expect(onboardingMarkdown).toContain(
-			"- [Chapter 1. Reading Status Markers](#chapter-1-reading-status-markers)",
+			"- [Chapter 1. Start Here](#chapter-1-start-here)",
 		);
 		expect(onboardingMarkdown).toContain("# Chapter 2. Mental Models");
 		expect(onboardingMarkdown).toContain(
-			"support matrix, proof matrix, and evidence ledger",
+			"You do not need that model to get started.",
 		);
 	});
 

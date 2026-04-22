@@ -90,7 +90,7 @@ Artifact:: `src/exporter/**`, `src/markdown/**`, `tests/integration/fixture-gold
 Response:: The test suite renders fixture input and compares complete output against `expected.<flavor>.md`.
 Response Measure:: Any unexpected byte-level output drift fails the golden test.
 
-Notes cited: `Golden tests require rendered output comparison`; `Testing relies on golden fixtures and deterministic snapshots`
+Traceability:: `Golden tests require rendered output comparison`; `Testing relies on golden fixtures and deterministic snapshots`
 
 ==== QS-2 Reference Compatibility With Locked Provenance
 
@@ -100,7 +100,7 @@ Artifact:: `tests/reference/**`, `tests/integration/reference-antora.test.ts`
 Response:: The suite verifies the locked `sha256`, provenance metadata, expected node types, and selected rendered markers while avoiding brittle whole-file byte comparisons.
 Response Measure:: A changed snapshot without manifest alignment, or a semantic regression in links, includes, admonitions, tables, images, or visible fallback markers, fails the reference test.
 
-Notes cited: `Reference testing uses official Antora documentation as a compatibility corpus`; `Reference tests check semantic invariants not exact bytes`; `Reference fixtures are curated and provenance locked`; `Reference corpus should cover navigation xrefs includes and admonitions`
+Traceability:: `Reference testing uses official Antora documentation as a compatibility corpus`; `Reference tests check semantic invariants not exact bytes`; `Reference fixtures are curated and provenance locked`; `Reference corpus should cover navigation xrefs includes and admonitions`
 
 ==== QS-3 Valid Extensions Stay Out Of Fallback
 
@@ -110,7 +110,7 @@ Artifact:: `src/adapter/asciidoctor-structure.ts`, `src/exporter/structured-to-i
 Response:: The converter emits a semantic `codeBlock`, renderers preserve the language tag verbatim, and fallback is not invoked merely because the downstream tool may interpret that language specially.
 Response Measure:: Rendered output retains the original fence language and contains no `Unsupported` fallback marker for that block.
 
-Notes cited: `Transparent extensions are not fallback mechanisms`; `The architecture favors explicit extension over implicit degradation`
+Traceability:: `Transparent extensions are not fallback mechanisms`; `The architecture favors explicit extension over implicit degradation`
 
 ==== QS-4 Repository Self-Consistency Before Release
 
@@ -120,4 +120,4 @@ Artifact:: `package.json`, `README.md`, `Makefile`, `.github/workflows/**`, `tes
 Response:: Contract tests verify that referenced files exist, that removed scaffold artifacts stay removed, and that release scripts target the actual package structure.
 Response Measure:: Missing referenced files, stale scaffold paths, or misaligned package metadata fail the repository-contract suite or release checks.
 
-Notes cited: `Repository scripts and referenced files must stay in lockstep`; `Golden tests require rendered output comparison`
+Traceability:: `Repository scripts and referenced files must stay in lockstep`; `Golden tests require rendered output comparison`

@@ -6,19 +6,19 @@
 |Decision |Rationale |Current consequence
 
 |Use Antora Assembler as the export boundary
-|The notes `Exporter pipeline uses Assembler and a direct TypeScript converter` and `Antora extension entrypoints must reflect actual integration maturity` define the outer integration contract. The repository should expose a real Antora exporter extension, not a metadata-only helper.
+|The repository should expose a real Antora exporter extension, not a metadata-only helper.
 |`src/extension/index.ts` registers through `@antora/assembler.configure()` and keeps assembly outside renderer-local logic.
 
 |Keep the Markdown IR as the canonical semantic boundary
-|The notes `Markdown IR is the canonical render boundary` and `Flavor renderers are syntax adapters over one semantic layer` require semantic decisions to stay centralized and testable.
+|Semantic decisions should stay centralized and testable.
 |Conversion changes must land in the exporter, IR, normalization, lowering, or renderer layers rather than as ad-hoc string rewrites.
 
 |Centralize fallback policy instead of flavor-local degradation
-|The notes `Fallback selection is centralized across markdown flavors` and `Transparent extensions are not fallback mechanisms` distinguish valid semantic preservation from controlled degradation.
+|Valid semantic preservation and controlled degradation must stay distinct.
 |Unsupported constructs and raw HTML policy are owned by `src/markdown/fallback.ts`, while valid semantic constructs remain ordinary IR nodes.
 
 |Use one semantic export path for package APIs, module Markdown export, and inspection tooling
-|The note `Antora module markdown export should use the canonical repository pipeline` requires repository exports to stay on the same converter path as the package API.
+|Repository exports should stay on the same converter path as the package API.
 |`make markdown`, inspection scripts, and library consumers all depend on the same `extractAssemblyStructure -> convertAssemblyStructureToMarkdownIR -> normalizeMarkdownIR -> renderMarkdown` contract.
 
 |Use shared assembled module sources for module PDF and module Markdown outputs
@@ -26,7 +26,7 @@
 |`scripts/docs-module-sources.mjs` is now the maintained source builder for both per-module PDF output and flat module Markdown output.
 
 |Use `develop` for integration and `main` for published history
-|The notes `Develop should be the integration branch while main tracks published history` and `Tag pushes should publish only certified develop commits` define the release operating model.
+|The release path needs one certified integration state and one published history branch.
 |Release automation can verify one certified input state, then promote `main` and Pages publication only after successful publication steps.
 |===
 

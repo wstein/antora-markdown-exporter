@@ -3,7 +3,7 @@
 == Building Block View
 
 === Whitebox Overall System
-The decomposition follows the notes `Exporter pipeline uses Assembler and a direct TypeScript converter`, `Markdown IR is the canonical render boundary`, `Flavor renderers are syntax adapters over one semantic layer`, `Preserved include metadata uses private transport details`, `Xref target resolution is a separate lowering phase`, and `Inspection helpers expose normalized validation surfaces`. The repository therefore separates the outer Antora integration boundary from the inner markdown kernel instead of blending assembly, conversion, rendering, and validation into one opaque stage.
+The repository separates the outer Antora integration boundary from the inner markdown kernel. Assembly, structural extraction, lowering, normalization, rendering, inspection, and release validation stay visible as distinct stages rather than collapsing into one opaque export step.
 
 The main building blocks are:
 
@@ -58,7 +58,7 @@ Its implementation lives in `src/markdown/ir.ts`, `src/markdown/normalize.ts`, `
 The remaining risk is not the absence of an outer Antora integration boundary. It is drift between the real extension entrypoint and the repository-owned conversion semantics that entrypoint is supposed to expose.
 
 ==== Conversion And Include Handling
-The exporter converts assembled content into IR and keeps include semantics, provenance, and diagnostics available when they are intentionally preserved, without making the private marker format part of the public contract.
+The exporter converts assembled content into IR and keeps include semantics, provenance, and diagnostics available only when they are intentionally preserved. Private transport details are not part of the public contract.
 
 Its shipped structured runtime lives in `src/extension/index.ts`, `src/adapter/asciidoctor-structure.ts`, `src/exporter/structured-to-ir.ts`, and `src/markdown/**`. Structured extraction and lowering are now the maintained runtime path.
 

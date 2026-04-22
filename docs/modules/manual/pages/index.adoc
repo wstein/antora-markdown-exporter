@@ -2,32 +2,9 @@
 
 This manual is for operators and maintainers who need to run, validate, and release `@wsmy/antora-markdown-exporter`, the Antora Assembler based Markdown exporter with semantic IR, inspection surfaces, and explicit Markdown flavor rendering.
 
-The manual is task-oriented on purpose. For contributor-first explanations, see the onboarding guide. For the most precise architectural statements, prefer the cited notes and the implementation files they point to.
-
-When notes describe a broader intended system than the code currently ships, this manual preserves that uncertainty explicitly. In particular, the repository now exposes both a real markdown conversion and validation kernel and a real Assembler-backed Antora extension entrypoint.
+Use this document for prerequisites, commands, troubleshooting, validation, and release operations. For first-contributor guidance, see the onboarding guide. For invariants, proof surfaces, and full rationale, use the architecture document.
 
 == Core Workflows
-
-=== Read Status Markers First
-
-This manual uses the claim-status grammar from the note `Documentation claims should distinguish implementation test and workflow evidence`.
-
-[cols="1,3" options="header"]
-|===
-|Marker |Meaning
-
-|`Implemented`
-|The behavior exists in repository code today.
-
-|`Test-enforced`
-|The behavior is pinned by automated tests in `tests/**`.
-
-|`CI-enforced`
-|The behavior is executed or guarded by `.github/workflows/**`.
-
-|`Intended`
-|The behavior is the documented design direction, but the proof surface is still incomplete.
-|===
 
 === Run The Standard Repository Loop
 
@@ -103,18 +80,6 @@ That export emits:
 * local docs validation happens on your working branch
 * public publication to `https://wstein.github.io/antora-markdown-exporter` happens from `.github/workflows/pages.yml`
 * the Pages workflow checks out `main`, which the release workflow has already promoted
-
-Why this workflow exists:
-
-* the note `Release and package identity use scoped npm publishing` expects the repository to behave like a publishable TypeScript package
-* the notes `Repository scripts and referenced files must stay in lockstep` and `Testing relies on golden fixtures and deterministic snapshots` require stable, explicit validation entrypoints
-* Bun is the primary development runtime, while npm remains the publish transport
-
-Current uncertainty to preserve:
-
-* the package and docs describe an Antora exporter pipeline
-* the repository clearly implements conversion, rendering, inspection, testing, and release checks
-* the extension boundary in `src/extension/index.ts` is now part of the supported runtime path
 
 === Operator Prerequisites Matrix
 
@@ -428,9 +393,14 @@ Troubleshooting guidance:
 
 === Converter Support Matrix
 
-The note `Converter coverage should be published as a support matrix` defines the honesty bar for feature coverage.
-
 Treat this section as the primary honesty surface for converter behavior. If a prose claim elsewhere sounds stronger than this matrix, the matrix wins until proof is updated.
+
+Status legend used in this and later proof sections:
+
+* `Implemented`: behavior exists in repository code
+* `Test-enforced`: behavior is pinned by automated tests
+* `CI-enforced`: behavior is exercised or guarded by workflows
+* `Intended`: design direction is documented, but proof is not complete
 
 [cols="1,1,2,2,2" options="header"]
 |===
@@ -572,8 +542,6 @@ This ledger turns the architecture story into reviewable evidence. Use it when a
 
 === Package Identity And Publish Checks
 
-The note `Release and package identity use scoped npm publishing` is the release anchor.
-
 The repository publishes as `@wsmy/antora-markdown-exporter` and is expected to behave like a publishable TypeScript package.
 
 Release integrity checks should confirm:
@@ -627,8 +595,6 @@ Current conflict to preserve:
 |===
 
 === Keep Scripts, Docs, And Files In Lockstep
-
-The note `Repository scripts and referenced files must stay in lockstep` is the repository integrity rule.
 
 Before considering a release or operational change complete, verify that:
 

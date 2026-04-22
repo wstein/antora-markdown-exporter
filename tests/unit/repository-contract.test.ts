@@ -177,28 +177,30 @@ describe("repository contract", () => {
 		expect(readme).toContain("`CI-enforced`");
 		expect(readme).toContain("`Intended`");
 
-		expect(onboardingDoc).toContain("== Reading Status Markers");
-		expect(onboardingDoc).toContain("`Implemented`::");
-		expect(onboardingDoc).toContain("`Test-enforced`::");
-		expect(onboardingDoc).toContain("`CI-enforced`::");
-		expect(onboardingDoc).toContain("`Intended`::");
-		expect(onboardingDoc).toContain("one contract family");
+		expect(onboardingDoc).toContain("== Start Here");
+		expect(onboardingDoc).toContain("day-one contributors");
+		expect(onboardingDoc).toContain(
+			"You do not need that model to get started.",
+		);
+		expect(onboardingDoc).toContain("== Core Workflows");
+		expect(onboardingDoc).toContain("=== Day One");
+		expect(onboardingDoc).toContain("=== First Task");
 		expect(onboardingDoc).toContain(".github/workflows/release.yml");
 		expect(onboardingDoc).toContain(".github/workflows/pages.yml");
-		expect(onboardingDoc).toContain(
-			"support matrix, proof matrix, and evidence ledger",
-		);
 		expect(onboardingDoc).toContain(
 			"=== Changed Responsibilities After Structured Extraction",
 		);
 
-		expect(manualDoc).toContain("=== Read Status Markers First");
+		expect(manualDoc).not.toContain("=== Read Status Markers First");
 		expect(manualDoc).toContain("=== Operator Prerequisites Matrix");
 		expect(manualDoc).toContain("=== Canonical Contract Family");
 		expect(manualDoc).toContain("=== Converter Support Matrix");
 		expect(manualDoc).toContain("=== Changed Responsibilities");
 		expect(manualDoc).toContain("=== Evidence Ledger");
 		expect(manualDoc).toContain("=== Proof Matrix");
+		expect(manualDoc).toContain(
+			"Status legend used in this and later proof sections:",
+		);
 		expect(manualDoc).toContain(".github/workflows/release.yml");
 		expect(manualDoc).toContain(".github/workflows/pages.yml");
 		expect(manualDoc).toContain(

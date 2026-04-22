@@ -6,7 +6,7 @@
 
 === Claim Status Grammar
 
-This architecture document uses the claim-status grammar from the note `Documentation claims should distinguish implementation test and workflow evidence`.
+This architecture document is the canonical home for claim-status markers.
 
 `Implemented`:: The behavior exists in repository code.
 `Test-enforced`:: The behavior is pinned by automated tests.
@@ -21,7 +21,7 @@ The main architectural goals are:
 * expose stable inspection APIs for CI, release validation, and downstream tooling
 * keep package naming and extension entrypoints honest about current implementation maturity
 
-The notes `Exporter pipeline uses Assembler and a direct TypeScript converter`, `Markdown IR is the canonical render boundary`, `Flavor renderers are syntax adapters over one semantic layer`, `Fallback selection is centralized across markdown flavors`, `Transparent extensions are not fallback mechanisms`, `The architecture favors explicit extension over implicit degradation`, `Strict architecture must be extended without weakening invariants`, `Preserved include metadata uses private transport details`, `Xref target resolution is a separate lowering phase`, and `Antora extension entrypoints must reflect actual integration maturity` describe this architecture. The codebase now implements both the real Assembler-backed extension entrypoint in `src/extension/index.ts` and the repository-owned markdown kernel in `src/exporter/**`, `src/markdown/**`, `scripts/inspection-report.ts`, and the test suite.
+The architecture is built around a real Assembler-backed extension entrypoint in `src/extension/index.ts` and a repository-owned markdown kernel in `src/exporter/**`, `src/markdown/**`, `scripts/inspection-report.ts`, and the test suite. Semantic meaning stays centralized, fallback stays explicit, transparent extensions stay semantic where safe, and xref routing remains a lowering concern rather than a renderer concern.
 
 The main uncertainty is no longer whether a real Antora registration path exists. It does. The remaining architectural concern is keeping that outer registration path, its converter coverage, and the public documentation aligned as the pipeline evolves.
 
@@ -32,19 +32,19 @@ The main uncertainty is no longer whether a real Antora registration path exists
 
 |1
 |Deterministic, reviewable output
-|The notes `Markdown IR is the canonical render boundary`, `Flavor renderers are syntax adapters over one semantic layer`, and `Testing relies on golden fixtures and deterministic snapshots` all assume that semantic decisions are centralized and that rendered output is stable enough for golden tests and release validation.
+|Semantic decisions stay centralized and rendered output stays stable enough for golden tests, release checks, and review.
 
 |2
 |Semantic fidelity with explicit escape hatches
-|The notes `Transparent extensions are not fallback mechanisms`, `The architecture favors explicit extension over implicit degradation`, and `Strict architecture must be extended without weakening invariants` require the system to preserve valid author intent where safe and to degrade visibly only through explicit policy.
+|The system should preserve valid author intent where safe and degrade visibly only through explicit policy.
 
 |3
 |Inspectable validation surfaces
-|The note `Inspection helpers expose normalized validation surfaces` requires reusable inspection results for xref metadata so CI, release checks, and tooling do not reimplement recursive IR traversal.
+|Reusable inspection results should keep CI, release checks, and tooling off ad-hoc recursive traversal.
 
 |4
 |Honest public maturity signaling
-|The note `Antora extension entrypoints must reflect actual integration maturity` requires naming and public examples to match what the package actually ships today.
+|Names, examples, and public docs must match the package surface the repository actually ships today.
 |===
 
 === Stakeholders
