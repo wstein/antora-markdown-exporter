@@ -175,9 +175,7 @@ describe("export antora modules script", () => {
 			},
 		);
 
-		expect(output).toContain(
-			"Exported 4 documentation modules as gfm Markdown.",
-		);
+		expect(output).toContain("Exported 4 Antora assemblies as gfm Markdown.");
 		expect(output).toContain("Assembly root level: 1");
 		expect(output).toContain("Review bundle:");
 		expect(output).toContain("- review bundle: .github/workflows/release.yml");
@@ -206,7 +204,11 @@ describe("export antora modules script", () => {
 		const result = JSON.parse(output) as {
 			count: number;
 			flavor: string;
-			files: { moduleName: string; outputPath: string }[];
+			files: {
+				assemblyName: string;
+				moduleName: string | null;
+				outputPath: string;
+			}[];
 			reviewBundleFiles: { outputPath: string }[];
 			reviewBundleRoot: string;
 			rootLevel: number;
@@ -223,10 +225,26 @@ describe("export antora modules script", () => {
 		]);
 		expect(result.rootLevel).toBe(1);
 		expect(result.files).toEqual([
-			{ moduleName: "documentation", outputPath: "documentation.md" },
-			{ moduleName: "architecture", outputPath: "architecture.md" },
-			{ moduleName: "manual", outputPath: "manual.md" },
-			{ moduleName: "onboarding", outputPath: "onboarding.md" },
+			{
+				assemblyName: "documentation",
+				moduleName: "ROOT",
+				outputPath: "documentation.md",
+			},
+			{
+				assemblyName: "architecture",
+				moduleName: "architecture",
+				outputPath: "architecture.md",
+			},
+			{
+				assemblyName: "manual",
+				moduleName: "manual",
+				outputPath: "manual.md",
+			},
+			{
+				assemblyName: "onboarding",
+				moduleName: "onboarding",
+				outputPath: "onboarding.md",
+			},
 		]);
 	});
 
@@ -266,6 +284,12 @@ describe("export antora modules script", () => {
 
 		expect(exportedFiles.map((entry) => entry.relativeOutputPath)).toEqual([
 			"index.md",
+		]);
+		expect(exportedFiles).toEqual([
+			expect.objectContaining({
+				assemblyName: "index",
+				moduleName: null,
+			}),
 		]);
 	});
 });

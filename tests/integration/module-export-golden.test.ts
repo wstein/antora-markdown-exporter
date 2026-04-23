@@ -33,7 +33,7 @@ describe("module export golden tests", () => {
 		for (const exportedFile of exportedFiles) {
 			const actual = await readFile(exportedFile.outputPath, "utf8");
 			const expected = await readFile(
-				resolve(fixturesRoot, `${exportedFile.moduleName}.gfm.md`),
+				resolve(fixturesRoot, `${exportedFile.assemblyName}.gfm.md`),
 				"utf8",
 			);
 			expect(actual).toBe(expected);

@@ -26,7 +26,8 @@ export type ExportAntoraModulesOptions = {
 };
 
 export type ExportedMarkdownFile = {
-	moduleName: string;
+	assemblyName: string;
+	moduleName: string | null;
 	outputPath: string;
 	relativeOutputPath: string;
 };
@@ -237,6 +238,7 @@ async function main(): Promise<void> {
 						outputPath: entry.relativeOutputPath,
 					})),
 					files: exportedFiles.map((entry) => ({
+						assemblyName: entry.assemblyName,
 						moduleName: entry.moduleName,
 						outputPath: entry.relativeOutputPath,
 					})),
@@ -250,12 +252,12 @@ async function main(): Promise<void> {
 
 	console.log(
 		[
-			`Exported ${exportedFiles.length} documentation modules as ${options.flavor} Markdown.`,
+			`Exported ${exportedFiles.length} Antora assemblies as ${options.flavor} Markdown.`,
 			`Output root: ${options.outputRoot}`,
 			`Review bundle: ${reviewBundleRoot}`,
 			`Assembly root level: ${options.rootLevel}`,
 			...exportedFiles.map(
-				(entry) => `- ${entry.moduleName}: ${entry.relativeOutputPath}`,
+				(entry) => `- ${entry.assemblyName}: ${entry.relativeOutputPath}`,
 			),
 			...reviewBundleFiles.map(
 				(entry) => `- review bundle: ${entry.relativeOutputPath}`,

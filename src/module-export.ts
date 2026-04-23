@@ -34,7 +34,8 @@ export type AntoraMarkdownModuleExportOptions = {
 };
 
 export type AntoraMarkdownModuleExportFile = {
-	moduleName: string;
+	assemblyName: string;
+	moduleName: string | null;
 	outputPath: string;
 	relativeOutputPath: string;
 };
@@ -64,12 +65,13 @@ export type AntoraMarkdownExportDiagnostic = {
 };
 
 export type AntoraModuleMarkdownExport = {
+	assemblyName: string;
 	component: string;
 	content: string;
 	diagnostics: AntoraMarkdownExportDiagnostic[];
 	flavor: MarkdownFlavorName;
 	mediaType: string;
-	moduleName: string;
+	moduleName: string | null;
 	name: string;
 	path: string;
 	rootLevel: AssemblerRootLevel;
@@ -78,11 +80,12 @@ export type AntoraModuleMarkdownExport = {
 };
 
 export type AssembledAntoraModuleFile = {
+	assemblyName: string;
 	component: string;
 	contents: Buffer;
 	downloadStem: string;
 	mediaType: string;
-	moduleName: string;
+	moduleName: string | null;
 	name: string;
 	relativePath: string;
 	rootLevel: AssemblerRootLevel;
@@ -150,6 +153,26 @@ function toSourcePagePath(page: RuntimePageRef): string | undefined {
 	}
 
 	return `modules/${page.src.module}/pages/${page.src.relative}`;
+}
+
+function parseSourceModuleName(sourcePath: string): string | null {
+	const match = /^modules\/(?<module>[^/]+)\/pages\//u.exec(sourcePath);
+	return match?.groups?.module ?? null;
+}
+
+function inferAssemblyModuleName(sourcePages: string[]): string | null {
+	const moduleNames = [
+		...new Set(
+			sourcePages
+				.map((sourcePath) => parseSourceModuleName(sourcePath))
+				.filter((moduleName): moduleName is string => moduleName !== null),
+		),
+	];
+
+	const [moduleName] = moduleNames;
+	return moduleNames.length === 1 && moduleName !== undefined
+		? moduleName
+		: null;
 }
 
 function collectUnsupportedDiagnosticsFromBlocks(
@@ -290,11 +313,12 @@ export async function assembleAntoraModules(
 		];
 
 		return {
+			assemblyName: file.src.stem,
 			component: file.src.component,
 			contents: Buffer.from(file.contents),
 			downloadStem: file.assembler.downloadStem,
 			mediaType: file.src.mediaType,
-			moduleName: file.src.module,
+			moduleName: inferAssemblyModuleName(sourcePages),
 			name: file.src.stem,
 			relativePath: file.src.relative,
 			rootLevel: file.assembler.rootLevel,
@@ -336,6 +360,7 @@ export async function exportAntoraModulesToMarkdown(
 					file.src.relative.replace(/\.md$/u, ".adoc"),
 				);
 				return {
+					assemblyName: assembledFile?.assemblyName ?? file.src.stem,
 					component: file.src.component,
 					content: await readMarkdownContents(file.contents),
 					diagnostics:
@@ -352,7 +377,7 @@ export async function exportAntoraModulesToMarkdown(
 								),
 					flavor: resolvedOptions.flavor,
 					mediaType: file.src.mediaType,
-					moduleName: file.src.module,
+					moduleName: assembledFile?.moduleName ?? null,
 					name: file.src.stem,
 					path: file.src.relative,
 					rootLevel: resolvedOptions.rootLevel,
@@ -411,7 +436,8 @@ export async function exportAntoraModules(
 		exportedFiles: exports.map((file) => {
 			const relativeOutputPath = file.path;
 			return {
-				moduleName: relativeOutputPath.replace(/\.md$/u, ""),
+				assemblyName: file.assemblyName,
+				moduleName: file.moduleName,
 				outputPath: resolve(outputRoot, relativeOutputPath),
 				relativeOutputPath,
 			};

@@ -90,15 +90,15 @@ Recommended operator loop:
   ```bash
   make docs
   ```
-6. Export Antora module pages to Markdown when you need generated Markdown artifacts from the repository’s own pipeline:
+6. Export Antora assemblies to Markdown when you need generated Markdown artifacts from the repository’s own pipeline:
   ```bash
   make markdown
   ```
 
 That export emits:
 
-- flat module documents at `build/markdown/documentation.md`, `build/markdown/architecture.md`, `build/markdown/manual.md`, and `build/markdown/onboarding.md`
-- one assembled `.md` file for each exported documentation module
+- assembled Markdown files at `build/markdown/documentation.md`, `build/markdown/architecture.md`, `build/markdown/manual.md`, and `build/markdown/onboarding.md`
+- one `.md` file for each Antora assembly selected by `assembly.root_level`
 - output built from the same Assembler-driven export model as the package API and rendered through the same conversion, normalization, and flavor pipeline
 - no post-render Markdown cleanup layer; if the generated Markdown is wrong, the fix belongs in the converter or renderer
   1. Let the Pages workflow publish the static site only after a successful tag-triggered `Release` workflow:
@@ -234,7 +234,7 @@ Important conflict to preserve:
 | `make integration` | Runs integration tests only. |
 | `make reference` | Runs the reference compatibility suite in `tests/integration/reference-antora.test.ts`. |
 | `make inspect-report INPUT=...` | Emits a machine-readable inspection report for one input file by delegating to `bun run inspect:report`. |
-| `make markdown` | Exports Assembler-driven module documents to `build/markdown/documentation.md`, `build/markdown/architecture.md`, `build/markdown/manual.md`, and `build/markdown/onboarding.md` through the dedicated package `markdown:build` task, which runs `scripts/export-antora-modules.ts` in explicit `--package-task-markdown` mode. The repository now keeps the default Markdown export flavor in `antora-playbook.yml` under `asciidoc.attributes.markdown-exporter-flavor`, while `assembly.root_level` remains owned by `antora-assembler.yml`. The direct script reads those Antora-owned defaults; the package task still emits `multimarkdown` as an explicit convenience mode. Both modes keep the `.md` extension. The default CLI output is a human-readable summary; use `bun run export:modules -- --json` when automation needs machine-readable output. The export uses the same Assembler-driven partitioning model and the same converter path as the package API. It also materializes a review bundle under `build/markdown/review-bundle/.github/workflows/` so release and publication claims always ship with `release.yml` and `pages.yml` evidence. Pass `bun run export:modules -- --flavor gfm` to force GFM output. |
+| `make markdown` | Exports Assembler-driven Antora assemblies to Markdown through the dedicated package `markdown:build` task, which runs `scripts/export-antora-modules.ts` in explicit `--package-task-markdown` mode. The repository keeps the default Markdown export flavor in `antora-playbook.yml` under `asciidoc.attributes.markdown-exporter-flavor`, while `assembly.root_level` remains owned by `antora-assembler.yml`. The direct script reads those Antora-owned defaults; the package task still emits `multimarkdown` as an explicit convenience mode. Both modes keep the `.md` extension. The default CLI output is a human-readable summary; use `bun run export:modules -- --json` when automation needs machine-readable output. The export uses the same Assembler-driven partitioning model and the same converter path as the package API. It also materializes a review bundle under `build/markdown/review-bundle/.github/workflows/` so release and publication claims always ship with `release.yml` and `pages.yml` evidence. Pass `bun run export:modules -- --flavor gfm` to force GFM output or `bun run export:modules -- --root-level 0` for a single combined Markdown export. |
 | `bun run check` | Runs Biome checks and the full coverage-enabled Vitest suite. |
 | `bun run release:check` | Runs pre-publish package integrity checks against built artifacts and `npm pack --dry-run`. |
 | `make release VERSION=vX.Y.Z` | Runs the release wizard on `develop`. A new version starts a release candidate; the current untagged version finalizes by creating and pushing the release tag. |

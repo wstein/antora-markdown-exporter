@@ -97,27 +97,37 @@ describe("module export library API", () => {
 
 		expect(
 			assembledFiles.map((entry) => ({
+				assemblyName: entry.assemblyName,
+				moduleName: entry.moduleName,
 				name: entry.name,
 				relativePath: entry.relativePath,
 				sourcePages: entry.sourcePages,
 			})),
 		).toEqual([
 			{
+				assemblyName: "documentation",
+				moduleName: "ROOT",
 				name: "documentation",
 				relativePath: "documentation.adoc",
 				sourcePages: ["modules/ROOT/pages/index.adoc"],
 			},
 			{
+				assemblyName: "architecture",
+				moduleName: "architecture",
 				name: "architecture",
 				relativePath: "architecture.adoc",
 				sourcePages: ["modules/architecture/pages/index.adoc"],
 			},
 			{
+				assemblyName: "manual",
+				moduleName: "manual",
 				name: "manual",
 				relativePath: "manual.adoc",
 				sourcePages: ["modules/manual/pages/index.adoc"],
 			},
 			{
+				assemblyName: "onboarding",
+				moduleName: "onboarding",
 				name: "onboarding",
 				relativePath: "onboarding.adoc",
 				sourcePages: ["modules/onboarding/pages/index.adoc"],
@@ -145,6 +155,12 @@ describe("module export library API", () => {
 			"architecture.md",
 			"manual.md",
 			"onboarding.md",
+		]);
+		expect(markdownExports.map((entry) => entry.moduleName)).toEqual([
+			"ROOT",
+			"architecture",
+			"manual",
+			"onboarding",
 		]);
 		expect(
 			markdownExports.every((entry) => entry.diagnostics.length === 0),
@@ -227,4 +243,21 @@ describe("module export library API", () => {
 		expect(exports[0]?.content).toContain("Unsupported:");
 		expect(exports[0]?.sourcePages).toEqual(["modules/ROOT/pages/index.adoc"]);
 	}, 15_000);
+
+	it("reports assembly-first metadata for a single combined export", async () => {
+		const markdownExports = await exportAntoraModulesToMarkdown({
+			playbookPath: resolve("antora-playbook.yml"),
+			rootLevel: 0,
+		});
+
+		expect(markdownExports).toHaveLength(1);
+		expect(markdownExports[0]).toEqual(
+			expect.objectContaining({
+				assemblyName: "index",
+				moduleName: null,
+				path: "index.md",
+				rootLevel: 0,
+			}),
+		);
+	});
 });
