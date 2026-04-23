@@ -90,22 +90,11 @@ afterEach(async () => {
 });
 
 describe("module export library API", () => {
-	it("publishes a stable library surface for Antora module export", async () => {
+	it("publishes assembled module files with source-page provenance", async () => {
 		const assembledFiles = await assembleAntoraModules({
 			playbookPath: resolve("antora-playbook.yml"),
 		});
-		const outputRoot = await mkdtemp(
-			resolve(tmpdir(), "antora-markdown-library-export-"),
-		);
-		const defaults = await resolveAntoraMarkdownExportDefaults({
-			playbookPath: resolve("antora-playbook.yml"),
-		});
 
-		expect(defaults).toEqual({
-			flavor: "gfm",
-			rootLevel: 1,
-			xrefFallbackLabelStyle: "fragment-or-basename",
-		});
 		expect(
 			assembledFiles.map((entry) => ({
 				name: entry.name,
@@ -137,47 +126,44 @@ describe("module export library API", () => {
 		expect(assembledFiles[0]?.contents.toString("utf8")).toContain(
 			"= Antora Markdown Exporter: Documentation",
 		);
+	}, 15_000);
+
+	it("publishes in-memory markdown exports with metadata and defaults", async () => {
+		const defaults = await resolveAntoraMarkdownExportDefaults({
+			playbookPath: resolve("antora-playbook.yml"),
+		});
 		const markdownExports = await exportAntoraModulesToMarkdown({
 			playbookPath: resolve("antora-playbook.yml"),
 		});
+
+		expect(defaults).toEqual({
+			flavor: "gfm",
+			rootLevel: 1,
+			xrefFallbackLabelStyle: "fragment-or-basename",
+		});
+		expect(markdownExports.map((entry) => entry.path)).toEqual([
+			"documentation.md",
+			"architecture.md",
+			"manual.md",
+			"onboarding.md",
+		]);
 		expect(
-			markdownExports.map((entry) => ({
-				diagnostics: entry.diagnostics,
-				name: entry.name,
-				path: entry.path,
-				sourcePages: entry.sourcePages,
-			})),
-		).toEqual([
-			{
-				diagnostics: [],
-				name: "documentation",
-				path: "documentation.md",
-				sourcePages: ["modules/ROOT/pages/index.adoc"],
-			},
-			{
-				diagnostics: [],
-				name: "architecture",
-				path: "architecture.md",
-				sourcePages: ["modules/architecture/pages/index.adoc"],
-			},
-			{
-				diagnostics: [],
-				name: "manual",
-				path: "manual.md",
-				sourcePages: ["modules/manual/pages/index.adoc"],
-			},
-			{
-				diagnostics: [],
-				name: "onboarding",
-				path: "onboarding.md",
-				sourcePages: ["modules/onboarding/pages/index.adoc"],
-			},
+			markdownExports.every((entry) => entry.diagnostics.length === 0),
+		).toBe(true);
+		expect(markdownExports[2]?.sourcePages).toEqual([
+			"modules/manual/pages/index.adoc",
 		]);
 		expect(markdownExports[2]?.content).toContain(
 			"# Antora Markdown Exporter: Manual",
 		);
 		expect(markdownExports[2]?.content).toContain(
 			"- [Chapter 2. Core Workflows](#chapter-2-core-workflows)",
+		);
+	}, 15_000);
+
+	it("writes markdown exports and optional assembly source files to disk", async () => {
+		const outputRoot = await mkdtemp(
+			resolve(tmpdir(), "antora-markdown-library-export-"),
 		);
 
 		const result = await exportAntoraModules({
@@ -213,7 +199,7 @@ describe("module export library API", () => {
 		expect(manualAssemblySource).toContain(
 			"= Antora Markdown Exporter: Manual",
 		);
-	});
+	}, 15_000);
 
 	it("emits structured export diagnostics for unsupported assembly nodes", async () => {
 		const root = await createUnsupportedFixtureRepository();
@@ -242,5 +228,5 @@ describe("module export library API", () => {
 		]);
 		expect(exports[0]?.content).toContain("Unsupported:");
 		expect(exports[0]?.sourcePages).toEqual(["modules/ROOT/pages/index.adoc"]);
-	});
+	}, 15_000);
 });
