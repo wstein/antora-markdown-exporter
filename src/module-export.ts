@@ -1,5 +1,6 @@
 import { resolve } from "node:path";
 import {
+	assembleAntoraModules as assembleModulesFromRuntime,
 	resolveAntoraMarkdownExportDefaults as resolveDefaultsFromRuntime,
 	runAntoraAssembler as runAssemblerRuntime,
 } from "./antora-runtime.js";
@@ -42,6 +43,19 @@ export type AntoraMarkdownModuleExportResult = {
 	xrefFallbackLabelStyle: XrefFallbackLabelStyle;
 };
 
+export type AssembledAntoraModuleFile = {
+	component: string;
+	contents: Buffer;
+	downloadStem: string;
+	mediaType: string;
+	moduleName: string;
+	name: string;
+	relativePath: string;
+	rootLevel: AssemblerRootLevel;
+	sourcePages: string[];
+	version: string;
+};
+
 export type AntoraAssemblerRunOptions = {
 	buildDir: string;
 	configSource?: AntoraMarkdownExporterExtensionConfig["configSource"];
@@ -50,6 +64,53 @@ export type AntoraAssemblerRunOptions = {
 	playbookPath: string;
 	rootLevel?: AssemblerRootLevel;
 };
+
+export type AssembleAntoraModulesOptions = {
+	configSource?: AntoraMarkdownExporterExtensionConfig["configSource"];
+	playbookPath: string;
+	rootLevel?: AssemblerRootLevel;
+};
+
+type RuntimePageRef = {
+	src?: { family?: string; module?: string; relative?: string };
+};
+
+type RuntimeAssembledModuleFile = {
+	assembler: {
+		assembled?: {
+			pages?: Map<RuntimePageRef, unknown>;
+		};
+		downloadStem: string;
+		rootLevel: AssemblerRootLevel;
+	};
+	contents: Buffer;
+	src: {
+		component: string;
+		mediaType: string;
+		module: string;
+		relative: string;
+		stem: string;
+		version: string;
+	};
+};
+
+type RuntimeExportedModuleFile = {
+	src: {
+		relative: string;
+	};
+};
+
+function toSourcePagePath(page: RuntimePageRef): string | undefined {
+	if (
+		page.src?.family !== "page" ||
+		page.src.module === undefined ||
+		page.src.relative === undefined
+	) {
+		return undefined;
+	}
+
+	return `modules/${page.src.module}/pages/${page.src.relative}`;
+}
 
 export async function resolveAntoraMarkdownExportDefaults({
 	configSource,
@@ -63,20 +124,47 @@ export async function resolveAntoraMarkdownExportDefaults({
 
 export async function runAntoraAssembler(
 	options: AntoraAssemblerRunOptions,
-): Promise<
-	{
-		src: {
-			relative: string;
-		};
-	}[]
-> {
-	return runAssemblerRuntime({
+): Promise<RuntimeExportedModuleFile[]> {
+	return (await runAssemblerRuntime({
 		buildDir: options.buildDir,
 		configSource: options.configSource,
 		converter: options.converter,
 		keepSource: options.keepSource,
 		playbookPath: options.playbookPath,
 		rootLevel: options.rootLevel,
+	})) as RuntimeExportedModuleFile[];
+}
+
+export async function assembleAntoraModules(
+	options: AssembleAntoraModulesOptions,
+): Promise<AssembledAntoraModuleFile[]> {
+	const files = (await assembleModulesFromRuntime({
+		configSource: options.configSource,
+		playbookPath: options.playbookPath,
+		rootLevel: options.rootLevel,
+	})) as RuntimeAssembledModuleFile[];
+
+	return files.map((file) => {
+		const sourcePages = [
+			...new Set(
+				Array.from(file.assembler?.assembled?.pages?.keys?.() ?? [])
+					.map((page) => toSourcePagePath(page))
+					.filter((page): page is string => page !== undefined),
+			),
+		];
+
+		return {
+			component: file.src.component,
+			contents: Buffer.from(file.contents),
+			downloadStem: file.assembler.downloadStem,
+			mediaType: file.src.mediaType,
+			moduleName: file.src.module,
+			name: file.src.stem,
+			relativePath: file.src.relative,
+			rootLevel: file.assembler.rootLevel,
+			sourcePages,
+			version: file.src.version,
+		};
 	});
 }
 

@@ -251,6 +251,7 @@ describe("repository contract", () => {
 		expect(manualDoc).toContain("`Test-enforced`");
 		expect(manualDoc).toContain("`CI-enforced`");
 		expect(manualDoc).toContain("`Intended`");
+		expect(packageIndex).toContain("assembleAntoraModules");
 
 		expect(introGoalsDoc).toContain("=== Claim Status Grammar");
 		expect(qualityDoc).toContain("=== Proof Matrix");

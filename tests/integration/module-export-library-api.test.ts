@@ -3,12 +3,16 @@ import { tmpdir } from "node:os";
 import { resolve } from "node:path";
 import { describe, expect, it } from "vitest";
 import {
+	assembleAntoraModules,
 	exportAntoraModules,
 	resolveAntoraMarkdownExportDefaults,
 } from "../../src/index.js";
 
 describe("module export library API", () => {
 	it("publishes a stable library surface for Antora module export", async () => {
+		const assembledFiles = await assembleAntoraModules({
+			playbookPath: resolve("antora-playbook.yml"),
+		});
 		const outputRoot = await mkdtemp(
 			resolve(tmpdir(), "antora-markdown-library-export-"),
 		);
@@ -21,6 +25,37 @@ describe("module export library API", () => {
 			rootLevel: 1,
 			xrefFallbackLabelStyle: "fragment-or-basename",
 		});
+		expect(
+			assembledFiles.map((entry) => ({
+				name: entry.name,
+				relativePath: entry.relativePath,
+				sourcePages: entry.sourcePages,
+			})),
+		).toEqual([
+			{
+				name: "documentation",
+				relativePath: "documentation.adoc",
+				sourcePages: ["modules/ROOT/pages/index.adoc"],
+			},
+			{
+				name: "architecture",
+				relativePath: "architecture.adoc",
+				sourcePages: ["modules/architecture/pages/index.adoc"],
+			},
+			{
+				name: "manual",
+				relativePath: "manual.adoc",
+				sourcePages: ["modules/manual/pages/index.adoc"],
+			},
+			{
+				name: "onboarding",
+				relativePath: "onboarding.adoc",
+				sourcePages: ["modules/onboarding/pages/index.adoc"],
+			},
+		]);
+		expect(assembledFiles[0]?.contents.toString("utf8")).toContain(
+			"= Antora Markdown Exporter: Documentation",
+		);
 
 		const result = await exportAntoraModules({
 			outputRoot,

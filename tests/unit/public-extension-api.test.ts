@@ -1,5 +1,6 @@
 import { describe, expect, it } from "vitest";
 import {
+	assembleAntoraModules,
 	collectMarkdownInspectionRagDocument,
 	createMarkdownConverter,
 	describePackage,
@@ -25,6 +26,7 @@ describe("public extension API", () => {
 	});
 
 	it("exports the stable Antora module-export library entrypoints", () => {
+		expect(typeof assembleAntoraModules).toBe("function");
 		expect(typeof exportAntoraModules).toBe("function");
 		expect(typeof resolveAntoraMarkdownExportDefaults).toBe("function");
 		expect(typeof runAntoraAssembler).toBe("function");

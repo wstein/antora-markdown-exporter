@@ -55,9 +55,9 @@ function parseConfiguredXrefFallbackLabelStyle(value) {
 function createBuildConfig(buildDir, keepSource = false) {
 	return {
 		clean: false,
-		dir: buildDir,
 		keepSource,
 		publish: false,
+		...(buildDir ? { dir: buildDir } : {}),
 	};
 }
 
@@ -182,12 +182,12 @@ async function createExportedPageUrlMap(
 	return exportedPageUrlMap;
 }
 
-export async function runAntoraAssembler({
+async function prepareAntoraRuntime({
 	buildDir,
 	configSource,
-	converter,
 	keepSource = false,
 	playbookPath,
+	preferredQualifier,
 	rootLevel,
 }) {
 	const resolvedPlaybookPath = resolve(playbookPath);
@@ -200,9 +200,6 @@ export async function runAntoraAssembler({
 		["--playbook", resolvedPlaybookPath],
 		process.env,
 	);
-	const preferredQualifier = `-${
-		converter?.backend ?? converter?.extname?.slice(1) ?? "markdown"
-	}`;
 	const baseAssemblerConfig = await loadAssemblerConfig.call(
 		moduleShim,
 		playbook,
@@ -215,51 +212,123 @@ export async function runAntoraAssembler({
 		rootLevel,
 	});
 	const context = new GeneratorContext(moduleShim);
+	const { fxns, vars } = await GeneratorContext.start(context, playbook);
+	vars.siteAsciiDocConfig = fxns.resolveAsciiDocConfig(playbook);
+	if (!(vars.siteAsciiDocConfig.keepSource instanceof Boolean)) {
+		vars.siteAsciiDocConfig.keepSource = Object.assign(new Boolean(true), {
+			oldValue: vars.siteAsciiDocConfig.keepSource,
+		});
+	}
+	const contentAggregate = await fxns.aggregateContent(playbook);
+	vars.contentCatalog = fxns.classifyContent(
+		playbook,
+		contentAggregate,
+		vars.siteAsciiDocConfig,
+	);
+	fxns.convertDocuments(vars.contentCatalog, vars.siteAsciiDocConfig);
+	const navigationCatalog = fxns.buildNavigation(
+		vars.contentCatalog,
+		vars.siteAsciiDocConfig,
+	);
+
+	return {
+		assemblerConfig,
+		context,
+		fxns,
+		navigationCatalog,
+		playbook,
+		vars,
+	};
+}
+
+function closeAntoraRuntime(context) {
+	return GeneratorContext.close(context);
+}
+
+function produceAssemblerFiles(runtime) {
+	const loadAsciiDoc =
+		runtime.fxns.loadAsciiDoc ?? require("@antora/asciidoc-loader");
+	return produceAssemblyFiles(
+		loadAsciiDoc,
+		runtime.vars.contentCatalog,
+		runtime.assemblerConfig,
+		(componentVersion) => ({
+			...runtime.assemblerConfig.assembly,
+			attributes: { ...runtime.assemblerConfig.assembly.attributes },
+			navigation:
+				runtime.navigationCatalog?.getNavigation(
+					componentVersion.name,
+					componentVersion.version,
+				) ?? componentVersion.navigation,
+		}),
+	);
+}
+
+export async function assembleAntoraModules({
+	configSource,
+	playbookPath,
+	rootLevel,
+}) {
+	const runtime = await prepareAntoraRuntime({
+		configSource,
+		playbookPath,
+		preferredQualifier: "-markdown",
+		rootLevel,
+	});
 
 	try {
-		const { fxns, vars } = await GeneratorContext.start(context, playbook);
-		vars.siteAsciiDocConfig = fxns.resolveAsciiDocConfig(playbook);
-		if (!(vars.siteAsciiDocConfig.keepSource instanceof Boolean)) {
-			vars.siteAsciiDocConfig.keepSource = Object.assign(new Boolean(true), {
-				oldValue: vars.siteAsciiDocConfig.keepSource,
-			});
-		}
-		const contentAggregate = await fxns.aggregateContent(playbook);
-		vars.contentCatalog = fxns.classifyContent(
-			playbook,
-			contentAggregate,
-			vars.siteAsciiDocConfig,
-		);
-		fxns.convertDocuments(vars.contentCatalog, vars.siteAsciiDocConfig);
-		const navigationCatalog = fxns.buildNavigation(
-			vars.contentCatalog,
-			vars.siteAsciiDocConfig,
-		);
+		return produceAssemblerFiles(runtime);
+	} finally {
+		await closeAntoraRuntime(runtime.context);
+	}
+}
+
+export async function runAntoraAssembler({
+	buildDir,
+	configSource,
+	converter,
+	keepSource = false,
+	playbookPath,
+	rootLevel,
+}) {
+	const preferredQualifier = `-${
+		converter?.backend ?? converter?.extname?.slice(1) ?? "markdown"
+	}`;
+	const runtime = await prepareAntoraRuntime({
+		buildDir,
+		configSource,
+		keepSource,
+		playbookPath,
+		preferredQualifier,
+		rootLevel,
+	});
+
+	try {
 		if (typeof converter?.setExportedPageUrlMap === "function") {
 			converter.setExportedPageUrlMap(
 				await createExportedPageUrlMap(
-					context,
-					playbook,
-					vars.contentCatalog,
+					runtime.context,
+					runtime.playbook,
+					runtime.vars.contentCatalog,
 					converter,
-					assemblerConfig,
-					navigationCatalog,
+					runtime.assemblerConfig,
+					runtime.navigationCatalog,
 				),
 			);
 		}
 
 		return await assembleContent.call(
-			context,
-			playbook,
-			vars.contentCatalog,
+			runtime.context,
+			runtime.playbook,
+			runtime.vars.contentCatalog,
 			converter,
 			{
-				configSource: assemblerConfig,
-				navigationCatalog,
+				configSource: runtime.assemblerConfig,
+				navigationCatalog: runtime.navigationCatalog,
 			},
 		);
 	} finally {
-		await GeneratorContext.close(context);
+		await closeAntoraRuntime(runtime.context);
 	}
 }
 
