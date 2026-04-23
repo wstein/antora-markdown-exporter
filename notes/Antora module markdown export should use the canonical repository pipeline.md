@@ -25,6 +25,8 @@ The repository script and Make target should stay thin wrappers over that one pi
 
 That export-local link rewriting still belongs to the same pipeline because it uses Antora Assembler membership data for the assembled outputs. It is not a second converter and it is not a renderer-side string cleanup pass.
 
+That exporter-local link rewriting is no longer part of the intended architecture. The stricter boundary is to trust Assembler for internal reference rewriting and let the Markdown exporter convert the assembled source it receives without a second page-link routing pass.
+
 ## Why
 
 If local export workflows bypass the canonical pipeline:

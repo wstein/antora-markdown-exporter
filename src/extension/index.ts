@@ -4,11 +4,6 @@ import { configure } from "@antora/assembler";
 import { extractAssemblyStructure } from "../adapter/asciidoctor-structure.js";
 import { convertAssemblyStructureToMarkdownIR } from "../exporter/structured-to-ir.js";
 import type { MarkdownFlavorName } from "../markdown/flavor.js";
-import type {
-	MarkdownBlock,
-	MarkdownDocument,
-	MarkdownInline,
-} from "../markdown/ir.js";
 import { normalizeMarkdownIR } from "../markdown/normalize.js";
 import { renderMarkdown } from "../markdown/render/index.js";
 
@@ -33,7 +28,6 @@ export interface AntoraMarkdownExporterExtensionConfig {
 }
 
 type MarkdownConverterConfig = {
-	readonly exportedPageUrlMap?: ReadonlyMap<string, string>;
 	readonly flavor: MarkdownFlavorName;
 	readonly xrefFallbackLabelStyle: XrefFallbackLabelStyle;
 };
@@ -162,248 +156,12 @@ function extractStringAttributes(
 	);
 }
 
-function normalizeSiteBasePath(
-	siteUrl: string | undefined,
-): string | undefined {
-	if (siteUrl === undefined || siteUrl.length === 0) {
-		return undefined;
-	}
-
-	try {
-		const pathname = new URL(siteUrl).pathname.replace(/\/$/u, "");
-		return pathname.length === 0 ? undefined : pathname;
-	} catch {
-		return undefined;
-	}
-}
-
-function resolveExportedPageUrl(
-	url: string,
-	exportedPageUrlMap: ReadonlyMap<string, string>,
-	siteBasePath?: string,
-): string | undefined {
-	const mappedUrl = exportedPageUrlMap.get(url);
-	if (mappedUrl !== undefined) {
-		return mappedUrl;
-	}
-
-	try {
-		const pathname = new URL(url).pathname;
-		const normalizedPathname =
-			siteBasePath !== undefined && pathname.startsWith(`${siteBasePath}/`)
-				? pathname.slice(siteBasePath.length)
-				: pathname;
-		return (
-			exportedPageUrlMap.get(pathname) ??
-			exportedPageUrlMap.get(normalizedPathname)
-		);
-	} catch {
-		return undefined;
-	}
-}
-
-function rewriteExportedPageLinkInlines(
-	inlines: MarkdownInline[],
-	exportedPageUrlMap: ReadonlyMap<string, string>,
-	siteBasePath?: string,
-): MarkdownInline[] {
-	return inlines.map((inline) => {
-		switch (inline.type) {
-			case "emphasis":
-			case "strong":
-				return {
-					...inline,
-					children: rewriteExportedPageLinkInlines(
-						inline.children,
-						exportedPageUrlMap,
-						siteBasePath,
-					),
-				};
-			case "link":
-				return {
-					...inline,
-					url:
-						resolveExportedPageUrl(
-							inline.url,
-							exportedPageUrlMap,
-							siteBasePath,
-						) ?? inline.url,
-					children: rewriteExportedPageLinkInlines(
-						inline.children,
-						exportedPageUrlMap,
-						siteBasePath,
-					),
-				};
-			case "xref":
-				return {
-					...inline,
-					url:
-						resolveExportedPageUrl(
-							inline.url,
-							exportedPageUrlMap,
-							siteBasePath,
-						) ?? inline.url,
-					children: rewriteExportedPageLinkInlines(
-						inline.children,
-						exportedPageUrlMap,
-						siteBasePath,
-					),
-				};
-			case "image":
-				return {
-					...inline,
-					alt: rewriteExportedPageLinkInlines(
-						inline.alt,
-						exportedPageUrlMap,
-						siteBasePath,
-					),
-				};
-			default:
-				return inline;
-		}
-	});
-}
-
-function rewriteExportedPageLinkBlocks(
-	blocks: MarkdownBlock[],
-	exportedPageUrlMap: ReadonlyMap<string, string>,
-	siteBasePath?: string,
-): MarkdownBlock[] {
-	return blocks.map((block) => {
-		switch (block.type) {
-			case "paragraph":
-			case "heading":
-				return {
-					...block,
-					children: rewriteExportedPageLinkInlines(
-						block.children,
-						exportedPageUrlMap,
-						siteBasePath,
-					),
-				};
-			case "blockquote":
-			case "admonition":
-				return {
-					...block,
-					children: rewriteExportedPageLinkBlocks(
-						block.children,
-						exportedPageUrlMap,
-						siteBasePath,
-					),
-				};
-			case "list":
-				return {
-					...block,
-					items: block.items.map((item) => ({
-						...item,
-						children: rewriteExportedPageLinkBlocks(
-							item.children,
-							exportedPageUrlMap,
-							siteBasePath,
-						),
-					})),
-				};
-			case "labeledGroup":
-				return {
-					...block,
-					label: rewriteExportedPageLinkInlines(
-						block.label,
-						exportedPageUrlMap,
-						siteBasePath,
-					),
-					children: rewriteExportedPageLinkBlocks(
-						block.children,
-						exportedPageUrlMap,
-						siteBasePath,
-					),
-				};
-			case "table":
-				return {
-					...block,
-					caption:
-						block.caption === undefined
-							? undefined
-							: rewriteExportedPageLinkInlines(
-									block.caption,
-									exportedPageUrlMap,
-									siteBasePath,
-								),
-					header: {
-						...block.header,
-						cells: block.header.cells.map((cell) => ({
-							...cell,
-							children: rewriteExportedPageLinkInlines(
-								cell.children,
-								exportedPageUrlMap,
-								siteBasePath,
-							),
-						})),
-					},
-					rows: block.rows.map((row) => ({
-						...row,
-						cells: row.cells.map((cell) => ({
-							...cell,
-							children: rewriteExportedPageLinkInlines(
-								cell.children,
-								exportedPageUrlMap,
-								siteBasePath,
-							),
-						})),
-					})),
-				};
-			case "calloutList":
-				return {
-					...block,
-					items: block.items.map((item) => ({
-						...item,
-						children: rewriteExportedPageLinkBlocks(
-							item.children,
-							exportedPageUrlMap,
-							siteBasePath,
-						),
-					})),
-				};
-			case "footnoteDefinition":
-				return {
-					...block,
-					children: rewriteExportedPageLinkBlocks(
-						block.children,
-						exportedPageUrlMap,
-						siteBasePath,
-					),
-				};
-			default:
-				return block;
-		}
-	});
-}
-
-function rewriteExportedPageLinks(
-	document: MarkdownDocument,
-	exportedPageUrlMap: ReadonlyMap<string, string>,
-	siteBasePath?: string,
-): MarkdownDocument {
-	if (exportedPageUrlMap.size === 0) {
-		return document;
-	}
-
-	return {
-		...document,
-		children: rewriteExportedPageLinkBlocks(
-			document.children,
-			exportedPageUrlMap,
-			siteBasePath,
-		),
-	};
-}
-
 export function renderAssemblyMarkdown(
 	source: string,
 	flavor: MarkdownFlavorName = defaultFlavor,
 	sourcePath = "assembly.adoc",
 	options: {
 		attributes?: Record<string, string>;
-		exportedPageUrlMap?: ReadonlyMap<string, string>;
 		xrefFallbackLabelStyle?: XrefFallbackLabelStyle;
 	} = {},
 ): string {
@@ -413,14 +171,7 @@ export function renderAssemblyMarkdown(
 		xrefFallbackLabelStyle: options.xrefFallbackLabelStyle,
 	});
 	return renderMarkdown(
-		rewriteExportedPageLinks(
-			normalizeMarkdownIR(convertAssemblyStructureToMarkdownIR(structured)),
-			options.exportedPageUrlMap ?? new Map(),
-			normalizeSiteBasePath(
-				options.attributes?.["site-url"] ??
-					options.attributes?.["primary-site-url"],
-			),
-		),
+		normalizeMarkdownIR(convertAssemblyStructureToMarkdownIR(structured)),
 		flavor,
 	);
 }
@@ -431,17 +182,12 @@ export function createMarkdownConverter(
 	const flavor = config.flavor ?? defaultFlavor;
 	const xrefFallbackLabelStyle =
 		config.xrefFallbackLabelStyle ?? defaultXrefFallbackLabelStyle;
-	let exportedPageUrlMap =
-		config.exportedPageUrlMap ?? new Map<string, string>();
 
 	return {
 		backend: "markdown",
 		extname: ".md",
 		mediaType: "text/markdown",
 		loggerName: "@wsmy/antora-markdown-exporter",
-		setExportedPageUrlMap(value: ReadonlyMap<string, string>) {
-			exportedPageUrlMap = value;
-		},
 		async convert(
 			file: AssemblerFile,
 			convertAttributes: ConvertAttributes,
@@ -462,7 +208,6 @@ export function createMarkdownConverter(
 				convertAttributes.docfile,
 				{
 					attributes: extractStringAttributes(convertAttributes),
-					exportedPageUrlMap,
 					xrefFallbackLabelStyle,
 				},
 			);

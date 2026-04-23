@@ -87,101 +87,6 @@ function mergeAssemblerConfig(
 	};
 }
 
-function createIntrinsicAssemblerAttributes(converter) {
-	const attributes = {
-		"loader-assembler": "",
-	};
-	const targetExtname = converter?.extname ?? "";
-	const targetBackend = converter?.backend ?? targetExtname.slice(1);
-	const profile = targetBackend;
-
-	if (profile) {
-		attributes[`assembler-profile-${profile}`] = "";
-		attributes["assembler-profile"] = profile;
-	}
-
-	if (targetBackend) {
-		attributes[`assembler-backend-${targetBackend}`] = "";
-		attributes["assembler-backend"] = targetBackend;
-	}
-
-	if (targetExtname) {
-		const targetFiletype = targetExtname.slice(1);
-		attributes[`assembler-filetype-${targetFiletype}`] = "";
-		attributes["assembler-filetype"] = targetFiletype;
-	}
-
-	return attributes;
-}
-
-async function createExportedPageUrlMap(
-	context,
-	playbook,
-	contentCatalog,
-	converter,
-	configSource,
-	navigationCatalog,
-) {
-	const assemblerConfig = await loadAssemblerConfig.call(
-		context,
-		playbook,
-		configSource,
-		`-${converter?.backend ?? converter?.extname?.slice(1) ?? ""}`,
-	);
-	if (assemblerConfig.enabled === false) {
-		return new Map();
-	}
-
-	Object.assign(
-		assemblerConfig.assembly.attributes,
-		createIntrinsicAssemblerAttributes(converter),
-	);
-
-	const generatorFunctions = context.getFunctions();
-	const loadAsciiDoc =
-		generatorFunctions.loadAsciiDoc ?? require("@antora/asciidoc-loader");
-	const assemblyFiles = produceAssemblyFiles(
-		loadAsciiDoc,
-		contentCatalog,
-		assemblerConfig,
-		(componentVersion) => ({
-			...assemblerConfig.assembly,
-			attributes: { ...assemblerConfig.assembly.attributes },
-			navigation:
-				navigationCatalog?.getNavigation(
-					componentVersion.name,
-					componentVersion.version,
-				) ?? componentVersion.navigation,
-		}),
-	);
-	const siteUrl =
-		assemblerConfig.assembly.attributes["site-url"] ??
-		assemblerConfig.assembly.attributes["primary-site-url"];
-	const exportedPageUrlMap = new Map();
-
-	for (const assemblyFile of assemblyFiles) {
-		const outputRelativePath = assemblyFile.src.relative.replace(
-			/\.adoc$/u,
-			converter.extname,
-		);
-		for (const page of assemblyFile.assembler.assembled.pages.keys()) {
-			if (typeof page.pub?.url !== "string" || page.pub.url.length === 0) {
-				continue;
-			}
-
-			exportedPageUrlMap.set(page.pub.url, outputRelativePath);
-			if (typeof siteUrl === "string" && siteUrl.length > 0) {
-				exportedPageUrlMap.set(
-					new URL(page.pub.url, siteUrl).toString(),
-					outputRelativePath,
-				);
-			}
-		}
-	}
-
-	return exportedPageUrlMap;
-}
-
 async function prepareAntoraRuntime({
 	buildDir,
 	configSource,
@@ -304,19 +209,6 @@ export async function runAntoraAssembler({
 	});
 
 	try {
-		if (typeof converter?.setExportedPageUrlMap === "function") {
-			converter.setExportedPageUrlMap(
-				await createExportedPageUrlMap(
-					runtime.context,
-					runtime.playbook,
-					runtime.vars.contentCatalog,
-					converter,
-					runtime.assemblerConfig,
-					runtime.navigationCatalog,
-				),
-			);
-		}
-
 		return await assembleContent.call(
 			runtime.context,
 			runtime.playbook,
