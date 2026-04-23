@@ -185,6 +185,7 @@ export async function runAntoraAssembler({
 	configSource,
 	converter,
 	keepSource = false,
+	logOutput,
 	playbookPath,
 	rootLevel,
 }) {
@@ -209,6 +210,7 @@ export async function runAntoraAssembler({
 			{
 				configSource: runtime.assemblerConfig,
 				navigationCatalog: runtime.navigationCatalog,
+				logOutput,
 			},
 		);
 	} finally {

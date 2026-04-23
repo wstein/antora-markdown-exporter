@@ -51,6 +51,7 @@ export type AntoraMarkdownModuleExportResult = {
 export type ExportAntoraModulesToMarkdownOptions = {
 	configSource?: AntoraMarkdownExporterExtensionConfig["configSource"];
 	flavor?: MarkdownFlavorName;
+	logOutput?: string;
 	playbookPath: string;
 	rootLevel?: AssemblerRootLevel;
 };
@@ -98,6 +99,7 @@ export type AntoraAssemblerRunOptions = {
 	configSource?: AntoraMarkdownExporterExtensionConfig["configSource"];
 	converter: ReturnType<typeof createMarkdownConverter>;
 	keepSource?: boolean;
+	logOutput?: string;
 	playbookPath: string;
 	rootLevel?: AssemblerRootLevel;
 };
@@ -289,6 +291,7 @@ export async function runAntoraAssembler(
 		configSource: options.configSource,
 		converter: options.converter,
 		keepSource: options.keepSource,
+		logOutput: options.logOutput,
 		playbookPath: options.playbookPath,
 		rootLevel: options.rootLevel,
 	})) as RuntimeExportedModuleFile[];
@@ -350,6 +353,7 @@ export async function exportAntoraModulesToMarkdown(
 			buildDir,
 			configSource: options.configSource,
 			converter,
+			logOutput: options.logOutput,
 			playbookPath: resolvedOptions.playbookPath,
 			rootLevel: resolvedOptions.rootLevel,
 		});

@@ -210,6 +210,7 @@ export function register(
 	if (logOutput) {
 		const originalStderr = console.error;
 		const originalStdout = console.log;
+		const originalStderrWrite = process.stderr.write.bind(process.stderr);
 
 		console.error = (...args: unknown[]) => {
 			capturedLogs.push(args.map((arg) => String(arg)).join(" "));
@@ -221,16 +222,32 @@ export function register(
 			originalStdout(...args);
 		};
 
+		process.stderr.write = ((
+			chunk: string | Uint8Array,
+			encodingOrCallback?: BufferEncoding | ((error?: Error | null) => void),
+			callback?: (error?: Error | null) => void,
+		) => {
+			const text = String(chunk);
+			capturedLogs.push(text.trimEnd());
+			return originalStderrWrite(chunk, encodingOrCallback as never, callback);
+		}) as typeof process.stderr.write;
+
 		// Write logs after configure completes
 		const writeLogsAsync = async () => {
-			const logContent = [
-				"=== Antora Markdown Export Log ===",
-				new Date().toISOString(),
-				"",
-				...capturedLogs,
-			].join("\n");
-			await mkdir(dirname(logOutput), { recursive: true });
-			await writeFile(logOutput, logContent, "utf8");
+			try {
+				const logContent = [
+					"=== Antora Markdown Export Log ===",
+					new Date().toISOString(),
+					"",
+					...capturedLogs,
+				].join("\n");
+				await mkdir(dirname(logOutput), { recursive: true });
+				await writeFile(logOutput, logContent, "utf8");
+			} finally {
+				process.stderr.write = originalStderrWrite;
+				console.error = originalStderr;
+				console.log = originalStdout;
+			}
 		};
 
 		// Schedule log write for next tick to ensure it happens after processing
