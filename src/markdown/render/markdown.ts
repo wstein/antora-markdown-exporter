@@ -2,7 +2,6 @@ import { renderUnsupportedBlock, resolveRawHtmlFallback } from "../fallback.js";
 import type { MarkdownFlavorName, MarkdownFlavorSpec } from "../flavor.js";
 import { resolveMarkdownFlavor } from "../flavor.js";
 import type { MarkdownBlock, MarkdownDocument, MarkdownInline } from "../ir.js";
-import { resolveMarkdownXrefDestination } from "../xref-resolution.js";
 
 function escapeMarkdownText(value: string): string {
 	return value.replace(/[\\*_`[\]<>]/g, "\\$&");
@@ -185,7 +184,7 @@ function renderInline(
 			return `[${label}](${renderLinkDestination(node.url, node.title)})`;
 		}
 		case "xref":
-			return `[${node.children.map((child) => renderInline(child, flavor, context)).join("")}](${renderLinkDestination(resolveMarkdownXrefDestination(node, flavor), node.title)})`;
+			return `[${node.children.map((child) => renderInline(child, flavor, context)).join("")}](${renderLinkDestination(node.url, node.title)})`;
 		case "image": {
 			const alt = node.alt
 				.map((child) => renderInline(child, flavor, context))

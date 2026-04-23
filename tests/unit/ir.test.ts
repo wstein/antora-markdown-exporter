@@ -103,7 +103,7 @@ describe("Markdown IR boundary", () => {
 			children: expect.arrayContaining([
 				expect.objectContaining({
 					type: "xref",
-					url: "install.adoc",
+					url: "install.html",
 					target: expect.objectContaining({
 						raw: "install.html",
 						path: "install.adoc",
@@ -111,7 +111,7 @@ describe("Markdown IR boundary", () => {
 				}),
 				expect.objectContaining({
 					type: "xref",
-					url: "install.adoc#cli",
+					url: "install.html#cli",
 					target: expect.objectContaining({
 						raw: "install.html#cli",
 						path: "install.adoc",

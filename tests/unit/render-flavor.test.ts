@@ -304,7 +304,7 @@ describe("flavor-aware markdown rendering", () => {
 		);
 	});
 
-	it("shapes Antora xref destinations per flavor policy", () => {
+	it("keeps xref destinations as supplied by the assembled document", () => {
 		const documentWithXrefs = {
 			type: "document" as const,
 			children: [
@@ -365,18 +365,14 @@ describe("flavor-aware markdown rendering", () => {
 			],
 		};
 
-		expect(renderMarkdown(documentWithXrefs, "gfm")).toContain(
-			"[install](docs/ROOT/install.adoc) [cli](docs/2.0/ROOT/install.adoc#cli) [nav](docs/ROOT/partial/nav.adoc)",
-		);
-		expect(renderGitLab(documentWithXrefs)).toContain(
-			"[install](docs/install.html) [cli](docs/2.0/install.html#cli) [nav](docs/ROOT/partial/nav.adoc)",
-		);
-		expect(renderStrict(documentWithXrefs)).toContain(
-			"[install](docs/install.html) [cli](docs/2.0/install.html#cli) [nav](docs/ROOT/partial/nav.adoc)",
-		);
+		const expected =
+			"[install](docs/ROOT/install.adoc) [cli](docs/2.0/ROOT/install.adoc#cli) [nav](docs/ROOT/partial/nav.adoc)";
+		expect(renderMarkdown(documentWithXrefs, "gfm")).toContain(expected);
+		expect(renderGitLab(documentWithXrefs)).toContain(expected);
+		expect(renderStrict(documentWithXrefs)).toContain(expected);
 	});
 
-	it("routes asset-family and non-root-module xrefs through site-style flavors", () => {
+	it("keeps asset-family and non-root-module xrefs unchanged", () => {
 		const documentWithFamilyTargets = {
 			type: "document" as const,
 			children: [
@@ -456,15 +452,13 @@ describe("flavor-aware markdown rendering", () => {
 			],
 		};
 
-		expect(renderCommonMark(documentWithFamilyTargets)).toContain(
-			"[diagram](docs/2.0/ROOT/image/diagram.png) [guide](docs/2.0/ROOT/attachment/guide.pdf) [overview](docs/2.0/api/index.adoc#overview) [example](docs/2.0/ROOT/example/example.adoc)",
-		);
-		expect(renderGitLab(documentWithFamilyTargets)).toContain(
-			"[diagram](docs/2.0/_images/diagram.png) [guide](docs/2.0/_attachments/guide.pdf) [overview](docs/2.0/api/index.html#overview) [example](docs/2.0/_examples/example.adoc)",
-		);
+		const expected =
+			"[diagram](docs/2.0/ROOT/image/diagram.png) [guide](docs/2.0/ROOT/attachment/guide.pdf) [overview](docs/2.0/api/page/index.adoc#overview) [example](docs/2.0/ROOT/example/example.adoc)";
+		expect(renderCommonMark(documentWithFamilyTargets)).toContain(expected);
+		expect(renderGitLab(documentWithFamilyTargets)).toContain(expected);
 	});
 
-	it("accepts pre-resolved flavor specs and covers site fallbacks for empty xref paths", () => {
+	it("accepts pre-resolved flavor specs and keeps empty-path hrefs unchanged", () => {
 		const flavor = resolveMarkdownFlavor(markdownFlavorSpecs.gitlab);
 		const rendered = renderMarkdown(
 			{
@@ -513,7 +507,7 @@ describe("flavor-aware markdown rendering", () => {
 		);
 
 		expect(rendered).toContain(
-			"[overview](#overview) [home](docs/ROOT/index.adoc)",
+			"[overview](docs/ROOT/index.adoc#overview) [home](docs/ROOT/index.adoc)",
 		);
 	});
 

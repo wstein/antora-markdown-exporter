@@ -149,7 +149,7 @@ describe("inspection report script", () => {
 			{
 				index: 0,
 				label: "Install guide",
-				destination: "install.adoc",
+				destination: "install.html",
 				rawTarget: "install.html",
 				path: "install.adoc",
 				family: "page",

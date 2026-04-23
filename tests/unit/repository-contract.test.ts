@@ -423,15 +423,15 @@ describe("repository contract", () => {
 
 	it("keeps standalone .md xref expectations isolated from fixture routing contracts", () => {
 		expect(extensionUnitTests).toContain("[setup](guide/setup.md)");
-		expect(extensionUnitTests).toContain("[setup](setup.md)");
 		expect(extensionUnitTests).toContain("[guide/setup](guide/setup.md)");
+		expect(extensionUnitTests).toContain("[setup](guide/setup.html)");
 
 		for (const file of xrefExpectedMarkdownFiles) {
 			expect(readFileSync(file, "utf8")).not.toContain(".md)");
 		}
 
 		expect(referenceManifest).not.toContain(".md)");
-		expect(referenceManifest).toContain("[install](docs/install.html)");
+		expect(referenceManifest).toContain("[install](docs:ROOT:install.html)");
 	});
 
 	it("keeps the roadmap notes for export controls, multimarkdown provenance, and agentic inspection in the tree", () => {

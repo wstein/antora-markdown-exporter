@@ -19,13 +19,11 @@ When the repository exports Markdown from documentation modules, it should:
 - normalize the IR before rendering
 - render with one explicit Markdown flavor
 - write deterministic output under a generated directory such as `build/markdown/**`
-- keep assembled review artifacts locally navigable by rewriting internal page links to the corresponding exported `.md` files
+- preserve the assembled hrefs that Antora Assembler and Asciidoctor provide instead of reconstructing exporter-owned link destinations
 
 The repository script and Make target should stay thin wrappers over that one pipeline rather than creating a separate conversion path or post-processing rendered Markdown with search-and-replace cleanup.
 
-That export-local link rewriting still belongs to the same pipeline because it uses Antora Assembler membership data for the assembled outputs. It is not a second converter and it is not a renderer-side string cleanup pass.
-
-That exporter-local link rewriting is no longer part of the intended architecture. The stricter boundary is to trust Assembler for internal reference rewriting and let the Markdown exporter convert the assembled source it receives without a second page-link routing pass.
+The stricter boundary is to trust Assembler for internal reference rewriting and let the Markdown exporter convert the assembled source it receives without a second destination-routing pass.
 
 ## Why
 

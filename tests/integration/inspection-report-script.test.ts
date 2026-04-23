@@ -56,7 +56,7 @@ describe("inspection report script integration", () => {
 			          "raw": "install.html",
 			        },
 			        "type": "xref",
-			        "url": "install.adoc",
+			        "url": "install.html",
 			      },
 			      {
 			        "children": [

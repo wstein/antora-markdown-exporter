@@ -24,7 +24,6 @@ import type {
 	MarkdownTable,
 	MarkdownXref,
 } from "../markdown/ir.js";
-import { resolveMarkdownSourceXrefDestination } from "../markdown/xref-resolution.js";
 
 function convertInline(node: AssemblyInline): MarkdownInline {
 	switch (node.type) {
@@ -59,7 +58,7 @@ function convertInline(node: AssemblyInline): MarkdownInline {
 		case "xref":
 			return <MarkdownXref>{
 				type: "xref",
-				url: resolveMarkdownSourceXrefDestination(node.target, node.url),
+				url: node.url,
 				title: node.title,
 				target: node.target,
 				children: node.children.map(convertInline),

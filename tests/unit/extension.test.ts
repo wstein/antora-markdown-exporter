@@ -157,7 +157,7 @@ describe("markdown exporter extension", () => {
 			},
 		);
 
-		expect(markdown).toBe("# Guide\n\nSee [setup](guide/setup.adoc).\n");
+		expect(markdown).toBe("# Guide\n\nSee [setup](guide/setup.html).\n");
 	});
 
 	it("registers the converter through Antora assembler configuration", async () => {

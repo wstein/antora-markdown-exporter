@@ -160,7 +160,7 @@ describe("structured assembly to markdown ir", () => {
 			children: expect.arrayContaining([
 				expect.objectContaining({
 					type: "xref",
-					url: "install.adoc#cli",
+					url: "install.html#cli",
 					target: expect.objectContaining({
 						raw: "install.html#cli",
 						path: "install.adoc",
@@ -219,7 +219,7 @@ describe("structured assembly to markdown ir", () => {
 			children: expect.arrayContaining([
 				expect.objectContaining({
 					type: "xref",
-					url: "install.adoc#cli",
+					url: "install.html#cli",
 				}),
 			]),
 		});
