@@ -120,13 +120,21 @@ async function prepareAntoraRuntime({
 		throw new Error(`Antora playbook does not exist: ${resolvedPlaybookPath}`);
 	}
 
+	// Configure logger BEFORE buildPlaybook to ensure any loggers it creates use our config
+	const playbookDir = dirname(resolvedPlaybookPath);
+	if (runtimeLog) {
+		configureLogger(runtimeLog, playbookDir);
+	}
+
 	const playbook = mergeRuntimeLogConfig(
 		buildPlaybook(["--playbook", resolvedPlaybookPath], process.env),
 		runtimeLog,
 	);
-	configureLogger(playbook.runtime.log, dirname(resolvedPlaybookPath));
+	// Configure logger again with merged config in case buildPlaybook modified runtime.log
+	configureLogger(playbook.runtime.log, playbookDir);
+	const context = new GeneratorContext(moduleShim);
 	const baseAssemblerConfig = await loadAssemblerConfig.call(
-		moduleShim,
+		context,
 		playbook,
 		configSource,
 		preferredQualifier,
@@ -136,7 +144,6 @@ async function prepareAntoraRuntime({
 		keepSource,
 		rootLevel,
 	});
-	const context = new GeneratorContext(moduleShim);
 	const { fxns, vars } = await GeneratorContext.start(context, playbook);
 	vars.siteAsciiDocConfig = fxns.resolveAsciiDocConfig(playbook);
 	if (!(vars.siteAsciiDocConfig.keepSource instanceof Boolean)) {

@@ -24,7 +24,9 @@ function git(cwd: string, args: string[]): string {
 	}).trim();
 }
 
-async function createUnsupportedFixtureRepository(): Promise<string> {
+async function createUnsupportedFixtureRepository(options?: {
+	playbookRuntimeLogLines?: string[];
+}): Promise<string> {
 	const root = await mkdtemp(join(os.tmpdir(), "antora-md-diag-"));
 	cleanupPaths.push(root);
 
@@ -50,6 +52,8 @@ async function createUnsupportedFixtureRepository(): Promise<string> {
 			"output:",
 			"  dir: build/site",
 			"",
+			...(options?.playbookRuntimeLogLines ?? []),
+			...(options?.playbookRuntimeLogLines ? [""] : []),
 		].join("\n"),
 	);
 	await writeTextFile(
@@ -261,12 +265,13 @@ describe("module export library API", () => {
 		);
 	});
 
-	it("allows overriding Antora runtime log settings through the API", async () => {
+	it("writes structured Antora logger output to the configured log file", async () => {
 		const root = await createUnsupportedFixtureRepository();
 		const logPath = resolve(root, "build", "logs", "export.log");
 
-		const exports = await exportAntoraModulesToMarkdown({
+		await exportAntoraModulesToMarkdown({
 			playbookPath: resolve(root, "antora-playbook.yml"),
+			configSource: "missing-assembler.yml",
 			runtimeLog: {
 				destination: {
 					file: logPath,
@@ -276,8 +281,123 @@ describe("module export library API", () => {
 			},
 		});
 
-		expect(exports[0]?.path).toBe("index.md");
 		const logContents = await readFile(logPath, "utf8");
-		expect(logContents).toBe("");
+		expect(logContents).toContain('"level":"warn"');
+		expect(logContents).toContain('"name":"@antora/assembler"');
+		expect(logContents).toContain("Could not resolve config file");
+	}, 15_000);
+
+	it("lets API runtimeLog overrides win over playbook runtime.log defaults", async () => {
+		const root = await createUnsupportedFixtureRepository({
+			playbookRuntimeLogLines: [
+				"runtime:",
+				"  log:",
+				"    level: warn",
+				"    format: json",
+				"    destination:",
+				"      file: build/logs/from-playbook.log",
+			],
+		});
+		const overriddenLogPath = resolve(root, "build", "logs", "from-api.log");
+		const playbookLogPath = resolve(root, "build", "logs", "from-playbook.log");
+
+		await exportAntoraModulesToMarkdown({
+			playbookPath: resolve(root, "antora-playbook.yml"),
+			configSource: "missing-assembler.yml",
+			runtimeLog: {
+				destination: {
+					file: overriddenLogPath,
+				},
+				format: "json",
+				level: "warn",
+			},
+		});
+
+		await expect(readFile(overriddenLogPath, "utf8")).resolves.toContain(
+			"Could not resolve config file",
+		);
+		await expect(readFile(playbookLogPath, "utf8")).rejects.toThrow();
+	}, 15_000);
+
+	it("lets API log level override a silencing playbook runtime.log level", async () => {
+		const root = await createUnsupportedFixtureRepository({
+			playbookRuntimeLogLines: [
+				"runtime:",
+				"  log:",
+				"    level: silent",
+				"    format: json",
+				"    destination:",
+				"      file: build/logs/from-playbook.log",
+			],
+		});
+		const logPath = resolve(root, "build", "logs", "from-playbook.log");
+
+		await exportAntoraModulesToMarkdown({
+			playbookPath: resolve(root, "antora-playbook.yml"),
+			configSource: "missing-assembler.yml",
+			runtimeLog: {
+				destination: {
+					file: logPath,
+				},
+				level: "warn",
+			},
+		});
+
+		const logContents = await readFile(logPath, "utf8");
+		expect(logContents).toContain("Could not resolve config file");
+		expect(logContents).toContain('"level":"warn"');
+	}, 15_000);
+
+	it("lets API log format override playbook pretty logging", async () => {
+		const root = await createUnsupportedFixtureRepository({
+			playbookRuntimeLogLines: [
+				"runtime:",
+				"  log:",
+				"    level: warn",
+				"    format: pretty",
+				"    destination:",
+				"      file: build/logs/from-playbook.log",
+			],
+		});
+		const logPath = resolve(root, "build", "logs", "from-playbook.log");
+
+		await exportAntoraModulesToMarkdown({
+			playbookPath: resolve(root, "antora-playbook.yml"),
+			configSource: "missing-assembler.yml",
+			runtimeLog: {
+				destination: {
+					file: logPath,
+				},
+				format: "json",
+			},
+		});
+
+		const logContents = await readFile(logPath, "utf8");
+		expect(logContents).toContain('"level":"warn"');
+		expect(logContents.trimStart().startsWith("{")).toBe(true);
+		expect(logContents).not.toContain("[");
+	}, 15_000);
+
+	it("respects append false when writing Antora logger output", async () => {
+		const root = await createUnsupportedFixtureRepository();
+		const logPath = resolve(root, "build", "logs", "export.log");
+		await writeTextFile(logPath, "seed log entry\n");
+
+		await exportAntoraModulesToMarkdown({
+			playbookPath: resolve(root, "antora-playbook.yml"),
+			configSource: "missing-assembler.yml",
+			runtimeLog: {
+				destination: {
+					append: false,
+					file: logPath,
+				},
+				format: "json",
+				level: "warn",
+			},
+		});
+
+		const logContents = await readFile(logPath, "utf8");
+		expect(logContents).not.toContain("seed log entry");
+		expect(logContents).toContain("Could not resolve config file");
 	}, 15_000);
 });
