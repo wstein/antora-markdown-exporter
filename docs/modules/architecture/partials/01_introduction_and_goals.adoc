@@ -21,7 +21,7 @@ The main architectural goals are:
 * expose stable inspection APIs for CI, release validation, and downstream tooling
 * keep package naming and extension entrypoints honest about current implementation maturity
 
-The architecture is built around a real Assembler-backed extension entrypoint in `src/extension/index.ts` and a repository-owned markdown kernel in `src/exporter/**`, `src/markdown/**`, `scripts/inspection-report.ts`, and the test suite. Semantic meaning stays centralized, fallback stays explicit, transparent extensions stay semantic where safe, and xref routing remains a lowering concern rather than a renderer concern.
+The architecture is built around a real Assembler-backed extension entrypoint in `src/extension/index.ts` and a repository-owned markdown kernel in `src/exporter/**`, `src/markdown/**`, `scripts/inspection-report.ts`, and the test suite. Semantic meaning stays centralized, fallback stays explicit, transparent extensions stay semantic where safe, and rendered destinations stay tied to the assembled hrefs instead of being reconstructed in a separate lowering layer.
 
 The main uncertainty is no longer whether a real Antora registration path exists. It does. The remaining architectural concern is keeping that outer registration path, its converter coverage, and the public documentation aligned as the pipeline evolves.
 

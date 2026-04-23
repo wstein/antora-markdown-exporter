@@ -462,7 +462,7 @@ Status legend used in this and later proof sections:
 |Xrefs, anchors, and page aliases
 |Supported
 |Structured xref targets, anchor identifiers, and page aliases remain inspectable until lowering or rendering.
-|`src/markdown/xref-resolution.ts`; `tests/unit/xref-resolution.test.ts`; `tests/unit/inspection.test.ts`; reference fixtures
+|`tests/unit/inspection.test.ts`; reference fixtures
 |Inspection report review; rendered fixture review
 
 |Inspection report surfaces

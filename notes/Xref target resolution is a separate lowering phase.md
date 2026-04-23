@@ -4,40 +4,34 @@ aliases: ["Xref lowering phase", "Xref routing boundary", "Markdown xref resolut
 tags: ["markdown", "xref", "routing", "architecture"]
 target: current
 ---
-Xref target resolution is a separate lowering phase because Antora-aware destination shaping is semantic policy, not string-formatting work. Renderers should serialize resolved destinations rather than own routing logic directly.
+Xref target metadata remains structured without a separate lowering phase. Renderers should serialize the assembled hrefs they receive rather than reconstruct Antora routing logic after conversion.
 
 ## What
 
-The repository preserves structured xref metadata in the Markdown IR and then lowers that metadata into a concrete destination path in `src/markdown/xref-resolution.ts`.
+The repository preserves structured xref metadata in the Markdown IR while carrying the assembled href through to rendering.
 
-That lowering step is responsible for:
-- source-shaped vs site-shaped routing
-- family-aware routing for page, image, attachment, and example targets
-- ROOT-module omission when a site flavor requires it
-- fallback to source-shaped destinations for unknown families
-
-The renderer then formats the already-resolved destination as Markdown link syntax.
+The renderer is responsible for Markdown link syntax, not for rebuilding destination routing policy.
 
 ## Why
 
-When xref routing logic lives inside a string renderer, it becomes hard to test, hard to reuse, and easy to couple to unrelated formatting concerns.
+When xref routing logic is reconstructed after assembly, the exporter starts fighting Antora and Asciidoctor.
 
-Separating the lowering phase keeps:
-- routing policy testable in direct unit assertions
+Keeping assembled destinations intact keeps:
+- the converter aligned with the assembled source buffer
 - renderer logic narrower
-- Antora-specific semantics inspectable after conversion
+- structured target metadata available for inspection without inventing a second routing contract
 
 ## How
 
 Keep structured xref target metadata in `src/markdown/ir.ts`.
 
-Resolve destinations through `src/markdown/xref-resolution.ts` before link serialization in `src/markdown/render/markdown.ts`.
+Serialize destinations in `src/markdown/render/markdown.ts` using the assembled href already carried by `MarkdownXref.url`.
 
-Do not duplicate family routing or ROOT-module omission logic in multiple renderers.
+Do not add a second Antora-aware routing layer after assembly.
 
 ## Links
 
-- [[Markdown IR is the canonical render boundary]] - Xref metadata survives until the lowering phase.
-- [[Flavor renderers are syntax adapters over one semantic layer]] - Renderers should consume resolved destinations, not own route policy.
-- [[Exporter pipeline uses Assembler and a direct TypeScript converter]] - Xref lowering happens after conversion, before final markdown emission.
-- src/markdown/xref-resolution.ts - Canonical xref destination lowering logic.
+- [[Markdown IR is the canonical render boundary]] - Xref metadata survives until rendering.
+- [[Flavor renderers are syntax adapters over one semantic layer]] - Renderers should consume preserved destinations, not own route policy.
+- [[Exporter pipeline uses Assembler and a direct TypeScript converter]] - Destination routing stops at the assembled-source boundary.
+- src/markdown/render/markdown.ts - Markdown link serialization over preserved destinations.

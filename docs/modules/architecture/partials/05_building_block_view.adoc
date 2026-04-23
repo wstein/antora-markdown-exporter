@@ -24,7 +24,7 @@ The main building blocks are:
 |`src/exporter/structured-to-ir.ts` lowers repository-owned structured assembly into semantic Markdown IR nodes, preserving headings, xrefs, anchors, aliases, images, tables, admonitions, and other mapped structure without reparsing block syntax.
 
 |Markdown kernel
-|`src/markdown/ir.ts`, `src/markdown/normalize.ts`, and `src/markdown/xref-resolution.ts` define the canonical IR, normalize documents, and lower xref targets before rendering.
+|`src/markdown/ir.ts`, `src/markdown/normalize.ts`, and `src/markdown/render/**` define the canonical IR, normalize documents, and serialize preserved destinations during rendering.
 
 |Flavor renderers and fallback policy
 |`src/markdown/flavor.ts`, `src/markdown/fallback.ts`, and `src/markdown/render/**` define flavor capabilities, raw HTML and unsupported-node fallback policy, and the final markdown serializers.
@@ -51,9 +51,9 @@ The most important interfaces are:
 * `collectMarkdownInspectionReport(document)` provides normalized inspection data for includes and xrefs.
 
 ==== Markdown Kernel
-The markdown kernel is the repository’s semantic center. It owns canonical node types, normalization, flavor capability lookup, fallback decisions, and xref lowering.
+The markdown kernel is the repository’s semantic center. It owns canonical node types, normalization, flavor capability lookup, fallback decisions, and rendering of the preserved assembled destinations.
 
-Its implementation lives in `src/markdown/ir.ts`, `src/markdown/normalize.ts`, `src/markdown/flavor.ts`, `src/markdown/fallback.ts`, `src/markdown/xref-resolution.ts`, and `src/markdown/render/**`.
+Its implementation lives in `src/markdown/ir.ts`, `src/markdown/normalize.ts`, `src/markdown/flavor.ts`, `src/markdown/fallback.ts`, and `src/markdown/render/**`.
 
 The remaining risk is not the absence of an outer Antora integration boundary. It is drift between the real extension entrypoint and the repository-owned conversion semantics that entrypoint is supposed to expose.
 

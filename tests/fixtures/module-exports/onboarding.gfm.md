@@ -97,7 +97,7 @@ This is why the implementation is split across:
 - `src/markdown/ir.ts`
 - `src/markdown/normalize.ts`
 - `src/markdown/render/**`
-- `src/markdown/xref-resolution.ts`
+- `src/markdown/render/**`
 
 If you are touching behavior after conversion starts, your change should usually land in the adapter, lowering, IR, normalization, renderer, or tests.
 
@@ -130,7 +130,7 @@ Use this routing guide:
 - to change semantic lowering, work in `src/exporter/structured-to-ir.ts`
 - to change normalized semantic shape, work in `src/markdown/ir.ts` or `src/markdown/normalize.ts`
 - to change rendered syntax only, stay in `src/markdown/render/**`
-- to change xref routing, stay in `src/markdown/xref-resolution.ts`
+- to change rendered xref formatting, stay in `src/markdown/render/**`
 - to change inspection output, stay in `src/markdown/inspection.ts`
 
 The helper split under `src/adapter/asciidoctor-structure/` matters too. `inline.ts`, `xref.ts`, `block-helpers.ts`, and `blocks.ts` carry narrower responsibilities, and their focused tests are part of the main proof surface. Update those helper tests when you change helper behavior.
@@ -190,7 +190,7 @@ When touching includes:
 
 ## 2.9. Xref Routing Is Lowering, Not Rendering
 
-Structured xref metadata is preserved in the IR and lowered to concrete destinations in `src/markdown/xref-resolution.ts` before link serialization. Renderers should format already-resolved destinations rather than owning Antora-aware routing logic themselves.
+Structured xref metadata is preserved in the IR, while rendered destinations come from the assembled hrefs carried through conversion. Renderers should format those preserved destinations rather than owning Antora-aware routing logic themselves.
 
 If you need to change xref behavior, start by deciding whether you are changing:
 
@@ -245,7 +245,7 @@ Start here when you need to make a code change:
 - fix semantic lowering: `src/exporter/structured-to-ir.ts`
 - change semantic node shapes: `src/markdown/ir.ts`
 - change normalization: `src/markdown/normalize.ts`
-- change xref lowering: `src/markdown/xref-resolution.ts`
+- change xref rendering: `src/markdown/render/**`
 - change fallback policy: `src/markdown/fallback.ts`
 - change printed markdown syntax only: `src/markdown/render/**`
 - change machine-readable inspection: `src/markdown/inspection.ts` or `scripts/inspection-report.ts`
@@ -308,7 +308,7 @@ At a high level, contributors can think about the repository in six layers:
 2. Assembler-backed Antora extension boundary in `src/extension/**`
 3. Assembly-to-IR conversion in `src/exporter/**`
 4. Canonical markdown kernel in `src/markdown/ir.ts` and `src/markdown/normalize.ts`
-5. Policy and lowering layers in `src/markdown/fallback.ts` and `src/markdown/xref-resolution.ts`
+5. Policy and rendering layers in `src/markdown/fallback.ts` and `src/markdown/render/**`
 6. Flavor renderers and validation surfaces in `src/markdown/render/**` and `src/markdown/inspection.ts`
 
 Those layers are exposed through one contract family:

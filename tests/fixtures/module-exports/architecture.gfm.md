@@ -66,7 +66,7 @@ The main architectural goals are:
 - expose stable inspection APIs for CI, release validation, and downstream tooling
 - keep package naming and extension entrypoints honest about current implementation maturity
 
-The architecture is built around a real Assembler-backed extension entrypoint in `src/extension/index.ts` and a repository-owned markdown kernel in `src/exporter/**`, `src/markdown/**`, `scripts/inspection-report.ts`, and the test suite. Semantic meaning stays centralized, fallback stays explicit, transparent extensions stay semantic where safe, and xref routing remains a lowering concern rather than a renderer concern.
+The architecture is built around a real Assembler-backed extension entrypoint in `src/extension/index.ts` and a repository-owned markdown kernel in `src/exporter/**`, `src/markdown/**`, `scripts/inspection-report.ts`, and the test suite. Semantic meaning stays centralized, fallback stays explicit, transparent extensions stay semantic where safe, and rendered destinations stay tied to the assembled hrefs instead of being reconstructed in a separate lowering layer.
 
 The main uncertainty is no longer whether a real Antora registration path exists. It does. The remaining architectural concern is keeping that outer registration path, its converter coverage, and the public documentation aligned as the pipeline evolves.
 
@@ -115,7 +115,7 @@ The business boundary is intentionally narrow. The repository does not claim to 
 | Technical interface | Role |
 | --- | --- |
 | Antora and Assembler | Provide the assembly and exporter extension boundary. The repository integrates through `@antora/assembler.configure()` and consumes assembled AsciiDoc as the converter input. |
-| Repository conversion kernel | `src/exporter/**`, `src/markdown/**`, and `src/extension/**` implement AsciiDoc-to-IR conversion, normalization, xref lowering, rendering, and the Antora extension entrypoint. |
+| Repository conversion kernel | `src/exporter/**`, `src/markdown/**`, and `src/extension/**` implement AsciiDoc-to-IR conversion, normalization, rendering, and the Antora extension entrypoint. |
 | Bun-first operator tooling | `Makefile`, `package.json`, and `scripts/**` provide the supported local execution path for build, validation, release, inspection reporting, and module Markdown export. |
 | GitHub Actions | Runs CI, release publication, and Pages deployment workflows against certified repository states. |
 | npm registry and GitHub Pages | Receive the published package and static documentation outputs after successful release automation. |
@@ -146,7 +146,7 @@ The main building blocks are:
 | Structured assembly adapter | `src/adapter/assembly-structure.ts` defines the repository-owned structural handoff between assembled Antora input and future Markdown IR lowering. `src/adapter/assembly-structure-spec.ts` and the published `assemblyStructureInvariants` keep the contract explicit about loss rules, source locations, and unsupported-node semantics. This boundary must outlive any one extractor implementation. |
 | Asciidoctor structural extractor | `src/adapter/asciidoctor-structure.ts` loads assembled source through Asciidoctor and maps supported document structure into the repository-owned assembly adapter. Helper modules under `src/adapter/asciidoctor-structure/` separate block extraction, inline extraction, xref normalization, and list/table helpers so branch-heavy semantics can be tested directly. Unsupported structural contexts remain explicit. |
 | Structured lowering | `src/exporter/structured-to-ir.ts` lowers repository-owned structured assembly into semantic Markdown IR nodes, preserving headings, xrefs, anchors, aliases, images, tables, admonitions, and other mapped structure without reparsing block syntax. |
-| Markdown kernel | `src/markdown/ir.ts`, `src/markdown/normalize.ts`, and `src/markdown/xref-resolution.ts` define the canonical IR, normalize documents, and lower xref targets before rendering. |
+| Markdown kernel | `src/markdown/ir.ts`, `src/markdown/normalize.ts`, and `src/markdown/render/**` define the canonical IR, normalize documents, and serialize preserved destinations during rendering. |
 | Flavor renderers and fallback policy | `src/markdown/flavor.ts`, `src/markdown/fallback.ts`, and `src/markdown/render/**` define flavor capabilities, raw HTML and unsupported-node fallback policy, and the final markdown serializers. |
 | Inspection and automation surfaces | `src/markdown/inspection.ts` and `scripts/inspection-report.ts` expose normalized inspection data for CI, release validation, and other tooling. |
 | Package, CLI, and release boundary | `src/index.ts`, `package.json`, `bin/antora-markdown-exporter.js`, and `scripts/release-check.mjs` package the library-first API, CLI entrypoint, and release validation. |
@@ -165,9 +165,9 @@ The most important interfaces are:
 
 ### 5.1.1. Markdown Kernel
 
-The markdown kernel is the repository’s semantic center. It owns canonical node types, normalization, flavor capability lookup, fallback decisions, and xref lowering.
+The markdown kernel is the repository’s semantic center. It owns canonical node types, normalization, flavor capability lookup, fallback decisions, and rendering of the preserved assembled destinations.
 
-Its implementation lives in `src/markdown/ir.ts`, `src/markdown/normalize.ts`, `src/markdown/flavor.ts`, `src/markdown/fallback.ts`, `src/markdown/xref-resolution.ts`, and `src/markdown/render/**`.
+Its implementation lives in `src/markdown/ir.ts`, `src/markdown/normalize.ts`, `src/markdown/flavor.ts`, `src/markdown/fallback.ts`, and `src/markdown/render/**`.
 
 The remaining risk is not the absence of an outer Antora integration boundary. It is drift between the real extension entrypoint and the repository-owned conversion semantics that entrypoint is supposed to expose.
 
@@ -193,7 +193,7 @@ These surfaces live in `src/markdown/inspection.ts`, `scripts/inspection-report.
 2. `src/adapter/asciidoctor-structure.ts` loads the assembled content through Asciidoctor and maps supported structure into the repository-owned assembly adapter.
 3. `convertAssemblyStructureToMarkdownIR(document)` lowers that structured assembly document into Markdown IR nodes.
 4. The caller normalizes the document through `normalizeMarkdownIR`.
-5. Xref targets remain structured until lowering in `src/markdown/xref-resolution.ts`.
+5. Xref targets remain structured until final link serialization in `src/markdown/render/**`.
 6. A flavor renderer serializes the normalized document according to `src/markdown/flavor.ts` and `src/markdown/fallback.ts`.
 
 The shipped runtime spans both the Assembler-backed extension entrypoint and the repository-owned structured conversion boundary. Coverage, docs, and CLI-facing policy controls must stay aligned with that structured runtime.

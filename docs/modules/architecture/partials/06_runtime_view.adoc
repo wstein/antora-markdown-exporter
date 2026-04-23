@@ -7,7 +7,7 @@
 2. `src/adapter/asciidoctor-structure.ts` loads the assembled content through Asciidoctor and maps supported structure into the repository-owned assembly adapter.
 3. `convertAssemblyStructureToMarkdownIR(document)` lowers that structured assembly document into Markdown IR nodes.
 4. The caller normalizes the document through `normalizeMarkdownIR`.
-5. Xref targets remain structured until lowering in `src/markdown/xref-resolution.ts`.
+5. Xref targets remain structured until final link serialization in `src/markdown/render/**`.
 6. A flavor renderer serializes the normalized document according to `src/markdown/flavor.ts` and `src/markdown/fallback.ts`.
 
 The shipped runtime spans both the Assembler-backed extension entrypoint and the repository-owned structured conversion boundary. Coverage, docs, and CLI-facing policy controls must stay aligned with that structured runtime.

@@ -38,7 +38,7 @@ The business boundary is intentionally narrow. The repository does not claim to 
 |Provide the assembly and exporter extension boundary. The repository integrates through `@antora/assembler.configure()` and consumes assembled AsciiDoc as the converter input.
 
 |Repository conversion kernel
-|`src/exporter/**`, `src/markdown/**`, and `src/extension/**` implement AsciiDoc-to-IR conversion, normalization, xref lowering, rendering, and the Antora extension entrypoint.
+|`src/exporter/**`, `src/markdown/**`, and `src/extension/**` implement AsciiDoc-to-IR conversion, normalization, rendering, and the Antora extension entrypoint.
 
 |Bun-first operator tooling
 |`Makefile`, `package.json`, and `scripts/**` provide the supported local execution path for build, validation, release, inspection reporting, and module Markdown export.
