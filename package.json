@@ -17,6 +17,11 @@
 			"import": "./dist/index.js",
 			"require": "./dist/index.cjs"
 		},
+		"./runtime": {
+			"types": "./dist/runtime.d.ts",
+			"import": "./dist/runtime.js",
+			"require": "./dist/runtime.cjs"
+		},
 		"./extension": {
 			"types": "./dist/extension/index.d.ts",
 			"import": "./dist/extension/index.js",
@@ -32,7 +37,7 @@
 		"LICENSE"
 	],
 	"scripts": {
-		"build": "tsup --dts --format esm,cjs --out-dir dist src/index.ts src/extension/index.ts",
+		"build": "tsup --dts --format esm,cjs --out-dir dist src/index.ts src/runtime.ts src/extension/index.ts",
 		"docs:build": "node scripts/build-docs-site.mjs",
 		"test": "vitest run --coverage",
 		"test:watch": "vitest",

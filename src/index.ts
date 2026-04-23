@@ -95,7 +95,6 @@ export {
 	exportAntoraModules,
 	exportAntoraModulesToMarkdown,
 	resolveAntoraMarkdownExportDefaults,
-	runAntoraAssembler,
 } from "./module-export.js";
 export { runAntoraSiteBuild } from "./site-build.js";
 

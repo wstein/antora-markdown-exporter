@@ -9,9 +9,9 @@ import {
 	PACKAGE_NAME,
 	register,
 	resolveAntoraMarkdownExportDefaults,
-	runAntoraAssembler,
 	runAntoraSiteBuild,
 } from "../../src/index.js";
+import { runAntoraAssembler } from "../../src/runtime.ts";
 
 describe("public extension API", () => {
 	it("exposes package metadata through the root entrypoint", () => {
@@ -31,8 +31,11 @@ describe("public extension API", () => {
 		expect(typeof exportAntoraModules).toBe("function");
 		expect(typeof exportAntoraModulesToMarkdown).toBe("function");
 		expect(typeof resolveAntoraMarkdownExportDefaults).toBe("function");
-		expect(typeof runAntoraAssembler).toBe("function");
 		expect(typeof runAntoraSiteBuild).toBe("function");
+	});
+
+	it("exports the lower-level assembler runtime from the runtime subpath", () => {
+		expect(typeof runAntoraAssembler).toBe("function");
 	});
 
 	it("exports the agent-ready inspection helper from the root entrypoint", () => {

@@ -2,7 +2,7 @@ import { mkdir, mkdtemp, readFile, writeFile } from "node:fs/promises";
 import { tmpdir } from "node:os";
 import { dirname, resolve } from "node:path";
 import { describe, expect, it } from "vitest";
-import { runAntoraAssembler } from "../../src/index.js";
+import { runAntoraAssembler } from "../../src/runtime.ts";
 
 function createProbeConverter() {
 	return {

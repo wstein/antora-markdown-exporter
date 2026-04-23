@@ -9,6 +9,7 @@ const packageJson = JSON.parse(
 ) as {
 	bin: Record<string, string>;
 	dependencies?: Record<string, string>;
+	exports: Record<string, unknown>;
 	files: string[];
 	scripts: Record<string, string>;
 };
@@ -287,7 +288,9 @@ describe("repository contract", () => {
 		expect(packageIndex).toContain("assemblyStructureInvariants");
 		expect(packageIndex).toContain("exportAntoraModules");
 		expect(packageIndex).toContain("resolveAntoraMarkdownExportDefaults");
-		expect(packageIndex).toContain("runAntoraAssembler");
+		expect(packageIndex).not.toContain("runAntoraAssembler");
+		expect(existsSync(resolve(root, "src/runtime.ts"))).toBe(true);
+		expect(packageJson.exports).toHaveProperty("./runtime");
 		expect(
 			readFileSync(
 				resolve(

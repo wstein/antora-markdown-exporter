@@ -17,6 +17,8 @@ The root package should publish both sides of the Antora module export boundary:
 - `assembleAntoraModules(...)` for callers that want assembled AsciiDoc module files with provenance before Markdown rendering
 - `exportAntoraModulesToMarkdown(...)` for callers that want assembled Markdown module exports with content and metadata already materialized
 
+The lower-level `runAntoraAssembler(...)` helper should remain available only through a narrower runtime-oriented subpath rather than the main root surface.
+
 Those APIs should stay Assembler-centered. They should accept Antora playbook and configuration inputs, use the same Assembler runtime as the extension and repository scripts, and expose one result per assembled export surface.
 
 The result shapes should include:
