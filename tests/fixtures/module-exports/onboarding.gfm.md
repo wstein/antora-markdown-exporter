@@ -85,7 +85,7 @@ Changes should keep those layers aligned.
 The project shape is:
 
 1. Antora Assembler produces assembled AsciiDoc and resolves most low-level inline and block structure first.
-2. The TypeScript exporter maps that assembled content and preserved metadata into a semantic Markdown IR.
+2. The TypeScript exporter converts that assembled content and preserved metadata into a semantic Markdown IR.
 3. Flavor renderers serialize that IR into concrete Markdown.
 
 The practical rule is simpler: once content reaches the repository pipeline, semantic decisions stay inside repository code. Do not route meaning through HTML-to-Markdown shortcuts or renderer-local hacks.
@@ -260,7 +260,7 @@ Use this quick checklist after your first code edit:
 - run `make test` before considering the change done
 - update golden fixtures only when the rendered change is intentional
 - update docs if the operator path, contributor path, or package behavior changed
-- if you changed semantic mapping or conversion, make sure the helper tests or IR tests changed with it
+- if you changed semantic conversion, make sure the helper tests or IR tests changed with it
 - if you changed rendered syntax only, keep the change inside `src/markdown/render/**`
 
 ## 3.4. Worked Example

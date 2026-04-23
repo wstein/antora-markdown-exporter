@@ -15,7 +15,7 @@ The repository adopts a four-stage export pipeline:
 
 1. Antora Assembler builds the assembled source document.
 2. The repository-owned extractor turns assembled source into structured assembly data.
-3. Structured conversion maps that repository-owned structure into the Markdown semantic layer.
+3. Structured conversion turns that repository-owned structure into the Markdown semantic layer.
 4. Flavor renderers serialize that semantic layer into concrete Markdown output.
 
 

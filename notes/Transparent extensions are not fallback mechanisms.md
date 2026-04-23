@@ -47,4 +47,4 @@ Keep fallback logic centralized and separate from extension preservation.
 
 - [[Transparent fenced extensions preserve authored language semantics]] - Mermaid is the primary example.
 - [[Fallback selection is centralized across markdown flavors]] - Fallback logic must remain explicit.
-- [[Markdown IR is the canonical render boundary]] - Classification occurs after semantic mapping.
+- [[Markdown IR is the canonical render boundary]] - Classification occurs after semantic conversion.

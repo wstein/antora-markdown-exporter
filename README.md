@@ -2,7 +2,7 @@
 
 Antora Assembler based Markdown exporter with semantic IR, inspection surfaces, and explicit Markdown flavor rendering.
 
-The package consumes assembled Antora/Asciidoctor output, maps that structure into a semantic Markdown IR, and renders explicit Markdown flavors without trying to recreate a full AsciiDoc parser.
+The package consumes assembled Antora/Asciidoctor output, converts that structure into a semantic Markdown IR, and renders explicit Markdown flavors without trying to recreate a full AsciiDoc parser.
 
 ## Install
 

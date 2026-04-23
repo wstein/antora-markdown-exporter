@@ -8,7 +8,7 @@ target: current
 
 ## Summary
 
-Antora module markdown export should use the canonical repository pipeline because generated Markdown artifacts must reflect the same Antora Assembler integration, semantic mapping, normalization, and flavor rendering rules that the package exposes everywhere else.
+Antora module markdown export should use the canonical repository pipeline because generated Markdown artifacts must reflect the same Antora Assembler integration, semantic conversion, normalization, and flavor rendering rules that the package exposes everywhere else.
 
 ## What
 

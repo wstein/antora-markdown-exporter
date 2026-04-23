@@ -520,7 +520,7 @@ The structured rewrite changed what the exporter owns.
 
 |Markdown IR conversion
 |`src/exporter/structured-to-ir.ts`
-|Change this layer when semantic structure is already present but the IR mapping is wrong or incomplete.
+|Change this layer when semantic structure is already present but the IR conversion is wrong or incomplete.
 
 |Inspection surfaces
 |`src/markdown/inspection.ts`

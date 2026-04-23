@@ -393,7 +393,7 @@ The structured rewrite changed what the exporter owns.
 | --- | --- | --- |
 | Include expansion and most low-level block formation | Antora Assembler plus Asciidoctor loading | Do not rebuild exporter-side include parsing or low-level block parsing. |
 | Structured semantic mapping | `src/adapter/asciidoctor-structure.ts` and helper modules | Keep mapping behavior aligned with `assemblyStructureInvariants`, `assemblyStructureSpecification`, and the support matrix. |
-| Markdown IR conversion | `src/exporter/structured-to-ir.ts` | Change this layer when semantic structure is already present but the IR mapping is wrong or incomplete. |
+| Markdown IR conversion | `src/exporter/structured-to-ir.ts` | Change this layer when semantic structure is already present but the IR conversion is wrong or incomplete. |
 | Inspection surfaces | `src/markdown/inspection.ts` | Prefer normalized semantic inspection over ad-hoc renderer traversal or dormant include transport assumptions. |
 
 ## 4.6. Evidence Ledger
