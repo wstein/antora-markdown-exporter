@@ -19,7 +19,6 @@ export interface AntoraMarkdownExporterExtensionConfig {
 	};
 	readonly configFile?: string;
 	readonly configFiles?: string[];
-	readonly logOutput?: string;
 }
 
 type MarkdownConverterConfig = {
@@ -199,64 +198,10 @@ export function register(
 		flavor,
 		navigationCatalog,
 		rootLevel,
-		logOutput,
 		...assemblerConfig
 	} = config;
 	const configuredDefaults =
 		resolveExporterDefaultsFromConfigSource(configSource);
-
-	// Capture logs if logOutput is specified
-	const capturedLogs: string[] = [];
-	if (logOutput) {
-		const originalStderr = console.error;
-		const originalStdout = console.log;
-		const originalStderrWrite = process.stderr.write.bind(process.stderr);
-
-		console.error = (...args: unknown[]) => {
-			capturedLogs.push(args.map((arg) => String(arg)).join(" "));
-			originalStderr(...args);
-		};
-
-		console.log = (...args: unknown[]) => {
-			capturedLogs.push(args.map((arg) => String(arg)).join(" "));
-			originalStdout(...args);
-		};
-
-		process.stderr.write = ((
-			chunk: string | Uint8Array,
-			encodingOrCallback?: BufferEncoding | ((error?: Error | null) => void),
-			callback?: (error?: Error | null) => void,
-		) => {
-			const text = String(chunk);
-			capturedLogs.push(text.trimEnd());
-			return originalStderrWrite(chunk, encodingOrCallback as never, callback);
-		}) as typeof process.stderr.write;
-
-		// Write logs after configure completes
-		const writeLogsAsync = async () => {
-			try {
-				const logContent = [
-					"=== Antora Markdown Export Log ===",
-					new Date().toISOString(),
-					"",
-					...capturedLogs,
-				].join("\n");
-				await mkdir(dirname(logOutput), { recursive: true });
-				await writeFile(logOutput, logContent, "utf8");
-			} finally {
-				process.stderr.write = originalStderrWrite;
-				console.error = originalStderr;
-				console.log = originalStdout;
-			}
-		};
-
-		// Schedule log write for next tick to ensure it happens after processing
-		setImmediate(() => {
-			writeLogsAsync().catch((err) => {
-				originalStderr("Failed to write log file:", err);
-			});
-		});
-	}
 
 	configure(
 		this,

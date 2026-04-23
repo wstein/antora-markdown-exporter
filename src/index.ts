@@ -87,6 +87,8 @@ export {
 	type AntoraMarkdownModuleExportOptions,
 	type AntoraMarkdownModuleExportResult,
 	type AntoraModuleMarkdownExport,
+	type AntoraRuntimeLogDestinationOptions,
+	type AntoraRuntimeLogOptions,
 	type AssembleAntoraModulesOptions,
 	type AssembledAntoraModuleFile,
 	assembleAntoraModules,

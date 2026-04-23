@@ -9,6 +9,7 @@ const require = createRequire(
 );
 const buildPlaybook = require("@antora/playbook-builder");
 const GeneratorContext = require("@antora/site-generator/generator-context");
+const { configureLogger, finalizeLogger } = require("@antora/logger");
 const { assembleContent } = require("@antora/assembler");
 const assemblerPackagePath = require.resolve("@antora/assembler/package.json");
 const assemblerLibDir = resolve(dirname(assemblerPackagePath), "lib");
@@ -42,6 +43,31 @@ function parseConfiguredFlavor(value) {
 	)
 		? value
 		: undefined;
+}
+
+function mergeRuntimeLogConfig(playbook, runtimeLog) {
+	if (!runtimeLog) {
+		return playbook;
+	}
+
+	const playbookRuntime = playbook.runtime ?? {};
+	const playbookLog = playbookRuntime.log ?? {};
+	const runtimeLogDestination = runtimeLog.destination ?? {};
+	const playbookDestination = playbookLog.destination ?? {};
+
+	playbook.runtime = {
+		...playbookRuntime,
+		log: {
+			...playbookLog,
+			...runtimeLog,
+			destination: {
+				...playbookDestination,
+				...runtimeLogDestination,
+			},
+		},
+	};
+
+	return playbook;
 }
 
 function createBuildConfig(buildDir, keepSource = false) {
@@ -85,6 +111,7 @@ async function prepareAntoraRuntime({
 	keepSource = false,
 	playbookPath,
 	preferredQualifier,
+	runtimeLog,
 	rootLevel,
 }) {
 	const resolvedPlaybookPath = resolve(playbookPath);
@@ -93,10 +120,11 @@ async function prepareAntoraRuntime({
 		throw new Error(`Antora playbook does not exist: ${resolvedPlaybookPath}`);
 	}
 
-	const playbook = buildPlaybook(
-		["--playbook", resolvedPlaybookPath],
-		process.env,
+	const playbook = mergeRuntimeLogConfig(
+		buildPlaybook(["--playbook", resolvedPlaybookPath], process.env),
+		runtimeLog,
 	);
+	configureLogger(playbook.runtime.log, dirname(resolvedPlaybookPath));
 	const baseAssemblerConfig = await loadAssemblerConfig.call(
 		moduleShim,
 		playbook,
@@ -139,7 +167,7 @@ async function prepareAntoraRuntime({
 }
 
 function closeAntoraRuntime(context) {
-	return GeneratorContext.close(context);
+	return GeneratorContext.close(context).then(() => finalizeLogger());
 }
 
 function produceAssemblerFiles(runtime) {
@@ -164,12 +192,14 @@ function produceAssemblerFiles(runtime) {
 export async function assembleAntoraModules({
 	configSource,
 	playbookPath,
+	runtimeLog,
 	rootLevel,
 }) {
 	const runtime = await prepareAntoraRuntime({
 		configSource,
 		playbookPath,
 		preferredQualifier: "-markdown",
+		runtimeLog,
 		rootLevel,
 	});
 
@@ -185,8 +215,8 @@ export async function runAntoraAssembler({
 	configSource,
 	converter,
 	keepSource = false,
-	logOutput,
 	playbookPath,
+	runtimeLog,
 	rootLevel,
 }) {
 	const preferredQualifier = `-${
@@ -198,6 +228,7 @@ export async function runAntoraAssembler({
 		keepSource,
 		playbookPath,
 		preferredQualifier,
+		runtimeLog,
 		rootLevel,
 	});
 
@@ -210,7 +241,6 @@ export async function runAntoraAssembler({
 			{
 				configSource: runtime.assemblerConfig,
 				navigationCatalog: runtime.navigationCatalog,
-				logOutput,
 			},
 		);
 	} finally {
@@ -221,11 +251,12 @@ export async function runAntoraAssembler({
 export async function resolveAntoraMarkdownExportDefaults({
 	configSource,
 	playbookPath,
+	runtimeLog,
 }) {
 	const resolvedPlaybookPath = resolve(playbookPath);
-	const playbook = buildPlaybook(
-		["--playbook", resolvedPlaybookPath],
-		process.env,
+	const playbook = mergeRuntimeLogConfig(
+		buildPlaybook(["--playbook", resolvedPlaybookPath], process.env),
+		runtimeLog,
 	);
 	const assemblerConfig = await loadAssemblerConfig.call(
 		moduleShim,

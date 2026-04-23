@@ -328,6 +328,86 @@ Current policy is intentionally strict:
 
 This means a reader may still see explicit unsupported markers in flavors or contexts that cannot faithfully carry the source semantics. That is a conscious evidence-preservation choice today, not an accidental renderer quirk.
 
+=== Library Runtime Logging Overrides
+
+The package API can override Antora runtime logging without editing the playbook file.
+
+Use the `runtimeLog` option on library entrypoints such as:
+
+* `exportAntoraModulesToMarkdown`
+* `exportAntoraModules`
+* `assembleAntoraModules`
+* `runAntoraAssembler`
+* `resolveAntoraMarkdownExportDefaults`
+
+Example:
+
+[source,ts]
+----
+import { exportAntoraModulesToMarkdown } from "@wsmy/antora-markdown-exporter";
+
+const exports = await exportAntoraModulesToMarkdown({
+  playbookPath: "/workspace/antora-playbook.yml",
+  runtimeLog: {
+    level: "warn",
+    format: "json",
+    destination: {
+      file: "/workspace/build/logs/export.log",
+      append: true,
+      sync: true,
+    },
+  },
+});
+----
+
+This API surface maps directly onto Antora's `runtime.log` model:
+
+[cols="1,2" options="header"]
+|===
+|Library API key |Antora playbook key
+
+|`runtimeLog.level`
+|`runtime.log.level`
+
+|`runtimeLog.levelFormat`
+|`runtime.log.level_format`
+
+|`runtimeLog.failureLevel`
+|`runtime.log.failure_level`
+
+|`runtimeLog.format`
+|`runtime.log.format`
+
+|`runtimeLog.destination.file`
+|`runtime.log.destination.file`
+
+|`runtimeLog.destination.append`
+|`runtime.log.destination.append`
+
+|`runtimeLog.destination.bufferSize`
+|`runtime.log.destination.buffer_size`
+
+|`runtimeLog.destination.sync`
+|`runtime.log.destination.sync`
+|===
+
+Operational rule:
+
+* use playbook `runtime.log` when you want repository- or site-level defaults
+* use `runtimeLog` when an embedding tool or test harness needs per-call overrides
+
+Merge behavior:
+
+* the playbook remains the base configuration
+* `runtimeLog` overrides only the provided `runtime.log` fields
+* nested destination values are merged field-by-field rather than replacing the whole destination object
+
+Logging behavior:
+
+* the library runtime configures Antora's centralized logger before the export starts
+* exporter messages still flow through Antora's standard logging facility under the exporter logger name
+* if the selected export run emits no log events at the configured severity or higher, the configured destination may remain empty
+
 === Canonical Contract Family
 
 The repository exposes one coherent contract family rather than separate ad-hoc tools:

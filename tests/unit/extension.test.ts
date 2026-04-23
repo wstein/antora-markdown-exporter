@@ -84,6 +84,7 @@ describe("markdown exporter extension", () => {
 		expect(converter.backend).toBe("markdown");
 		expect(converter.extname).toBe(".md");
 		expect(converter.mediaType).toBe("text/markdown");
+		expect(converter.loggerName).toBe("@wsmy/antora-markdown-exporter");
 	});
 
 	it("writes converted markdown to the requested output file", async () => {

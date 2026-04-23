@@ -24,12 +24,28 @@ export type AntoraMarkdownExportDefaults = {
 	rootLevel?: AssemblerRootLevel;
 };
 
+export type AntoraRuntimeLogDestinationOptions = {
+	append?: boolean;
+	bufferSize?: number;
+	file?: string;
+	sync?: boolean;
+};
+
+export type AntoraRuntimeLogOptions = {
+	destination?: AntoraRuntimeLogDestinationOptions;
+	failureLevel?: "warn" | "error" | "fatal" | "none";
+	format?: "json" | "pretty";
+	level?: "all" | "debug" | "info" | "warn" | "error" | "fatal" | "silent";
+	levelFormat?: "number" | "label";
+};
+
 export type AntoraMarkdownModuleExportOptions = {
 	configSource?: AntoraMarkdownExporterExtensionConfig["configSource"];
 	flavor?: MarkdownFlavorName;
 	keepSource?: boolean;
 	outputRoot: string;
 	playbookPath: string;
+	runtimeLog?: AntoraRuntimeLogOptions;
 	rootLevel?: AssemblerRootLevel;
 };
 
@@ -51,8 +67,8 @@ export type AntoraMarkdownModuleExportResult = {
 export type ExportAntoraModulesToMarkdownOptions = {
 	configSource?: AntoraMarkdownExporterExtensionConfig["configSource"];
 	flavor?: MarkdownFlavorName;
-	logOutput?: string;
 	playbookPath: string;
+	runtimeLog?: AntoraRuntimeLogOptions;
 	rootLevel?: AssemblerRootLevel;
 };
 
@@ -99,14 +115,15 @@ export type AntoraAssemblerRunOptions = {
 	configSource?: AntoraMarkdownExporterExtensionConfig["configSource"];
 	converter: ReturnType<typeof createMarkdownConverter>;
 	keepSource?: boolean;
-	logOutput?: string;
 	playbookPath: string;
+	runtimeLog?: AntoraRuntimeLogOptions;
 	rootLevel?: AssemblerRootLevel;
 };
 
 export type AssembleAntoraModulesOptions = {
 	configSource?: AntoraMarkdownExporterExtensionConfig["configSource"];
 	playbookPath: string;
+	runtimeLog?: AntoraRuntimeLogOptions;
 	rootLevel?: AssemblerRootLevel;
 };
 
@@ -255,6 +272,7 @@ async function resolveMarkdownExportOptions(options: {
 	configSource?: AntoraMarkdownExporterExtensionConfig["configSource"];
 	flavor?: MarkdownFlavorName;
 	playbookPath: string;
+	runtimeLog?: AntoraRuntimeLogOptions;
 	rootLevel?: AssemblerRootLevel;
 }): Promise<{
 	flavor: MarkdownFlavorName;
@@ -264,6 +282,7 @@ async function resolveMarkdownExportOptions(options: {
 	const defaults = await resolveAntoraMarkdownExportDefaults({
 		configSource: options.configSource,
 		playbookPath: options.playbookPath,
+		runtimeLog: options.runtimeLog,
 	});
 
 	return {
@@ -276,11 +295,13 @@ async function resolveMarkdownExportOptions(options: {
 export async function resolveAntoraMarkdownExportDefaults({
 	configSource,
 	playbookPath,
+	runtimeLog,
 }: {
 	configSource?: AntoraMarkdownExporterExtensionConfig["configSource"];
 	playbookPath: string;
+	runtimeLog?: AntoraRuntimeLogOptions;
 }): Promise<AntoraMarkdownExportDefaults> {
-	return resolveDefaultsFromRuntime({ configSource, playbookPath });
+	return resolveDefaultsFromRuntime({ configSource, playbookPath, runtimeLog });
 }
 
 export async function runAntoraAssembler(
@@ -291,8 +312,8 @@ export async function runAntoraAssembler(
 		configSource: options.configSource,
 		converter: options.converter,
 		keepSource: options.keepSource,
-		logOutput: options.logOutput,
 		playbookPath: options.playbookPath,
+		runtimeLog: options.runtimeLog,
 		rootLevel: options.rootLevel,
 	})) as RuntimeExportedModuleFile[];
 }
@@ -303,6 +324,7 @@ export async function assembleAntoraModules(
 	const files = (await assembleModulesFromRuntime({
 		configSource: options.configSource,
 		playbookPath: options.playbookPath,
+		runtimeLog: options.runtimeLog,
 		rootLevel: options.rootLevel,
 	})) as RuntimeAssembledModuleFile[];
 
@@ -338,6 +360,7 @@ export async function exportAntoraModulesToMarkdown(
 	const assembledFiles = await assembleAntoraModules({
 		configSource: options.configSource,
 		playbookPath: resolvedOptions.playbookPath,
+		runtimeLog: options.runtimeLog,
 		rootLevel: resolvedOptions.rootLevel,
 	});
 	const assembledFilesByPath = new Map(
@@ -353,8 +376,8 @@ export async function exportAntoraModulesToMarkdown(
 			buildDir,
 			configSource: options.configSource,
 			converter,
-			logOutput: options.logOutput,
 			playbookPath: resolvedOptions.playbookPath,
+			runtimeLog: options.runtimeLog,
 			rootLevel: resolvedOptions.rootLevel,
 		});
 
@@ -404,6 +427,7 @@ export async function exportAntoraModules(
 		? await assembleAntoraModules({
 				configSource: options.configSource,
 				playbookPath: resolvedOptions.playbookPath,
+				runtimeLog: options.runtimeLog,
 				rootLevel: resolvedOptions.rootLevel,
 			})
 		: [];
@@ -411,6 +435,7 @@ export async function exportAntoraModules(
 		configSource: options.configSource,
 		flavor: resolvedOptions.flavor,
 		playbookPath: resolvedOptions.playbookPath,
+		runtimeLog: options.runtimeLog,
 		rootLevel: resolvedOptions.rootLevel,
 	});
 

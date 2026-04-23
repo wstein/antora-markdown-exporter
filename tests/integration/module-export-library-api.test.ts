@@ -260,4 +260,24 @@ describe("module export library API", () => {
 			}),
 		);
 	});
+
+	it("allows overriding Antora runtime log settings through the API", async () => {
+		const root = await createUnsupportedFixtureRepository();
+		const logPath = resolve(root, "build", "logs", "export.log");
+
+		const exports = await exportAntoraModulesToMarkdown({
+			playbookPath: resolve(root, "antora-playbook.yml"),
+			runtimeLog: {
+				destination: {
+					file: logPath,
+				},
+				format: "json",
+				level: "warn",
+			},
+		});
+
+		expect(exports[0]?.path).toBe("index.md");
+		const logContents = await readFile(logPath, "utf8");
+		expect(logContents).toBe("");
+	}, 15_000);
 });
