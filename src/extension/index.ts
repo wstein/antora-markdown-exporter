@@ -19,6 +19,7 @@ export interface AntoraMarkdownExporterExtensionConfig {
 	};
 	readonly configFile?: string;
 	readonly configFiles?: string[];
+	readonly logOutput?: string;
 }
 
 type MarkdownConverterConfig = {
@@ -198,10 +199,48 @@ export function register(
 		flavor,
 		navigationCatalog,
 		rootLevel,
+		logOutput,
 		...assemblerConfig
 	} = config;
 	const configuredDefaults =
 		resolveExporterDefaultsFromConfigSource(configSource);
+
+	// Capture logs if logOutput is specified
+	const capturedLogs: string[] = [];
+	if (logOutput) {
+		const originalStderr = console.error;
+		const originalStdout = console.log;
+
+		console.error = (...args: unknown[]) => {
+			capturedLogs.push(args.map((arg) => String(arg)).join(" "));
+			originalStderr(...args);
+		};
+
+		console.log = (...args: unknown[]) => {
+			capturedLogs.push(args.map((arg) => String(arg)).join(" "));
+			originalStdout(...args);
+		};
+
+		// Write logs after configure completes
+		const writeLogsAsync = async () => {
+			const logContent = [
+				"=== Antora Markdown Export Log ===",
+				new Date().toISOString(),
+				"",
+				...capturedLogs,
+			].join("\n");
+			await mkdir(dirname(logOutput), { recursive: true });
+			await writeFile(logOutput, logContent, "utf8");
+		};
+
+		// Schedule log write for next tick to ensure it happens after processing
+		setImmediate(() => {
+			writeLogsAsync().catch((err) => {
+				originalStderr("Failed to write log file:", err);
+			});
+		});
+	}
+
 	configure(
 		this,
 		createMarkdownConverter({
