@@ -112,36 +112,7 @@ describe("markdown exporter extension", () => {
 		expect(attributes.outfilesuffix).toBe(".md");
 		expect(attributes.outfile).toBe(outputFile);
 		await expect(readFile(outputFile, "utf8")).resolves.toBe(
-			"# Guide\n\nSee [setup](guide/setup.md).\n\n",
-		);
-	});
-
-	it("writes configured path-style xref fallback labels when requested", async () => {
-		const converter = createMarkdownConverter({
-			xrefFallbackLabelStyle: "fragment-or-path",
-		});
-		const outputRoot = await mkdtemp(join(tmpdir(), "antora-md-exporter-"));
-		const outputFile = join(outputRoot, "guide.md");
-
-		await converter.convert(
-			{
-				path: "/virtual/modules/ROOT/pages/guide.adoc",
-				contents: Buffer.from(
-					"= Guide\n\nSee xref:guide/setup.adoc[].",
-					"utf8",
-				),
-			},
-			{
-				docfile: "/virtual/modules/ROOT/pages/guide.adoc",
-				outdir: outputRoot,
-				outfile: outputFile,
-				outfilesuffix: ".html",
-			},
-			{ dir: outputRoot },
-		);
-
-		await expect(readFile(outputFile, "utf8")).resolves.toBe(
-			"# Guide\n\nSee [guide/setup](guide/setup.md).\n\n",
+			"# Guide\n\nSee [guide/setup.md](guide/setup.md).\n\n",
 		);
 	});
 
@@ -157,7 +128,9 @@ describe("markdown exporter extension", () => {
 			},
 		);
 
-		expect(markdown).toBe("# Guide\n\nSee [setup](guide/setup.html).\n");
+		expect(markdown).toBe(
+			"# Guide\n\nSee [guide/setup.html](guide/setup.html).\n",
+		);
 	});
 
 	it("registers the converter through Antora assembler configuration", async () => {
@@ -179,7 +152,6 @@ describe("markdown exporter extension", () => {
 				configSource: { playbook: true },
 				navigationCatalog,
 				configFile: "antora-playbook.yml",
-				xrefFallbackLabelStyle: "fragment-or-path",
 			},
 		});
 
@@ -247,7 +219,6 @@ describe("markdown exporter extension", () => {
 						root_level: 0,
 						attributes: {
 							"markdown-exporter-flavor": "multimarkdown",
-							"markdown-exporter-xref-fallback-label-style": "fragment-or-path",
 						},
 					},
 				},
@@ -290,7 +261,6 @@ describe("markdown exporter extension", () => {
 						root_level: 0,
 						attributes: {
 							"markdown-exporter-flavor": "multimarkdown",
-							"markdown-exporter-xref-fallback-label-style": "fragment-or-path",
 						},
 					},
 				},
@@ -298,7 +268,7 @@ describe("markdown exporter extension", () => {
 			},
 		);
 		await expect(readFile(outputFile, "utf8")).resolves.toContain(
-			"See [guide/setup](guide/setup.md).",
+			"See [guide/setup.md](guide/setup.md).",
 		);
 	});
 
@@ -340,7 +310,6 @@ describe("markdown exporter extension", () => {
 					asciidoc: {
 						attributes: {
 							"markdown-exporter-flavor": "strict",
-							"markdown-exporter-xref-fallback-label-style": "fragment-or-path",
 						},
 					},
 				},
@@ -362,7 +331,6 @@ describe("markdown exporter extension", () => {
 					asciidoc: {
 						attributes: {
 							"markdown-exporter-flavor": "strict",
-							"markdown-exporter-xref-fallback-label-style": "fragment-or-path",
 						},
 					},
 					assembly: {
@@ -394,7 +362,7 @@ describe("markdown exporter extension", () => {
 		);
 
 		await expect(readFile(outputFile, "utf8")).resolves.toContain(
-			"See [guide/setup](guide/setup.md).",
+			"See [guide/setup.md](guide/setup.md).",
 		);
 	});
 

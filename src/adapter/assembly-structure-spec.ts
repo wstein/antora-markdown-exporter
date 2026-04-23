@@ -53,7 +53,7 @@ export const assemblyStructureSpecification: AssemblyStructureSpecification = {
 			heading: "Inline Fallback Semantics",
 			body: [
 				"Malformed inline HTML-like fragments fall back deterministically rather than being reparsed by ad-hoc heuristics.",
-				"Xref fallback labels are display policy; canonical target metadata remains the semantic source of truth.",
+				"Visible xref labels come from assembled Asciidoctor output; canonical target metadata remains the semantic source of truth.",
 				"Mixed inline semantics should preserve supported nested meaning where parsing is unambiguous and preserve raw text where it is not.",
 			],
 		},

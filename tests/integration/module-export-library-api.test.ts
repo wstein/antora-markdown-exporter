@@ -139,7 +139,6 @@ describe("module export library API", () => {
 		expect(defaults).toEqual({
 			flavor: "gfm",
 			rootLevel: 1,
-			xrefFallbackLabelStyle: "fragment-or-basename",
 		});
 		expect(markdownExports.map((entry) => entry.path)).toEqual([
 			"documentation.md",
@@ -174,7 +173,6 @@ describe("module export library API", () => {
 
 		expect(result.flavor).toBe("gfm");
 		expect(result.rootLevel).toBe(1);
-		expect(result.xrefFallbackLabelStyle).toBe("fragment-or-basename");
 		expect(
 			result.exportedFiles.map((entry) => entry.relativeOutputPath),
 		).toEqual([

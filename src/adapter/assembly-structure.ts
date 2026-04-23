@@ -361,7 +361,7 @@ export const assemblyStructureInvariants: AssemblyStructureInvariant[] = [
 			"Malformed or partial inline markup must fall back deterministically instead of being reparsed by ad-hoc heuristics.",
 		requirements: [
 			"Broken inline HTML-like fragments may survive as plain text when they cannot be mapped confidently to semantic nodes.",
-			"Xref fallback labels are display policy, not meaning; the target metadata remains canonical even when the visible label changes.",
+			"Visible xref labels come from assembled Asciidoctor output; the target metadata remains canonical even when the label is terse or fully qualified.",
 			"Inline extraction may decode safe literal entities, but it must not invent semantics that the structured source did not provide.",
 		],
 	},

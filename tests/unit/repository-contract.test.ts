@@ -165,14 +165,10 @@ describe("repository contract", () => {
 		expect(exportScript).toContain('let format: "human" | "json" = "human"');
 		expect(exportScript).toContain('if (argument === "--json")');
 		expect(exportScript).toContain(
-			'if (argument === "--xref-fallback-label-style")',
-		);
-		expect(exportScript).toContain(
 			'const reviewBundleRoot = resolve(options.outputRoot, "review-bundle")',
 		);
 		expect(exportScript).toContain('".github/workflows/release.yml"');
 		expect(exportScript).toContain('".github/workflows/pages.yml"');
-		expect(exportScript).toContain("Xref fallback labels:");
 		expect(exportScript).toContain("Review bundle:");
 		expect(exportScript).toContain('if (options.format === "json")');
 		expect(exportScript).not.toContain('if (argument === "--format")');
@@ -184,17 +180,15 @@ describe("repository contract", () => {
 		expect(antoraAssemblerConfig).toContain("assembly:");
 		expect(antoraAssemblerConfig).toContain("root_level: 1");
 		expect(antoraPlaybook).toContain("markdown-exporter-flavor: gfm");
-		expect(antoraPlaybook).toContain(
-			"markdown-exporter-xref-fallback-label-style: fragment-or-basename",
+		expect(antoraPlaybook).not.toContain(
+			"markdown-exporter-xref-fallback-label-style",
 		);
 		expect(extensionEntrypoint).toContain("root_level: rootLevel");
 	});
 
 	it("keeps the lightweight CLI wrapper honest about its current scope", () => {
 		expect(cliEntrypoint).toContain("Current scope:");
-		expect(cliEntrypoint).toContain(
-			"--xref-fallback-label-style fragment-or-path",
-		);
+		expect(cliEntrypoint).toContain("bun run export:modules -- --flavor");
 		expect(cliEntrypoint).toContain("only help and version output");
 	});
 
@@ -422,9 +416,10 @@ describe("repository contract", () => {
 	});
 
 	it("keeps standalone .md xref expectations isolated from fixture routing contracts", () => {
-		expect(extensionUnitTests).toContain("[setup](guide/setup.md)");
-		expect(extensionUnitTests).toContain("[guide/setup](guide/setup.md)");
-		expect(extensionUnitTests).toContain("[setup](guide/setup.html)");
+		expect(extensionUnitTests).toContain("[guide/setup.md](guide/setup.md)");
+		expect(extensionUnitTests).toContain(
+			"[guide/setup.html](guide/setup.html)",
+		);
 
 		for (const file of xrefExpectedMarkdownFiles) {
 			expect(readFileSync(file, "utf8")).not.toContain(".md)");

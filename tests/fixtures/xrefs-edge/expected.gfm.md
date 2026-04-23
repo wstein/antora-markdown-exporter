@@ -1,3 +1,3 @@
 # Cross references
 
-See [install](install.html) and [details](guide/setup.html#details).
+See [install.html](install.html) and [guide/setup.html](guide/setup.html#details).

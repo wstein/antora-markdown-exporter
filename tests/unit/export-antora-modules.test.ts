@@ -18,7 +18,6 @@ describe("export antora modules script", () => {
 		expect(options.outputRoot).toBe(resolve("build/markdown"));
 		expect(options.playbookPath).toBe(resolve("antora-playbook.yml"));
 		expect(options.rootLevel).toBeUndefined();
-		expect(options.xrefFallbackLabelStyle).toBeUndefined();
 	});
 
 	it("parses explicit arguments", () => {
@@ -31,8 +30,6 @@ describe("export antora modules script", () => {
 			"gitlab",
 			"--root-level",
 			"0",
-			"--xref-fallback-label-style",
-			"fragment-or-path",
 			"--json",
 		]);
 
@@ -41,7 +38,6 @@ describe("export antora modules script", () => {
 		expect(options.flavor).toBe("gitlab");
 		expect(options.format).toBe("json");
 		expect(options.rootLevel).toBe(0);
-		expect(options.xrefFallbackLabelStyle).toBe("fragment-or-path");
 	});
 
 	it("accepts multimarkdown as an explicit export flavor", () => {
@@ -79,7 +75,6 @@ describe("export antora modules script", () => {
 
 		expect(options.flavor).toBe("gfm");
 		expect(options.rootLevel).toBe(1);
-		expect(options.xrefFallbackLabelStyle).toBe("fragment-or-basename");
 	});
 
 	it("lets the package-task markdown mode override config-owned flavor defaults", async () => {
@@ -89,7 +84,6 @@ describe("export antora modules script", () => {
 
 		expect(options.flavor).toBe("multimarkdown");
 		expect(options.rootLevel).toBe(1);
-		expect(options.xrefFallbackLabelStyle).toBe("fragment-or-basename");
 	});
 
 	it("exports one assembled markdown document per Antora root-level assembly", async () => {
@@ -103,7 +97,6 @@ describe("export antora modules script", () => {
 				packageTaskMarkdown: false,
 				playbookPath: resolve("antora-playbook.yml"),
 				rootLevel: 1,
-				xrefFallbackLabelStyle: "fragment-or-basename",
 			});
 
 		expect(exportedFiles.map((entry) => entry.relativeOutputPath)).toEqual([
@@ -187,7 +180,6 @@ describe("export antora modules script", () => {
 		);
 		expect(output).toContain("Assembly root level: 1");
 		expect(output).toContain("Review bundle:");
-		expect(output).toContain("Xref fallback labels: fragment-or-basename");
 		expect(output).toContain("- review bundle: .github/workflows/release.yml");
 		expect(output).toContain("- review bundle: .github/workflows/pages.yml");
 		expect(output).toContain("- documentation: documentation.md");
@@ -218,7 +210,6 @@ describe("export antora modules script", () => {
 			reviewBundleFiles: { outputPath: string }[];
 			reviewBundleRoot: string;
 			rootLevel: number;
-			xrefFallbackLabelStyle: string;
 		};
 
 		expect(result.count).toBe(4);
@@ -231,36 +222,12 @@ describe("export antora modules script", () => {
 			{ outputPath: ".github/workflows/pages.yml" },
 		]);
 		expect(result.rootLevel).toBe(1);
-		expect(result.xrefFallbackLabelStyle).toBe("fragment-or-basename");
 		expect(result.files).toEqual([
 			{ moduleName: "documentation", outputPath: "documentation.md" },
 			{ moduleName: "architecture", outputPath: "architecture.md" },
 			{ moduleName: "manual", outputPath: "manual.md" },
 			{ moduleName: "onboarding", outputPath: "onboarding.md" },
 		]);
-	});
-
-	it("accepts path-style xref fallback labels for module export runs", async () => {
-		const outputRoot = await mkdtemp(
-			resolve(tmpdir(), "antora-markdown-export-"),
-		);
-		const { exportedFiles, reviewBundleFiles } =
-			await exportAntoraModulesToMarkdown({
-				flavor: "gfm",
-				outputRoot,
-				packageTaskMarkdown: false,
-				playbookPath: resolve("antora-playbook.yml"),
-				rootLevel: 1,
-				xrefFallbackLabelStyle: "fragment-or-path",
-			});
-
-		expect(exportedFiles.map((entry) => entry.relativeOutputPath)).toEqual([
-			"documentation.md",
-			"architecture.md",
-			"manual.md",
-			"onboarding.md",
-		]);
-		expect(reviewBundleFiles).toHaveLength(2);
 	});
 
 	it("keeps multimarkdown module exports free of source-style antora xref destinations", async () => {
@@ -273,7 +240,6 @@ describe("export antora modules script", () => {
 			packageTaskMarkdown: true,
 			playbookPath: resolve("antora-playbook.yml"),
 			rootLevel: 1,
-			xrefFallbackLabelStyle: "fragment-or-basename",
 		});
 
 		const manualMarkdown = await readFile(
@@ -296,7 +262,6 @@ describe("export antora modules script", () => {
 			packageTaskMarkdown: false,
 			playbookPath: resolve("antora-playbook.yml"),
 			rootLevel: 0,
-			xrefFallbackLabelStyle: "fragment-or-basename",
 		});
 
 		expect(exportedFiles.map((entry) => entry.relativeOutputPath)).toEqual([

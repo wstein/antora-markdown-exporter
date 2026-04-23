@@ -15,7 +15,6 @@ import {
 import type {
 	AntoraMarkdownExporterExtensionConfig,
 	AssemblerRootLevel,
-	XrefFallbackLabelStyle,
 } from "./extension/index.js";
 import { createMarkdownConverter } from "./extension/index.js";
 import type { MarkdownFlavorName } from "./markdown/flavor.js";
@@ -23,7 +22,6 @@ import type { MarkdownFlavorName } from "./markdown/flavor.js";
 export type AntoraMarkdownExportDefaults = {
 	flavor?: MarkdownFlavorName;
 	rootLevel?: AssemblerRootLevel;
-	xrefFallbackLabelStyle?: XrefFallbackLabelStyle;
 };
 
 export type AntoraMarkdownModuleExportOptions = {
@@ -33,7 +31,6 @@ export type AntoraMarkdownModuleExportOptions = {
 	outputRoot: string;
 	playbookPath: string;
 	rootLevel?: AssemblerRootLevel;
-	xrefFallbackLabelStyle?: XrefFallbackLabelStyle;
 };
 
 export type AntoraMarkdownModuleExportFile = {
@@ -48,7 +45,6 @@ export type AntoraMarkdownModuleExportResult = {
 	outputRoot: string;
 	playbookPath: string;
 	rootLevel: AssemblerRootLevel;
-	xrefFallbackLabelStyle: XrefFallbackLabelStyle;
 };
 
 export type ExportAntoraModulesToMarkdownOptions = {
@@ -56,7 +52,6 @@ export type ExportAntoraModulesToMarkdownOptions = {
 	flavor?: MarkdownFlavorName;
 	playbookPath: string;
 	rootLevel?: AssemblerRootLevel;
-	xrefFallbackLabelStyle?: XrefFallbackLabelStyle;
 };
 
 export type AntoraMarkdownExportDiagnostic = {
@@ -80,7 +75,6 @@ export type AntoraModuleMarkdownExport = {
 	rootLevel: AssemblerRootLevel;
 	sourcePages: string[];
 	version: string;
-	xrefFallbackLabelStyle: XrefFallbackLabelStyle;
 };
 
 export type AssembledAntoraModuleFile = {
@@ -237,12 +231,10 @@ async function resolveMarkdownExportOptions(options: {
 	flavor?: MarkdownFlavorName;
 	playbookPath: string;
 	rootLevel?: AssemblerRootLevel;
-	xrefFallbackLabelStyle?: XrefFallbackLabelStyle;
 }): Promise<{
 	flavor: MarkdownFlavorName;
 	playbookPath: string;
 	rootLevel: AssemblerRootLevel;
-	xrefFallbackLabelStyle: XrefFallbackLabelStyle;
 }> {
 	const defaults = await resolveAntoraMarkdownExportDefaults({
 		configSource: options.configSource,
@@ -253,10 +245,6 @@ async function resolveMarkdownExportOptions(options: {
 		flavor: options.flavor ?? defaults.flavor ?? "gfm",
 		playbookPath: resolve(options.playbookPath),
 		rootLevel: options.rootLevel ?? defaults.rootLevel ?? 1,
-		xrefFallbackLabelStyle:
-			options.xrefFallbackLabelStyle ??
-			defaults.xrefFallbackLabelStyle ??
-			"fragment-or-basename",
 	};
 }
 
@@ -331,7 +319,6 @@ export async function exportAntoraModulesToMarkdown(
 	const buildDir = await mkdtemp(join(tmpdir(), "antora-markdown-export-"));
 	const converter = createMarkdownConverter({
 		flavor: resolvedOptions.flavor,
-		xrefFallbackLabelStyle: resolvedOptions.xrefFallbackLabelStyle,
 	});
 
 	try {
@@ -359,8 +346,6 @@ export async function exportAntoraModulesToMarkdown(
 										assembledFile.contents.toString("utf8"),
 										{
 											sourcePath: assembledFile.relativePath,
-											xrefFallbackLabelStyle:
-												resolvedOptions.xrefFallbackLabelStyle,
 										},
 									),
 									assembledFile.relativePath,
@@ -373,7 +358,6 @@ export async function exportAntoraModulesToMarkdown(
 					rootLevel: resolvedOptions.rootLevel,
 					sourcePages: assembledFile?.sourcePages ?? [],
 					version: file.src.version,
-					xrefFallbackLabelStyle: resolvedOptions.xrefFallbackLabelStyle,
 				};
 			}),
 		);
@@ -399,7 +383,6 @@ export async function exportAntoraModules(
 		flavor: resolvedOptions.flavor,
 		playbookPath: resolvedOptions.playbookPath,
 		rootLevel: resolvedOptions.rootLevel,
-		xrefFallbackLabelStyle: resolvedOptions.xrefFallbackLabelStyle,
 	});
 
 	await mkdir(outputRoot, { recursive: true });
@@ -425,7 +408,6 @@ export async function exportAntoraModules(
 		outputRoot,
 		playbookPath: resolvedOptions.playbookPath,
 		rootLevel: resolvedOptions.rootLevel,
-		xrefFallbackLabelStyle: resolvedOptions.xrefFallbackLabelStyle,
 		exportedFiles: exports.map((file) => {
 			const relativeOutputPath = file.path;
 			return {

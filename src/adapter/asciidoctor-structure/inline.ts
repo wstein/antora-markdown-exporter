@@ -12,11 +12,7 @@ import {
 	parseHtmlAttributes,
 } from "./shared.js";
 import type { ExtractAssemblyStructureOptions } from "./types.js";
-import {
-	isStructuredXrefHref,
-	normalizeXrefChildren,
-	parseXrefTarget,
-} from "./xref.js";
+import { isStructuredXrefHref, parseXrefTarget } from "./xref.js";
 
 export function parsePlainTextWithSoftBreaks(value: string): AssemblyInline[] {
 	const lines = decodeHtmlEntities(value)
@@ -39,19 +35,12 @@ export function parsePlainTextWithSoftBreaks(value: string): AssemblyInline[] {
 
 export function parseInlineHtmlWithOptions(
 	content: string,
-	options: ExtractAssemblyStructureOptions = {},
+	_options: ExtractAssemblyStructureOptions = {},
 ): AssemblyInline[] {
-	const xrefFallbackLabelStyle =
-		options.xrefFallbackLabelStyle ?? "fragment-or-basename";
-	return parseInlineHtmlWithPolicy(content, xrefFallbackLabelStyle);
+	return parseInlineHtmlWithPolicy(content);
 }
 
-function parseInlineHtmlWithPolicy(
-	content: string,
-	xrefFallbackLabelStyle: NonNullable<
-		ExtractAssemblyStructureOptions["xrefFallbackLabelStyle"]
-	>,
-): AssemblyInline[] {
+function parseInlineHtmlWithPolicy(content: string): AssemblyInline[] {
 	const nodes: AssemblyInline[] = [];
 	let cursor = 0;
 
@@ -114,7 +103,6 @@ function parseInlineHtmlWithPolicy(
 				type: "strong",
 				children: parseInlineHtmlWithPolicy(
 					content.slice(nextTagIndex + strongOpen.length, endIndex),
-					xrefFallbackLabelStyle,
 				),
 			});
 			cursor = endIndex + 9;
@@ -135,7 +123,6 @@ function parseInlineHtmlWithPolicy(
 				type: "emphasis",
 				children: parseInlineHtmlWithPolicy(
 					content.slice(nextTagIndex + emphasisOpen.length, endIndex),
-					xrefFallbackLabelStyle,
 				),
 			});
 			cursor = endIndex + 5;
@@ -177,7 +164,7 @@ function parseInlineHtmlWithPolicy(
 			const linkAttributes = Object.fromEntries(
 				Object.entries(attributes).filter(([key]) => key !== "href"),
 			);
-			const children = parseInlineHtmlWithPolicy(inner, xrefFallbackLabelStyle);
+			const children = parseInlineHtmlWithPolicy(inner);
 			if (isStructuredXrefHref(href)) {
 				const target = parseXrefTarget(href);
 				nodes.push(<AssemblyXref>{
@@ -186,12 +173,7 @@ function parseInlineHtmlWithPolicy(
 					target,
 					attributes:
 						Object.keys(linkAttributes).length > 0 ? linkAttributes : undefined,
-					children: normalizeXrefChildren(
-						href,
-						target,
-						children,
-						xrefFallbackLabelStyle,
-					),
+					children,
 				});
 			} else {
 				nodes.push(<AssemblyLink>{

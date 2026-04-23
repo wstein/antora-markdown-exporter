@@ -29,7 +29,6 @@ export { register };
 asciidoc:
   attributes:
     markdown-exporter-flavor: gfm
-    markdown-exporter-xref-fallback-label-style: fragment-or-basename
 ```
 
 4. Keep assembly partitioning in Assembler config:
@@ -133,10 +132,7 @@ import {
 
 const structured = extractAssemblyStructure(
   "== Sample\n\nSee xref:install.adoc#cli[install].",
-  {
-    sourcePath: "/virtual/project/page.adoc",
-    xrefFallbackLabelStyle: "fragment-or-basename",
-  },
+  { sourcePath: "/virtual/project/page.adoc" },
 );
 const document = convertAssemblyStructureToMarkdownIR(structured);
 
@@ -154,8 +150,6 @@ console.log(rag.entries);
 
 Inspection helpers normalize before traversal and return entries in document order, so the combined report is stable enough for CI, release validation, and snapshot-style contract tests.
 `collectMarkdownInspectionRagDocument(document)` narrows that same normalized surface into deterministic ordered entries for agentic retrieval and prompt assembly without reparsing rendered Markdown. The RAG document now includes headings, anchors, page aliases, and best-effort source locations alongside xrefs so chunking and retrieval can stay on the semantic side of the pipeline.
-
-When unlabeled xrefs need a different display form, the structured extractor and extension runtime also accept `xrefFallbackLabelStyle`. Use `fragment-or-basename` for labels like `setup`, or `fragment-or-path` for labels like `guide/setup`.
 
 ## CI And Release Validation
 
@@ -331,7 +325,7 @@ To export the main Antora modules to Markdown using the repository pipeline, run
 make markdown
 ```
 
-This emits flat Assembler exports under `build/markdown/documentation.md`, `build/markdown/architecture.md`, `build/markdown/manual.md`, and `build/markdown/onboarding.md` through the same structured conversion path as the library API: structured extraction, IR lowering, normalization, and flavor rendering. It also materializes a review bundle under `build/markdown/review-bundle/.github/workflows/` so exported docs ship with `release.yml` and `pages.yml`. The repository tracks `assembly.root_level: 1` in [antora-assembler.yml](./antora-assembler.yml), and it now keeps exporter display defaults in [antora-playbook.yml](./antora-playbook.yml) under `asciidoc.attributes.markdown-exporter-flavor` and `asciidoc.attributes.markdown-exporter-xref-fallback-label-style`. The direct `bun run export:modules` script reads those Antora-owned defaults, while `make markdown` remains an explicit convenience task that requests `multimarkdown`. Both flavors still write `.md` files. Use `--root-level 0` when you want the single combined `index.md` export instead of one export per top-level navigation entry. The default CLI output is a human-readable summary. If automation needs machine-readable output, run `bun run export:modules -- --json`. Use `bun run export:modules -- --flavor gitlab`, `bun run export:modules -- --flavor gfm`, `bun run export:modules -- --xref-fallback-label-style fragment-or-path`, or an alternate `--output-root` when you need a different target.
+This emits flat Assembler exports under `build/markdown/documentation.md`, `build/markdown/architecture.md`, `build/markdown/manual.md`, and `build/markdown/onboarding.md` through the same structured conversion path as the library API: structured extraction, IR lowering, normalization, and flavor rendering. It also materializes a review bundle under `build/markdown/review-bundle/.github/workflows/` so exported docs ship with `release.yml` and `pages.yml`. The repository tracks `assembly.root_level: 1` in [antora-assembler.yml](./antora-assembler.yml), and it keeps the default export flavor in [antora-playbook.yml](./antora-playbook.yml) under `asciidoc.attributes.markdown-exporter-flavor`. The direct `bun run export:modules` script reads those Antora-owned defaults, while `make markdown` remains an explicit convenience task that requests `multimarkdown`. Both flavors still write `.md` files. Use `--root-level 0` when you want the single combined `index.md` export instead of one export per top-level navigation entry. The default CLI output is a human-readable summary. If automation needs machine-readable output, run `bun run export:modules -- --json`. Use `bun run export:modules -- --flavor gitlab`, `bun run export:modules -- --flavor gfm`, or an alternate `--output-root` when you need a different target.
 
 ## Release
 

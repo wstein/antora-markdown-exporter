@@ -330,7 +330,7 @@
 			"renderedContains": [
 				"<!-- page-aliases: old-home, old-overview -->",
 				"[Overview](#overview)",
-				"[install](install.html)"
+				"[install.html](install.html)"
 			],
 			"renderedExcludes": ["Unsupported:"]
 		}
@@ -425,9 +425,9 @@
 		"expectations": {
 			"nodeTypes": ["heading", "paragraph"],
 			"renderedContains": [
-				"[install](docs:ROOT:install.html)",
-				"[cli](2.0@docs:ROOT:install.html#cli)",
-				"[nav](docs:ROOT:partial$nav.html)"
+				"[docs:ROOT:install.html](docs:ROOT:install.html)",
+				"[2.0@docs:ROOT:install.html](2.0@docs:ROOT:install.html#cli)",
+				"[docs:ROOT:partial$nav.html](docs:ROOT:partial$nav.html)"
 			],
 			"renderedExcludes": ["Unsupported:"]
 		}

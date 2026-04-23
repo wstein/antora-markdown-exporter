@@ -35,19 +35,11 @@ const defaultAssemblyAttributes = {
 	toclevels: "3",
 };
 const exporterFlavorAttribute = "markdown-exporter-flavor";
-const exporterXrefFallbackAttribute =
-	"markdown-exporter-xref-fallback-label-style";
 
 function parseConfiguredFlavor(value) {
 	return ["gfm", "commonmark", "gitlab", "multimarkdown", "strict"].includes(
 		value,
 	)
-		? value
-		: undefined;
-}
-
-function parseConfiguredXrefFallbackLabelStyle(value) {
-	return value === "fragment-or-basename" || value === "fragment-or-path"
 		? value
 		: undefined;
 }
@@ -252,9 +244,5 @@ export async function resolveAntoraMarkdownExportDefaults({
 			assemblerConfig.assembly?.rootLevel === 1
 				? assemblerConfig.assembly.rootLevel
 				: undefined,
-		xrefFallbackLabelStyle: parseConfiguredXrefFallbackLabelStyle(
-			assemblyAttributes[exporterXrefFallbackAttribute] ??
-				playbookAttributes[exporterXrefFallbackAttribute],
-		),
 	};
 }

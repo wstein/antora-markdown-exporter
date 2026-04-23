@@ -571,35 +571,13 @@ describe("asciidoctor structure extraction", () => {
 					? child.children[0].value
 					: "",
 			);
-		expect(labels).toEqual(["install", "cli", "overview", "setup", "nav"]);
-	});
-
-	it("supports explicit xref fallback label display policy", () => {
-		const document = extractAssemblyStructure(
-			[
-				"== Xrefs",
-				"",
-				"See xref:docs:ROOT:guide/setup.adoc[] and xref:2.0@docs:api:page$guide/index.adoc#overview[].",
-			].join("\n"),
-			{
-				xrefFallbackLabelStyle: "fragment-or-path",
-			},
-		);
-
-		const paragraph = document.children[1];
-		expect(paragraph).toMatchObject({ type: "paragraph" });
-		if (paragraph?.type !== "paragraph") {
-			throw new Error("expected paragraph");
-		}
-
-		const labels = paragraph.children
-			.filter((child) => child.type === "xref")
-			.map((child) =>
-				child.type === "xref" && child.children[0]?.type === "text"
-					? child.children[0].value
-					: "",
-			);
-		expect(labels).toEqual(["guide/setup", "overview"]);
+		expect(labels).toEqual([
+			"docs:ROOT:install.html",
+			"2.0@docs:ROOT:install.html",
+			"2.0@docs:api:page$index.html",
+			"docs:ROOT:guide/setup.html",
+			"docs:ROOT:partial$nav.html",
+		]);
 	});
 
 	it("extracts pass blocks and halign-driven table alignment structurally", () => {

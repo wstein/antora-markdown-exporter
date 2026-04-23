@@ -16,7 +16,6 @@ The repository should converge on one Antora-native control surface for Markdown
 
 - export flavor
 - assembly root level
-- xref fallback label style
 - output directory intent
 
 Those controls should be expressible through playbook or Assembler configuration data that the real Antora runtime can read directly.
@@ -43,7 +42,7 @@ Prefer implementation steps that:
 - preserve one converter pipeline under `src/extension/index.ts`
 - prove the behavior through integration tests that exercise the real Antora generator context
 
-The repository now reads default export flavor and xref fallback label policy from `antora-playbook.yml` attributes and keeps `assembly.root_level` in `antora-assembler.yml`. Wrapper flags remain overrides, not the only policy source.
+The repository now reads the default export flavor from `antora-playbook.yml` attributes and keeps `assembly.root_level` in `antora-assembler.yml`. Wrapper flags remain overrides, not the only policy source.
 
 Do not add a second custom configuration format for repository use.
 

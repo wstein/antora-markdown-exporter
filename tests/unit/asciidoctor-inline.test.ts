@@ -57,9 +57,6 @@ describe("asciidoctor inline helpers", () => {
 		expect(
 			parseInlineHtmlWithOptions(
 				'<a href="guide/setup.html">guide/setup.html</a>',
-				{
-					xrefFallbackLabelStyle: "fragment-or-path",
-				},
 			),
 		).toEqual([
 			{
@@ -74,7 +71,7 @@ describe("asciidoctor inline helpers", () => {
 					version: undefined,
 					fragment: undefined,
 				},
-				children: [{ type: "text", value: "guide/setup" }],
+				children: [{ type: "text", value: "guide/setup.html" }],
 			},
 		]);
 
@@ -96,9 +93,6 @@ describe("asciidoctor inline helpers", () => {
 		expect(
 			parseInlineHtmlWithOptions(
 				'<strong>See <a href="guide/setup.html">guide/setup.html</a></strong>',
-				{
-					xrefFallbackLabelStyle: "fragment-or-path",
-				},
 			),
 		).toEqual([
 			{
@@ -117,7 +111,7 @@ describe("asciidoctor inline helpers", () => {
 							version: undefined,
 							fragment: undefined,
 						},
-						children: [{ type: "text", value: "guide/setup" }],
+						children: [{ type: "text", value: "guide/setup.html" }],
 					},
 				],
 			},
@@ -126,9 +120,6 @@ describe("asciidoctor inline helpers", () => {
 		expect(
 			parseInlineHtmlWithOptions(
 				'<a href="guide/setup.html"><code>guide/setup.html</code></a>',
-				{
-					xrefFallbackLabelStyle: "fragment-or-path",
-				},
 			),
 		).toEqual([
 			{
@@ -143,7 +134,7 @@ describe("asciidoctor inline helpers", () => {
 					version: undefined,
 					fragment: undefined,
 				},
-				children: [{ type: "text", value: "guide/setup" }],
+				children: [{ type: "code", value: "guide/setup.html" }],
 			},
 		]);
 	});
@@ -174,9 +165,6 @@ describe("asciidoctor inline helpers", () => {
 		expect(
 			parseInlineHtmlWithOptions(
 				'<a href="guide/setup.html"><em>Install Guide</em></a>',
-				{
-					xrefFallbackLabelStyle: "fragment-or-path",
-				},
 			),
 		).toEqual([
 			{

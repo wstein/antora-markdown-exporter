@@ -61,5 +61,4 @@ export type AsciidoctorTableCell = {
 export type ExtractAssemblyStructureOptions = {
 	attributes?: Record<string, string>;
 	sourcePath?: string;
-	xrefFallbackLabelStyle?: "fragment-or-basename" | "fragment-or-path";
 };

@@ -3,7 +3,6 @@ import { parseInlineHtmlWithOptions } from "./asciidoctor-structure/inline.js";
 import { parseRenderOptions } from "./asciidoctor-structure/render-options.js";
 import { createAsciidoctor } from "./asciidoctor-structure/shared.js";
 import type { ExtractAssemblyStructureOptions } from "./asciidoctor-structure/types.js";
-import { applyXrefFallbackLabelStyleToBlocks } from "./asciidoctor-structure/xref.js";
 import type {
 	AssemblyBlock,
 	AssemblyDocument,
@@ -157,9 +156,6 @@ export function extractAssemblyStructure(
 		});
 	}
 
-	const xrefFallbackLabelStyle =
-		options.xrefFallbackLabelStyle ?? "fragment-or-basename";
-
 	return defineAssemblyDocument({
 		type: "document",
 		source: {
@@ -174,9 +170,6 @@ export function extractAssemblyStructure(
 			relativeSrcPath: document.getAttribute("page-relative-src-path"),
 		},
 		renderOptions: parseRenderOptions(document),
-		children: applyXrefFallbackLabelStyleToBlocks(
-			children,
-			xrefFallbackLabelStyle,
-		),
+		children,
 	});
 }

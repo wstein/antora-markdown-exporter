@@ -7,19 +7,13 @@ import type { MarkdownFlavorName } from "../markdown/flavor.js";
 import { normalizeMarkdownIR } from "../markdown/normalize.js";
 import { renderMarkdown } from "../markdown/render/index.js";
 
-export type XrefFallbackLabelStyle =
-	| "fragment-or-basename"
-	| "fragment-or-path";
 export type AssemblerRootLevel = 0 | 1;
 const exporterFlavorAttribute = "markdown-exporter-flavor";
-const exporterXrefFallbackAttribute =
-	"markdown-exporter-xref-fallback-label-style";
 
 export interface AntoraMarkdownExporterExtensionConfig {
 	readonly flavor?: MarkdownFlavorName;
 	readonly configSource?: Record<string, unknown> | string;
 	readonly rootLevel?: AssemblerRootLevel;
-	readonly xrefFallbackLabelStyle?: XrefFallbackLabelStyle;
 	readonly navigationCatalog?: {
 		getNavigation: (component: string, version: string) => unknown[];
 	};
@@ -29,7 +23,6 @@ export interface AntoraMarkdownExporterExtensionConfig {
 
 type MarkdownConverterConfig = {
 	readonly flavor: MarkdownFlavorName;
-	readonly xrefFallbackLabelStyle: XrefFallbackLabelStyle;
 };
 
 type ConvertAttributes = {
@@ -51,8 +44,6 @@ type AssemblerFile = {
 
 const defaultFlavor: MarkdownFlavorName = "gfm";
 const defaultAssemblerRootLevel: AssemblerRootLevel = 1;
-const defaultXrefFallbackLabelStyle: XrefFallbackLabelStyle =
-	"fragment-or-basename";
 
 function createDefaultAssemblerConfigSource(rootLevel: AssemblerRootLevel) {
 	return {
@@ -76,14 +67,6 @@ function parseConfiguredFlavor(value: unknown): MarkdownFlavorName | undefined {
 		: undefined;
 }
 
-function parseConfiguredXrefFallbackLabelStyle(
-	value: unknown,
-): XrefFallbackLabelStyle | undefined {
-	return value === "fragment-or-basename" || value === "fragment-or-path"
-		? value
-		: undefined;
-}
-
 function parseConfiguredRootLevel(
 	value: unknown,
 ): AssemblerRootLevel | undefined {
@@ -95,7 +78,6 @@ function resolveExporterDefaultsFromConfigSource(
 ): Partial<{
 	flavor: MarkdownFlavorName;
 	rootLevel: AssemblerRootLevel;
-	xrefFallbackLabelStyle: XrefFallbackLabelStyle;
 }> {
 	if (!isRecord(configSource)) {
 		return {};
@@ -117,10 +99,6 @@ function resolveExporterDefaultsFromConfigSource(
 		),
 		rootLevel: parseConfiguredRootLevel(
 			assembly.root_level ?? assembly.rootLevel,
-		),
-		xrefFallbackLabelStyle: parseConfiguredXrefFallbackLabelStyle(
-			assemblyAttributes[exporterXrefFallbackAttribute] ??
-				asciidocAttributes[exporterXrefFallbackAttribute],
 		),
 	};
 }
@@ -162,13 +140,11 @@ export function renderAssemblyMarkdown(
 	sourcePath = "assembly.adoc",
 	options: {
 		attributes?: Record<string, string>;
-		xrefFallbackLabelStyle?: XrefFallbackLabelStyle;
 	} = {},
 ): string {
 	const structured = extractAssemblyStructure(source, {
 		attributes: options.attributes,
 		sourcePath,
-		xrefFallbackLabelStyle: options.xrefFallbackLabelStyle,
 	});
 	return renderMarkdown(
 		normalizeMarkdownIR(convertAssemblyStructureToMarkdownIR(structured)),
@@ -180,8 +156,6 @@ export function createMarkdownConverter(
 	config: Partial<MarkdownConverterConfig> = {},
 ) {
 	const flavor = config.flavor ?? defaultFlavor;
-	const xrefFallbackLabelStyle =
-		config.xrefFallbackLabelStyle ?? defaultXrefFallbackLabelStyle;
 
 	return {
 		backend: "markdown",
@@ -208,7 +182,6 @@ export function createMarkdownConverter(
 				convertAttributes.docfile,
 				{
 					attributes: extractStringAttributes(convertAttributes),
-					xrefFallbackLabelStyle,
 				},
 			);
 			await writeFile(outputPath, `${markdown}\n`);
@@ -225,7 +198,6 @@ export function register(
 		flavor,
 		navigationCatalog,
 		rootLevel,
-		xrefFallbackLabelStyle,
 		...assemblerConfig
 	} = config;
 	const configuredDefaults =
@@ -234,8 +206,6 @@ export function register(
 		this,
 		createMarkdownConverter({
 			flavor: flavor ?? configuredDefaults.flavor,
-			xrefFallbackLabelStyle:
-				xrefFallbackLabelStyle ?? configuredDefaults.xrefFallbackLabelStyle,
 		}),
 		assemblerConfig,
 		{

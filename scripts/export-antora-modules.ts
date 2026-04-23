@@ -5,7 +5,6 @@ import {
 	exportAntoraModules,
 	type MarkdownFlavorName,
 	resolveAntoraMarkdownExportDefaults,
-	type XrefFallbackLabelStyle,
 } from "../src/index.ts";
 
 export type ParsedExportAntoraModulesOptions = {
@@ -15,7 +14,6 @@ export type ParsedExportAntoraModulesOptions = {
 	packageTaskMarkdown: boolean;
 	playbookPath: string;
 	rootLevel?: 0 | 1;
-	xrefFallbackLabelStyle?: XrefFallbackLabelStyle;
 };
 
 export type ExportAntoraModulesOptions = {
@@ -25,7 +23,6 @@ export type ExportAntoraModulesOptions = {
 	packageTaskMarkdown: boolean;
 	playbookPath: string;
 	rootLevel: 0 | 1;
-	xrefFallbackLabelStyle: XrefFallbackLabelStyle;
 };
 
 export type ExportedMarkdownFile = {
@@ -50,7 +47,7 @@ const markdownFlavors = new Set<MarkdownFlavorName>([
 
 function usage(): string {
 	return [
-		"Usage: bun scripts/export-antora-modules.ts [--playbook <file>] [--output-root <dir>] [--flavor <gfm|commonmark|gitlab|multimarkdown|strict>] [--root-level <0|1>] [--xref-fallback-label-style <fragment-or-basename|fragment-or-path>] [--package-task-markdown] [--json]",
+		"Usage: bun scripts/export-antora-modules.ts [--playbook <file>] [--output-root <dir>] [--flavor <gfm|commonmark|gitlab|multimarkdown|strict>] [--root-level <0|1>] [--package-task-markdown] [--json]",
 		"",
 		"Export documentation assemblies to Markdown using the repository's Antora Markdown converter.",
 	].join("\n");
@@ -66,7 +63,6 @@ export function parseArguments(
 	let packageTaskMarkdown = false;
 	let playbookPath = resolve("antora-playbook.yml");
 	let rootLevel: 0 | 1 | undefined;
-	let xrefFallbackLabelStyle: XrefFallbackLabelStyle | undefined;
 
 	for (let index = 0; index < argv.length; index += 1) {
 		const argument = argv[index];
@@ -110,19 +106,6 @@ export function parseArguments(
 			continue;
 		}
 
-		if (argument === "--xref-fallback-label-style") {
-			const value = argv[index + 1];
-			if (value !== "fragment-or-basename" && value !== "fragment-or-path") {
-				throw new Error(
-					"Missing or invalid value for --xref-fallback-label-style",
-				);
-			}
-
-			xrefFallbackLabelStyle = value;
-			index += 1;
-			continue;
-		}
-
 		if (argument === "--root-level") {
 			const value = argv[index + 1];
 			if (value !== "0" && value !== "1") {
@@ -158,7 +141,6 @@ export function parseArguments(
 		packageTaskMarkdown,
 		playbookPath,
 		rootLevel,
-		xrefFallbackLabelStyle,
 	};
 }
 
@@ -177,10 +159,6 @@ export async function resolveExportAntoraModulesOptions(
 			defaults.flavor ??
 			"gfm",
 		rootLevel: parsed.rootLevel ?? defaults.rootLevel ?? 1,
-		xrefFallbackLabelStyle:
-			parsed.xrefFallbackLabelStyle ??
-			defaults.xrefFallbackLabelStyle ??
-			"fragment-or-basename",
 	};
 }
 
@@ -217,7 +195,6 @@ export async function exportAntoraModulesToMarkdown(
 		outputRoot: options.outputRoot,
 		playbookPath: options.playbookPath,
 		rootLevel: options.rootLevel,
-		xrefFallbackLabelStyle: options.xrefFallbackLabelStyle,
 	});
 
 	for (const relativeSourcePath of workflowBundleEntries) {
@@ -259,7 +236,6 @@ async function main(): Promise<void> {
 					reviewBundleFiles: reviewBundleFiles.map((entry) => ({
 						outputPath: entry.relativeOutputPath,
 					})),
-					xrefFallbackLabelStyle: options.xrefFallbackLabelStyle,
 					files: exportedFiles.map((entry) => ({
 						moduleName: entry.moduleName,
 						outputPath: entry.relativeOutputPath,
@@ -278,7 +254,6 @@ async function main(): Promise<void> {
 			`Output root: ${options.outputRoot}`,
 			`Review bundle: ${reviewBundleRoot}`,
 			`Assembly root level: ${options.rootLevel}`,
-			`Xref fallback labels: ${options.xrefFallbackLabelStyle}`,
 			...exportedFiles.map(
 				(entry) => `- ${entry.moduleName}: ${entry.relativeOutputPath}`,
 			),

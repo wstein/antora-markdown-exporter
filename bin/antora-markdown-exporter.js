@@ -16,11 +16,9 @@ if (argv.includes("--help") || argv.length === 0) {
 	console.log("\nCurrent scope:");
 	console.log("  This wrapper currently exposes only help and version output.");
 	console.log(
-		"  For module export options such as --xref-fallback-label-style, run:",
+		"  For module export options such as --flavor or --root-level, run:",
 	);
-	console.log(
-		"  bun run export:modules -- --xref-fallback-label-style fragment-or-path",
-	);
+	console.log("  bun run export:modules -- --flavor gfm");
 	process.exit(0);
 }
 
