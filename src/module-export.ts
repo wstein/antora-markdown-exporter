@@ -2,6 +2,11 @@ import { mkdir, mkdtemp, rm, writeFile } from "node:fs/promises";
 import { tmpdir } from "node:os";
 import { dirname, join, resolve } from "node:path";
 import { buffer as readStreamBuffer } from "node:stream/consumers";
+import { extractAssemblyStructure } from "./adapter/asciidoctor-structure.js";
+import type {
+	AssemblyBlock,
+	AssemblyDocument,
+} from "./adapter/assembly-structure.js";
 import {
 	assembleAntoraModules as assembleModulesFromRuntime,
 	resolveAntoraMarkdownExportDefaults as resolveDefaultsFromRuntime,
@@ -56,6 +61,8 @@ export type ExportAntoraModulesToMarkdownOptions = {
 
 export type AntoraMarkdownExportDiagnostic = {
 	code: string;
+	column?: number;
+	line?: number;
 	message: string;
 	severity: "error" | "warning";
 	sourcePath?: string;
@@ -149,6 +156,66 @@ function toSourcePagePath(page: RuntimePageRef): string | undefined {
 	}
 
 	return `modules/${page.src.module}/pages/${page.src.relative}`;
+}
+
+function collectUnsupportedDiagnosticsFromBlocks(
+	blocks: AssemblyBlock[],
+	fallbackSourcePath: string,
+): AntoraMarkdownExportDiagnostic[] {
+	return blocks.flatMap((block) => {
+		switch (block.type) {
+			case "unsupported":
+				return [
+					{
+						code: "unsupported-structure",
+						column: block.location?.column,
+						line: block.location?.line,
+						message: block.reason,
+						severity: "warning",
+						sourcePath:
+							block.location?.path === undefined ||
+							block.location.path === "<stdin>"
+								? fallbackSourcePath
+								: block.location.path,
+					},
+				];
+			case "blockquote":
+			case "admonition":
+			case "footnoteDefinition":
+				return collectUnsupportedDiagnosticsFromBlocks(
+					block.children,
+					fallbackSourcePath,
+				);
+			case "list":
+				return block.items.flatMap((item) =>
+					collectUnsupportedDiagnosticsFromBlocks(
+						item.children,
+						fallbackSourcePath,
+					),
+				);
+			case "labeledGroup":
+				return collectUnsupportedDiagnosticsFromBlocks(
+					block.children,
+					fallbackSourcePath,
+				);
+			case "calloutList":
+				return block.items.flatMap((item) =>
+					collectUnsupportedDiagnosticsFromBlocks(
+						item.children,
+						fallbackSourcePath,
+					),
+				);
+			default:
+				return [];
+		}
+	});
+}
+
+function collectMarkdownExportDiagnostics(
+	document: AssemblyDocument,
+	sourcePath: string,
+): AntoraMarkdownExportDiagnostic[] {
+	return collectUnsupportedDiagnosticsFromBlocks(document.children, sourcePath);
 }
 
 async function readMarkdownContents(
@@ -284,7 +351,20 @@ export async function exportAntoraModulesToMarkdown(
 				return {
 					component: file.src.component,
 					content: await readMarkdownContents(file.contents),
-					diagnostics: [],
+					diagnostics:
+						assembledFile === undefined
+							? []
+							: collectMarkdownExportDiagnostics(
+									extractAssemblyStructure(
+										assembledFile.contents.toString("utf8"),
+										{
+											sourcePath: assembledFile.relativePath,
+											xrefFallbackLabelStyle:
+												resolvedOptions.xrefFallbackLabelStyle,
+										},
+									),
+									assembledFile.relativePath,
+								),
 					flavor: resolvedOptions.flavor,
 					mediaType: file.src.mediaType,
 					moduleName: file.src.module,
