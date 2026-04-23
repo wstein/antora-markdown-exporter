@@ -8,7 +8,7 @@ This section is the reference index for canonical notes cited by the architectur
 |Section |Referenced notes
 
 |Introduction and Goals
-|`Antora extension entrypoints must reflect actual integration maturity`; `Exporter pipeline uses Assembler and a direct TypeScript converter`; `Fallback selection is centralized across markdown flavors`; `Flavor renderers are syntax adapters over one semantic layer`; `Preserved include metadata uses private transport details`; `Markdown IR is the canonical render boundary`; `Strict architecture must be extended without weakening invariants`; `The architecture favors explicit extension over implicit degradation`; `Transparent extensions are not fallback mechanisms`; `Xref target resolution is a separate lowering phase`
+|`Antora extension entrypoints must reflect actual integration maturity`; `Exporter pipeline uses Assembler and a direct TypeScript converter`; `Fallback selection is centralized across markdown flavors`; `Flavor renderers are syntax adapters over one semantic layer`; `Preserved include metadata uses private transport details`; `Markdown IR is the canonical render boundary`; `Strict architecture must be extended without weakening invariants`; `The architecture favors explicit extension over implicit degradation`; `Transparent extensions are not fallback mechanisms`; `Xref destinations come from assembled hrefs`
 
 |Constraints
 |`Reference fixtures are curated and provenance locked`; `Repository scripts and referenced files must stay in lockstep`

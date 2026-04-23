@@ -43,6 +43,6 @@ If a future extension requires new inline semantics, add them as explicit IR sup
 
 - [[Exporter pipeline uses Assembler and a direct TypeScript converter]] - The exporter starts after assembly, not before it.
 - [[Markdown IR is the canonical render boundary]] - Inline meaning should land in IR rather than renderer-local heuristics.
-- [[Xref target resolution is a separate lowering phase]] - Xref metadata should remain structured until lowering.
+- [[Xref destinations come from assembled hrefs]] - Xref metadata should remain structured while renderers serialize preserved destinations.
 - src/adapter/asciidoctor-structure.ts - Structured extraction boundary for inline semantics.
 - src/markdown/ir.ts - Canonical semantic representation.

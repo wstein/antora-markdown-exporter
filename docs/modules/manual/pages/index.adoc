@@ -461,7 +461,7 @@ Status legend used in this and later proof sections:
 
 |Xrefs, anchors, and page aliases
 |Supported
-|Structured xref targets, anchor identifiers, and page aliases remain inspectable until lowering or rendering.
+|Structured xref targets, anchor identifiers, and page aliases remain inspectable until conversion or rendering.
 |`tests/unit/inspection.test.ts`; reference fixtures
 |Inspection report review; rendered fixture review
 
@@ -518,7 +518,7 @@ The structured rewrite changed what the exporter owns.
 |`src/adapter/asciidoctor-structure.ts` and helper modules
 |Keep mapping behavior aligned with `assemblyStructureInvariants`, `assemblyStructureSpecification`, and the support matrix.
 
-|Markdown IR lowering
+|Markdown IR conversion
 |`src/exporter/structured-to-ir.ts`
 |Change this layer when semantic structure is already present but the IR mapping is wrong or incomplete.
 
@@ -539,7 +539,7 @@ This ledger turns the architecture story into reviewable evidence. Use it when a
 |`src/adapter/asciidoctor-structure.ts`; `src/exporter/structured-to-ir.ts`
 |`tests/unit/asciidoctor-structure.test.ts`; `tests/unit/structured-to-ir.test.ts`; `tests/unit/ir.test.ts`
 |`bun run check`
-|Refactors should change structural extraction, lowering, and tests together.
+|Refactors should change structural extraction, conversion, and tests together.
 
 |Adapter contract rules stay explicit
 |`src/adapter/assembly-structure.ts`; `src/adapter/assembly-structure-spec.ts`; `src/index.ts`

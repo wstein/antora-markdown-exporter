@@ -13,7 +13,7 @@
   - [2.6. Fallback Is A Policy Layer](#26-fallback-is-a-policy-layer)
   - [2.7. Transparent Extensions Are Not Fallback](#27-transparent-extensions-are-not-fallback)
   - [2.8. Includes Are Mostly Assembler-Owned](#28-includes-are-mostly-assembler-owned)
-  - [2.9. Xref Routing Is Lowering, Not Rendering](#29-xref-routing-is-lowering-not-rendering)
+  - [2.9. Xref Destinations Are Preserved, Not Rebuilt](#29-xref-destinations-are-preserved-not-rebuilt)
   - [2.10. One Toolchain Path Is Primary](#210-one-toolchain-path-is-primary)
   - [2.11. Separate Integrator And Contributor Paths](#211-separate-integrator-and-contributor-paths)
 - [Chapter 3. Core Workflows](#chapter-3-core-workflows)
@@ -99,7 +99,7 @@ This is why the implementation is split across:
 - `src/markdown/render/**`
 - `src/markdown/render/**`
 
-If you are touching behavior after conversion starts, your change should usually land in the adapter, lowering, IR, normalization, renderer, or tests.
+If you are touching behavior after conversion starts, your change should usually land in the adapter, conversion, IR, normalization, renderer, or tests.
 
 ## 2.3. The Markdown IR Is The Contract
 
@@ -119,15 +119,15 @@ The biggest contributor trap is assuming the exporter still owns low-level Ascii
 
 Current responsibility split:
 
-- Antora Assembler resolves include expansion, most low-level inline interpretation, and block formation before repository lowering starts
+- Antora Assembler resolves include expansion, most low-level inline interpretation, and block formation before repository conversion starts
 - `src/adapter/asciidoctor-structure.ts` and its helper modules convert assembled content into the repository-owned adapter contract
-- `src/exporter/structured-to-ir.ts` lowers that contract into Markdown IR
+- `src/exporter/structured-to-ir.ts` converts that contract into Markdown IR
 - `src/markdown/inspection.ts` inspects normalized Markdown semantics such as xrefs rather than reviving include-directive transport
 
 Use this routing guide:
 
 - to add a new structural mapping, start in `src/adapter/asciidoctor-structure.ts`
-- to change semantic lowering, work in `src/exporter/structured-to-ir.ts`
+- to change semantic conversion, work in `src/exporter/structured-to-ir.ts`
 - to change normalized semantic shape, work in `src/markdown/ir.ts` or `src/markdown/normalize.ts`
 - to change rendered syntax only, stay in `src/markdown/render/**`
 - to change rendered xref formatting, stay in `src/markdown/render/**`
@@ -188,14 +188,14 @@ When touching includes:
 - keep preserved metadata narrow and explicitly private
 - document any diagnostic or provenance retention in architecture or operator docs when it becomes part of a supported workflow
 
-## 2.9. Xref Routing Is Lowering, Not Rendering
+## 2.9. Xref Destinations Are Preserved, Not Rebuilt
 
 Structured xref metadata is preserved in the IR, while rendered destinations come from the assembled hrefs carried through conversion. Renderers should format those preserved destinations rather than owning Antora-aware routing logic themselves.
 
 If you need to change xref behavior, start by deciding whether you are changing:
 
 - semantic target shape
-- lowering policy
+- conversion policy
 - final markdown string formatting
 
 Mixing those layers makes xref regressions much harder to reason about.
@@ -242,7 +242,7 @@ Start here when you need to make a code change:
 
 - add a structural mapping: `src/adapter/asciidoctor-structure.ts`
 - adjust helper extraction logic: `src/adapter/asciidoctor-structure/*.ts`
-- fix semantic lowering: `src/exporter/structured-to-ir.ts`
+- fix semantic conversion: `src/exporter/structured-to-ir.ts`
 - change semantic node shapes: `src/markdown/ir.ts`
 - change normalization: `src/markdown/normalize.ts`
 - change xref rendering: `src/markdown/render/**`
@@ -260,7 +260,7 @@ Use this quick checklist after your first code edit:
 - run `make test` before considering the change done
 - update golden fixtures only when the rendered change is intentional
 - update docs if the operator path, contributor path, or package behavior changed
-- if you changed semantic mapping or lowering, make sure the helper tests or IR tests changed with it
+- if you changed semantic mapping or conversion, make sure the helper tests or IR tests changed with it
 - if you changed rendered syntax only, keep the change inside `src/markdown/render/**`
 
 ## 3.4. Worked Example

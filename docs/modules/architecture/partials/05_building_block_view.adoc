@@ -3,7 +3,7 @@
 == Building Block View
 
 === Whitebox Overall System
-The repository separates the outer Antora integration boundary from the inner markdown kernel. Assembly, structural extraction, lowering, normalization, rendering, inspection, and release validation stay visible as distinct stages rather than collapsing into one opaque export step.
+The repository separates the outer Antora integration boundary from the inner markdown kernel. Assembly, structural extraction, conversion, normalization, rendering, inspection, and release validation stay visible as distinct stages rather than collapsing into one opaque export step.
 
 The main building blocks are:
 
@@ -15,13 +15,13 @@ The main building blocks are:
 |`src/extension/index.ts` exposes `register()` and `createMarkdownConverter()`. `register()` delegates to `@antora/assembler.configure()` and makes the package usable as a real Antora exporter extension.
 
 |Structured assembly adapter
-|`src/adapter/assembly-structure.ts` defines the repository-owned structural handoff between assembled Antora input and future Markdown IR lowering. `src/adapter/assembly-structure-spec.ts` and the published `assemblyStructureInvariants` keep the contract explicit about loss rules, source locations, and unsupported-node semantics. This boundary must outlive any one extractor implementation.
+|`src/adapter/assembly-structure.ts` defines the repository-owned structural handoff between assembled Antora input and future Markdown IR conversion. `src/adapter/assembly-structure-spec.ts` and the published `assemblyStructureInvariants` keep the contract explicit about loss rules, source locations, and unsupported-node semantics. This boundary must outlive any one extractor implementation.
 
 |Asciidoctor structural extractor
 |`src/adapter/asciidoctor-structure.ts` loads assembled source through Asciidoctor and maps supported document structure into the repository-owned assembly adapter. Helper modules under `src/adapter/asciidoctor-structure/` separate block extraction, inline extraction, xref normalization, and list/table helpers so branch-heavy semantics can be tested directly. Unsupported structural contexts remain explicit.
 
-|Structured lowering
-|`src/exporter/structured-to-ir.ts` lowers repository-owned structured assembly into semantic Markdown IR nodes, preserving headings, xrefs, anchors, aliases, images, tables, admonitions, and other mapped structure without reparsing block syntax.
+|Structured conversion
+|`src/exporter/structured-to-ir.ts` converts repository-owned structured assembly into semantic Markdown IR nodes, preserving headings, xrefs, anchors, aliases, images, tables, admonitions, and other mapped structure without reparsing block syntax.
 
 |Markdown kernel
 |`src/markdown/ir.ts`, `src/markdown/normalize.ts`, and `src/markdown/render/**` define the canonical IR, normalize documents, and serialize preserved destinations during rendering.
@@ -44,7 +44,7 @@ The most important interfaces are:
 * `defineAssemblyDocument(document)` pins the repository-owned adapter contract for structured assembly input.
 * `assemblyStructureInvariants` and `assemblyStructureSpecification` publish the contract rules for loss, source locations, and explicit unsupported nodes.
 * `extractAssemblyStructure(source, options)` extracts supported document structure into the repository-owned assembly adapter.
-* `convertAssemblyStructureToMarkdownIR(document)` lowers repository-owned structured assembly into Markdown IR.
+* `convertAssemblyStructureToMarkdownIR(document)` converts repository-owned structured assembly into Markdown IR.
 * `renderAssemblyMarkdown(source, flavor, sourcePath)` is the shipped extension runtime entrypoint for assembled AsciiDoc export.
 * `normalizeMarkdownIR(document)` freezes the semantic shape expected by renderers and inspection helpers.
 * `renderMarkdown(document, flavor)` and flavor-specific helpers serialize the normalized IR.
@@ -60,7 +60,7 @@ The remaining risk is not the absence of an outer Antora integration boundary. I
 ==== Conversion And Include Handling
 The exporter converts assembled content into IR and keeps include semantics, provenance, and diagnostics available only when they are intentionally preserved. Private transport details are not part of the public contract.
 
-Its shipped structured runtime lives in `src/extension/index.ts`, `src/adapter/asciidoctor-structure.ts`, `src/exporter/structured-to-ir.ts`, and `src/markdown/**`. Structured extraction and lowering are now the maintained runtime path.
+Its shipped structured runtime lives in `src/extension/index.ts`, `src/adapter/asciidoctor-structure.ts`, `src/exporter/structured-to-ir.ts`, and `src/markdown/**`. Structured extraction and conversion are now the maintained runtime path.
 
 The private marker transport is intentionally isolated. The main ongoing risk is conversion coverage for richer assembled AsciiDoc constructs, not missing registration itself. Recent helper-focused tests now pin sparse row handling, optional nested block accessors, labeled-group fallback paragraphs, and xref fallback-label policy directly at the adapter boundary instead of hiding those cases only in end-to-end fixtures.
 

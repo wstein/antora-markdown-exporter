@@ -8,7 +8,7 @@ Preserved include metadata uses private transport details because the repository
 
 ## What
 
-The repository may use temporary internal representations to carry preserved include metadata through extraction and lowering when include diagnostics or provenance need to survive assembly.
+The repository may use temporary internal representations to carry preserved include metadata through extraction and conversion when include diagnostics or provenance need to survive assembly.
 
 That transport is intentionally private. The supported behavior is:
 - include directives remain inspectable in the Markdown IR

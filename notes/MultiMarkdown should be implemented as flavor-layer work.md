@@ -16,7 +16,7 @@ MultiMarkdown support should flow through:
 
 ## Why
 
-The repository already treats Markdown IR as the canonical render boundary and flavor renderers as syntax adapters over one semantic layer. That means MultiMarkdown should be expressed as renderer differences wherever possible, while the adapter and lowering layers remain flavor-agnostic.
+The repository already treats Markdown IR as the canonical render boundary and flavor renderers as syntax adapters over one semantic layer. That means MultiMarkdown should be expressed as renderer differences wherever possible, while the adapter and conversion layers remain flavor-agnostic.
 
 ## How
 
@@ -29,6 +29,6 @@ When MultiMarkdown behavior changes:
 
 ## Links
 
-- [[Markdown IR is the canonical render boundary]] - Flavor expansion should happen after semantic lowering.
+- [[Markdown IR is the canonical render boundary]] - Flavor expansion should happen after semantic conversion.
 - [[Flavor renderers are syntax adapters over one semantic layer]] - The renderer layer is the right home for MultiMarkdown differences.
 - [[Repository-owned assembly structure formalizes the exporter adapter boundary]] - New flavor work should continue to honor the adapter contract.

@@ -11,7 +11,7 @@
 
 |Keep the Markdown IR as the canonical semantic boundary
 |Semantic decisions should stay centralized and testable.
-|Conversion changes must land in the exporter, IR, normalization, lowering, or renderer layers rather than as ad-hoc string rewrites.
+|Conversion changes must land in the exporter, IR, normalization, or renderer layers rather than as ad-hoc string rewrites.
 
 |Centralize fallback policy instead of flavor-local degradation
 |Valid semantic preservation and controlled degradation must stay distinct.

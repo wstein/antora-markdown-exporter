@@ -66,7 +66,7 @@ The main architectural goals are:
 - expose stable inspection APIs for CI, release validation, and downstream tooling
 - keep package naming and extension entrypoints honest about current implementation maturity
 
-The architecture is built around a real Assembler-backed extension entrypoint in `src/extension/index.ts` and a repository-owned markdown kernel in `src/exporter/**`, `src/markdown/**`, `scripts/inspection-report.ts`, and the test suite. Semantic meaning stays centralized, fallback stays explicit, transparent extensions stay semantic where safe, and rendered destinations stay tied to the assembled hrefs instead of being reconstructed in a separate lowering layer.
+The architecture is built around a real Assembler-backed extension entrypoint in `src/extension/index.ts` and a repository-owned markdown kernel in `src/exporter/**`, `src/markdown/**`, `scripts/inspection-report.ts`, and the test suite. Semantic meaning stays centralized, fallback stays explicit, transparent extensions stay semantic where safe, and rendered destinations stay tied to the assembled hrefs instead of being reconstructed in a separate routing layer.
 
 The main uncertainty is no longer whether a real Antora registration path exists. It does. The remaining architectural concern is keeping that outer registration path, its converter coverage, and the public documentation aligned as the pipeline evolves.
 
@@ -136,16 +136,16 @@ The broader architectural strategy is:
 
 ## 5.1. Whitebox Overall System
 
-The repository separates the outer Antora integration boundary from the inner markdown kernel. Assembly, structural extraction, lowering, normalization, rendering, inspection, and release validation stay visible as distinct stages rather than collapsing into one opaque export step.
+The repository separates the outer Antora integration boundary from the inner markdown kernel. Assembly, structural extraction, conversion, normalization, rendering, inspection, and release validation stay visible as distinct stages rather than collapsing into one opaque export step.
 
 The main building blocks are:
 
 | Building block | Responsibility |
 | --- | --- |
 | Extension entrypoint | `src/extension/index.ts` exposes `register()` and `createMarkdownConverter()`. `register()` delegates to `@antora/assembler.configure()` and makes the package usable as a real Antora exporter extension. |
-| Structured assembly adapter | `src/adapter/assembly-structure.ts` defines the repository-owned structural handoff between assembled Antora input and future Markdown IR lowering. `src/adapter/assembly-structure-spec.ts` and the published `assemblyStructureInvariants` keep the contract explicit about loss rules, source locations, and unsupported-node semantics. This boundary must outlive any one extractor implementation. |
+| Structured assembly adapter | `src/adapter/assembly-structure.ts` defines the repository-owned structural handoff between assembled Antora input and future Markdown IR conversion. `src/adapter/assembly-structure-spec.ts` and the published `assemblyStructureInvariants` keep the contract explicit about loss rules, source locations, and unsupported-node semantics. This boundary must outlive any one extractor implementation. |
 | Asciidoctor structural extractor | `src/adapter/asciidoctor-structure.ts` loads assembled source through Asciidoctor and maps supported document structure into the repository-owned assembly adapter. Helper modules under `src/adapter/asciidoctor-structure/` separate block extraction, inline extraction, xref normalization, and list/table helpers so branch-heavy semantics can be tested directly. Unsupported structural contexts remain explicit. |
-| Structured lowering | `src/exporter/structured-to-ir.ts` lowers repository-owned structured assembly into semantic Markdown IR nodes, preserving headings, xrefs, anchors, aliases, images, tables, admonitions, and other mapped structure without reparsing block syntax. |
+| Structured conversion | `src/exporter/structured-to-ir.ts` converts repository-owned structured assembly into semantic Markdown IR nodes, preserving headings, xrefs, anchors, aliases, images, tables, admonitions, and other mapped structure without reparsing block syntax. |
 | Markdown kernel | `src/markdown/ir.ts`, `src/markdown/normalize.ts`, and `src/markdown/render/**` define the canonical IR, normalize documents, and serialize preserved destinations during rendering. |
 | Flavor renderers and fallback policy | `src/markdown/flavor.ts`, `src/markdown/fallback.ts`, and `src/markdown/render/**` define flavor capabilities, raw HTML and unsupported-node fallback policy, and the final markdown serializers. |
 | Inspection and automation surfaces | `src/markdown/inspection.ts` and `scripts/inspection-report.ts` expose normalized inspection data for CI, release validation, and other tooling. |
@@ -157,7 +157,7 @@ The most important interfaces are:
 - `defineAssemblyDocument(document)` pins the repository-owned adapter contract for structured assembly input.
 - `assemblyStructureInvariants` and `assemblyStructureSpecification` publish the contract rules for loss, source locations, and explicit unsupported nodes.
 - `extractAssemblyStructure(source, options)` extracts supported document structure into the repository-owned assembly adapter.
-- `convertAssemblyStructureToMarkdownIR(document)` lowers repository-owned structured assembly into Markdown IR.
+- `convertAssemblyStructureToMarkdownIR(document)` converts repository-owned structured assembly into Markdown IR.
 - `renderAssemblyMarkdown(source, flavor, sourcePath)` is the shipped extension runtime entrypoint for assembled AsciiDoc export.
 - `normalizeMarkdownIR(document)` freezes the semantic shape expected by renderers and inspection helpers.
 - `renderMarkdown(document, flavor)` and flavor-specific helpers serialize the normalized IR.
@@ -175,7 +175,7 @@ The remaining risk is not the absence of an outer Antora integration boundary. I
 
 The exporter converts assembled content into IR and keeps include semantics, provenance, and diagnostics available only when they are intentionally preserved. Private transport details are not part of the public contract.
 
-Its shipped structured runtime lives in `src/extension/index.ts`, `src/adapter/asciidoctor-structure.ts`, `src/exporter/structured-to-ir.ts`, and `src/markdown/**`. Structured extraction and lowering are now the maintained runtime path.
+Its shipped structured runtime lives in `src/extension/index.ts`, `src/adapter/asciidoctor-structure.ts`, `src/exporter/structured-to-ir.ts`, and `src/markdown/**`. Structured extraction and conversion are now the maintained runtime path.
 
 The private marker transport is intentionally isolated. The main ongoing risk is conversion coverage for richer assembled AsciiDoc constructs, not missing registration itself. Recent helper-focused tests now pin sparse row handling, optional nested block accessors, labeled-group fallback paragraphs, and xref fallback-label policy directly at the adapter boundary instead of hiding those cases only in end-to-end fixtures.
 
@@ -275,7 +275,7 @@ This concept cuts across the exporter, markdown kernel, inspection layer, packag
 | Decision | Rationale | Current consequence |
 | --- | --- | --- |
 | Use Antora Assembler as the export boundary | The repository should expose a real Antora exporter extension, not a metadata-only helper. | `src/extension/index.ts` registers through `@antora/assembler.configure()` and keeps assembly outside renderer-local logic. |
-| Keep the Markdown IR as the canonical semantic boundary | Semantic decisions should stay centralized and testable. | Conversion changes must land in the exporter, IR, normalization, lowering, or renderer layers rather than as ad-hoc string rewrites. |
+| Keep the Markdown IR as the canonical semantic boundary | Semantic decisions should stay centralized and testable. | Conversion changes must land in the exporter, IR, normalization, or renderer layers rather than as ad-hoc string rewrites. |
 | Centralize fallback policy instead of flavor-local degradation | Valid semantic preservation and controlled degradation must stay distinct. | Unsupported constructs and raw HTML policy are owned by `src/markdown/fallback.ts`, while valid semantic constructs remain ordinary IR nodes. |
 | Use one semantic export path for package APIs, module Markdown export, and inspection tooling | Repository exports should stay on the same converter path as the package API. | `make markdown`, inspection scripts, and library consumers all depend on the same `extractAssemblyStructure -> convertAssemblyStructureToMarkdownIR -> normalizeMarkdownIR -> renderMarkdown` contract. |
 | Prefer Assembler-owned assembly partitioning over repository-local export rules | Antora navigation and Assembler configuration should decide where exports begin. | `antora-assembler.yml` pins the repository default to `root_level: 1`, `src/extension/index.ts` applies the same default when no explicit config source is provided, and the repository scripts run through the real Antora generator and Assembler path. |
@@ -309,7 +309,7 @@ These decisions are intentionally implementation-facing. They explain why the re
 
 | Claim family | Implementation evidence | Test evidence | Workflow evidence | Boundary note |
 | --- | --- | --- | --- | --- |
-| Semantic conversion stays explicit | `src/adapter/assembly-structure.ts`; `src/adapter/assembly-structure-spec.ts`; `src/adapter/asciidoctor-structure.ts`; `src/exporter/structured-to-ir.ts`; `src/markdown/ir.ts` | `tests/unit/assembly-structure.test.ts`; `tests/unit/asciidoctor-structure.test.ts`; `tests/unit/asciidoctor-block-helpers.test.ts`; `tests/unit/structured-to-ir.test.ts`; `tests/unit/ir.test.ts` | `bun run check` | Semantic extensions should land in structured extraction and IR-aware lowering, not renderer-local rewrites. Adapter invariants, the published specification, and focused helper tests are part of the proof surface. |
+| Semantic conversion stays explicit | `src/adapter/assembly-structure.ts`; `src/adapter/assembly-structure-spec.ts`; `src/adapter/asciidoctor-structure.ts`; `src/exporter/structured-to-ir.ts`; `src/markdown/ir.ts` | `tests/unit/assembly-structure.test.ts`; `tests/unit/asciidoctor-structure.test.ts`; `tests/unit/asciidoctor-block-helpers.test.ts`; `tests/unit/structured-to-ir.test.ts`; `tests/unit/ir.test.ts` | `bun run check` | Semantic extensions should land in structured extraction and IR-aware conversion, not renderer-local rewrites. Adapter invariants, the published specification, and focused helper tests are part of the proof surface. |
 | Workflow claims stay auditable | `scripts/release-check.mjs`; `scripts/export-antora-modules.ts` | `tests/unit/repository-contract.test.ts`; `tests/unit/export-antora-modules.test.ts` | `.github/workflows/ci.yml`; `.github/workflows/release.yml`; `.github/workflows/pages.yml` | Release and publication claims require both local contract tests and workflow references. |
 | Compatibility claims stay curated | `tests/reference/manifest.json` | `tests/integration/reference-antora.test.ts` | `make reference` | Coverage tags and provenance are part of the proof surface, not metadata garnish. |
 
@@ -385,7 +385,7 @@ This section is the reference index for canonical notes cited by the architectur
 
 | Section | Referenced notes |
 | --- | --- |
-| Introduction and Goals | `Antora extension entrypoints must reflect actual integration maturity`; `Exporter pipeline uses Assembler and a direct TypeScript converter`; `Fallback selection is centralized across markdown flavors`; `Flavor renderers are syntax adapters over one semantic layer`; `Preserved include metadata uses private transport details`; `Markdown IR is the canonical render boundary`; `Strict architecture must be extended without weakening invariants`; `The architecture favors explicit extension over implicit degradation`; `Transparent extensions are not fallback mechanisms`; `Xref target resolution is a separate lowering phase` |
+| Introduction and Goals | `Antora extension entrypoints must reflect actual integration maturity`; `Exporter pipeline uses Assembler and a direct TypeScript converter`; `Fallback selection is centralized across markdown flavors`; `Flavor renderers are syntax adapters over one semantic layer`; `Preserved include metadata uses private transport details`; `Markdown IR is the canonical render boundary`; `Strict architecture must be extended without weakening invariants`; `The architecture favors explicit extension over implicit degradation`; `Transparent extensions are not fallback mechanisms`; `Xref destinations come from assembled hrefs` |
 | Constraints | `Reference fixtures are curated and provenance locked`; `Repository scripts and referenced files must stay in lockstep` |
 | Solution Strategy | `Build tooling uses bun-first package manager fallback` |
 | Runtime View | `Inspection helpers expose normalized validation surfaces`; `Release and package identity use scoped npm publishing` |

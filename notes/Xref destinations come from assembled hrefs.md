@@ -1,14 +1,14 @@
 ---
 id: 20260421035500
-aliases: ["Xref lowering phase", "Xref routing boundary", "Markdown xref resolution"]
+aliases: ["Xref destinations", "Assembled href preservation", "Markdown xref destinations"]
 tags: ["markdown", "xref", "routing", "architecture"]
 target: current
 ---
-Xref target metadata remains structured without a separate lowering phase. Renderers should serialize the assembled hrefs they receive rather than reconstruct Antora routing logic after conversion.
+Xref destinations come from assembled hrefs. Renderers should serialize the assembled hrefs they receive rather than reconstruct Antora routing logic after conversion.
 
 ## What
 
-The repository preserves structured xref metadata in the Markdown IR while carrying the assembled href through to rendering.
+The repository preserves structured xref metadata in the Markdown IR while carrying the assembled href through conversion and rendering.
 
 The renderer is responsible for Markdown link syntax, not for rebuilding destination routing policy.
 

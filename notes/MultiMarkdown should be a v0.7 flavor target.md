@@ -16,7 +16,7 @@ For the current implementation:
 
 ## Why
 
-The repository already has a semantic pipeline that separates extraction, lowering, and rendering. MultiMarkdown fits that architecture as another output target rather than as a reason to change the upstream contract or default operator expectations.
+The repository already has a semantic pipeline that separates extraction, conversion, and rendering. MultiMarkdown fits that architecture as another output target rather than as a reason to change the upstream contract or default operator expectations.
 
 ## Sources
 
@@ -26,4 +26,4 @@ The repository already has a semantic pipeline that separates extraction, loweri
 ## Links
 
 - [[Flavor renderers are syntax adapters over one semantic layer]] - MultiMarkdown belongs in the flavor layer.
-- [[Markdown IR is the canonical render boundary]] - New flavors should arrive after semantic lowering.
+- [[Markdown IR is the canonical render boundary]] - New flavors should arrive after semantic conversion.
