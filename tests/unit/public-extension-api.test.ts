@@ -5,6 +5,7 @@ import {
 	createMarkdownConverter,
 	describePackage,
 	exportAntoraModules,
+	exportAntoraModulesToMarkdown,
 	PACKAGE_NAME,
 	register,
 	resolveAntoraMarkdownExportDefaults,
@@ -28,6 +29,7 @@ describe("public extension API", () => {
 	it("exports the stable Antora module-export library entrypoints", () => {
 		expect(typeof assembleAntoraModules).toBe("function");
 		expect(typeof exportAntoraModules).toBe("function");
+		expect(typeof exportAntoraModulesToMarkdown).toBe("function");
 		expect(typeof resolveAntoraMarkdownExportDefaults).toBe("function");
 		expect(typeof runAntoraAssembler).toBe("function");
 		expect(typeof runAntoraSiteBuild).toBe("function");

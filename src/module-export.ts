@@ -1,4 +1,7 @@
-import { resolve } from "node:path";
+import { mkdir, mkdtemp, rm, writeFile } from "node:fs/promises";
+import { tmpdir } from "node:os";
+import { dirname, join, resolve } from "node:path";
+import { buffer as readStreamBuffer } from "node:stream/consumers";
 import {
 	assembleAntoraModules as assembleModulesFromRuntime,
 	resolveAntoraMarkdownExportDefaults as resolveDefaultsFromRuntime,
@@ -40,6 +43,36 @@ export type AntoraMarkdownModuleExportResult = {
 	outputRoot: string;
 	playbookPath: string;
 	rootLevel: AssemblerRootLevel;
+	xrefFallbackLabelStyle: XrefFallbackLabelStyle;
+};
+
+export type ExportAntoraModulesToMarkdownOptions = {
+	configSource?: AntoraMarkdownExporterExtensionConfig["configSource"];
+	flavor?: MarkdownFlavorName;
+	playbookPath: string;
+	rootLevel?: AssemblerRootLevel;
+	xrefFallbackLabelStyle?: XrefFallbackLabelStyle;
+};
+
+export type AntoraMarkdownExportDiagnostic = {
+	code: string;
+	message: string;
+	severity: "error" | "warning";
+	sourcePath?: string;
+};
+
+export type AntoraModuleMarkdownExport = {
+	component: string;
+	content: string;
+	diagnostics: AntoraMarkdownExportDiagnostic[];
+	flavor: MarkdownFlavorName;
+	mediaType: string;
+	moduleName: string;
+	name: string;
+	path: string;
+	rootLevel: AssemblerRootLevel;
+	sourcePages: string[];
+	version: string;
 	xrefFallbackLabelStyle: XrefFallbackLabelStyle;
 };
 
@@ -95,8 +128,14 @@ type RuntimeAssembledModuleFile = {
 };
 
 type RuntimeExportedModuleFile = {
+	contents: Buffer | NodeJS.ReadableStream | string;
 	src: {
+		component: string;
+		mediaType: string;
+		module: string;
 		relative: string;
+		stem: string;
+		version: string;
 	};
 };
 
@@ -110,6 +149,48 @@ function toSourcePagePath(page: RuntimePageRef): string | undefined {
 	}
 
 	return `modules/${page.src.module}/pages/${page.src.relative}`;
+}
+
+async function readMarkdownContents(
+	contents: RuntimeExportedModuleFile["contents"],
+): Promise<string> {
+	if (typeof contents === "string") {
+		return contents;
+	}
+
+	if (Buffer.isBuffer(contents)) {
+		return contents.toString("utf8");
+	}
+
+	return (await readStreamBuffer(contents)).toString("utf8");
+}
+
+async function resolveMarkdownExportOptions(options: {
+	configSource?: AntoraMarkdownExporterExtensionConfig["configSource"];
+	flavor?: MarkdownFlavorName;
+	playbookPath: string;
+	rootLevel?: AssemblerRootLevel;
+	xrefFallbackLabelStyle?: XrefFallbackLabelStyle;
+}): Promise<{
+	flavor: MarkdownFlavorName;
+	playbookPath: string;
+	rootLevel: AssemblerRootLevel;
+	xrefFallbackLabelStyle: XrefFallbackLabelStyle;
+}> {
+	const defaults = await resolveAntoraMarkdownExportDefaults({
+		configSource: options.configSource,
+		playbookPath: options.playbookPath,
+	});
+
+	return {
+		flavor: options.flavor ?? defaults.flavor ?? "gfm",
+		playbookPath: resolve(options.playbookPath),
+		rootLevel: options.rootLevel ?? defaults.rootLevel ?? 1,
+		xrefFallbackLabelStyle:
+			options.xrefFallbackLabelStyle ??
+			defaults.xrefFallbackLabelStyle ??
+			"fragment-or-basename",
+	};
 }
 
 export async function resolveAntoraMarkdownExportDefaults({
@@ -168,42 +249,105 @@ export async function assembleAntoraModules(
 	});
 }
 
+export async function exportAntoraModulesToMarkdown(
+	options: ExportAntoraModulesToMarkdownOptions,
+): Promise<AntoraModuleMarkdownExport[]> {
+	const resolvedOptions = await resolveMarkdownExportOptions(options);
+	const assembledFiles = await assembleAntoraModules({
+		configSource: options.configSource,
+		playbookPath: resolvedOptions.playbookPath,
+		rootLevel: resolvedOptions.rootLevel,
+	});
+	const assembledFilesByPath = new Map(
+		assembledFiles.map((file) => [file.relativePath, file]),
+	);
+	const buildDir = await mkdtemp(join(tmpdir(), "antora-markdown-export-"));
+	const converter = createMarkdownConverter({
+		flavor: resolvedOptions.flavor,
+		xrefFallbackLabelStyle: resolvedOptions.xrefFallbackLabelStyle,
+	});
+
+	try {
+		const files = await runAntoraAssembler({
+			buildDir,
+			configSource: options.configSource,
+			converter,
+			playbookPath: resolvedOptions.playbookPath,
+			rootLevel: resolvedOptions.rootLevel,
+		});
+
+		return await Promise.all(
+			files.map(async (file) => {
+				const assembledFile = assembledFilesByPath.get(
+					file.src.relative.replace(/\.md$/u, ".adoc"),
+				);
+				return {
+					component: file.src.component,
+					content: await readMarkdownContents(file.contents),
+					diagnostics: [],
+					flavor: resolvedOptions.flavor,
+					mediaType: file.src.mediaType,
+					moduleName: file.src.module,
+					name: file.src.stem,
+					path: file.src.relative,
+					rootLevel: resolvedOptions.rootLevel,
+					sourcePages: assembledFile?.sourcePages ?? [],
+					version: file.src.version,
+					xrefFallbackLabelStyle: resolvedOptions.xrefFallbackLabelStyle,
+				};
+			}),
+		);
+	} finally {
+		await rm(buildDir, { force: true, recursive: true });
+	}
+}
+
 export async function exportAntoraModules(
 	options: AntoraMarkdownModuleExportOptions,
 ): Promise<AntoraMarkdownModuleExportResult> {
-	const defaults = await resolveAntoraMarkdownExportDefaults({
-		configSource: options.configSource,
-		playbookPath: options.playbookPath,
-	});
-	const flavor = options.flavor ?? defaults.flavor ?? "gfm";
-	const rootLevel = options.rootLevel ?? defaults.rootLevel ?? 1;
-	const xrefFallbackLabelStyle =
-		options.xrefFallbackLabelStyle ??
-		defaults.xrefFallbackLabelStyle ??
-		"fragment-or-basename";
+	const resolvedOptions = await resolveMarkdownExportOptions(options);
 	const outputRoot = resolve(options.outputRoot);
-	const playbookPath = resolve(options.playbookPath);
-	const converter = createMarkdownConverter({
-		flavor,
-		xrefFallbackLabelStyle,
-	});
-	const files = await runAntoraAssembler({
-		buildDir: outputRoot,
+	const assembledFiles = options.keepSource
+		? await assembleAntoraModules({
+				configSource: options.configSource,
+				playbookPath: resolvedOptions.playbookPath,
+				rootLevel: resolvedOptions.rootLevel,
+			})
+		: [];
+	const exports = await exportAntoraModulesToMarkdown({
 		configSource: options.configSource,
-		converter,
-		keepSource: options.keepSource,
-		playbookPath,
-		rootLevel,
+		flavor: resolvedOptions.flavor,
+		playbookPath: resolvedOptions.playbookPath,
+		rootLevel: resolvedOptions.rootLevel,
+		xrefFallbackLabelStyle: resolvedOptions.xrefFallbackLabelStyle,
 	});
 
+	await mkdir(outputRoot, { recursive: true });
+	await Promise.all(
+		exports.map(async (file) => {
+			const outputPath = resolve(outputRoot, file.path);
+			await mkdir(dirname(outputPath), { recursive: true });
+			await writeFile(outputPath, file.content, "utf8");
+		}),
+	);
+	if (options.keepSource) {
+		await Promise.all(
+			assembledFiles.map(async (file) => {
+				const outputPath = resolve(outputRoot, file.relativePath);
+				await mkdir(dirname(outputPath), { recursive: true });
+				await writeFile(outputPath, file.contents);
+			}),
+		);
+	}
+
 	return {
-		flavor,
+		flavor: resolvedOptions.flavor,
 		outputRoot,
-		playbookPath,
-		rootLevel,
-		xrefFallbackLabelStyle,
-		exportedFiles: files.map((file) => {
-			const relativeOutputPath = file.src.relative;
+		playbookPath: resolvedOptions.playbookPath,
+		rootLevel: resolvedOptions.rootLevel,
+		xrefFallbackLabelStyle: resolvedOptions.xrefFallbackLabelStyle,
+		exportedFiles: exports.map((file) => {
+			const relativeOutputPath = file.path;
 			return {
 				moduleName: relativeOutputPath.replace(/\.md$/u, ""),
 				outputPath: resolve(outputRoot, relativeOutputPath),

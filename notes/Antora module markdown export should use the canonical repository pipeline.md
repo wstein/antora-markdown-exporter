@@ -39,7 +39,15 @@ One pipeline keeps exported artifacts, package behavior, and validation expectat
 
 ## How
 
-Implement Antora module export through one maintained script in `scripts/**` that uses:
+Implement Antora module export through one maintained package surface in `src/module-export.ts`, with one maintained script in `scripts/**` delegating to that library API.
+
+The package surface should expose:
+
+- `assembleAntoraModules(...)`
+- `exportAntoraModulesToMarkdown(...)`
+- `exportAntoraModules(...)`
+
+Those entrypoints should use:
 
 - Antora Assembler configuration as the source of truth for assembly partitioning
 - `createMarkdownConverter`

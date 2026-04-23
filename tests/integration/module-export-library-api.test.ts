@@ -5,6 +5,7 @@ import { describe, expect, it } from "vitest";
 import {
 	assembleAntoraModules,
 	exportAntoraModules,
+	exportAntoraModulesToMarkdown,
 	resolveAntoraMarkdownExportDefaults,
 } from "../../src/index.js";
 
@@ -56,8 +57,51 @@ describe("module export library API", () => {
 		expect(assembledFiles[0]?.contents.toString("utf8")).toContain(
 			"= Antora Markdown Exporter: Documentation",
 		);
+		const markdownExports = await exportAntoraModulesToMarkdown({
+			playbookPath: resolve("antora-playbook.yml"),
+		});
+		expect(
+			markdownExports.map((entry) => ({
+				diagnostics: entry.diagnostics,
+				name: entry.name,
+				path: entry.path,
+				sourcePages: entry.sourcePages,
+			})),
+		).toEqual([
+			{
+				diagnostics: [],
+				name: "documentation",
+				path: "documentation.md",
+				sourcePages: ["modules/ROOT/pages/index.adoc"],
+			},
+			{
+				diagnostics: [],
+				name: "architecture",
+				path: "architecture.md",
+				sourcePages: ["modules/architecture/pages/index.adoc"],
+			},
+			{
+				diagnostics: [],
+				name: "manual",
+				path: "manual.md",
+				sourcePages: ["modules/manual/pages/index.adoc"],
+			},
+			{
+				diagnostics: [],
+				name: "onboarding",
+				path: "onboarding.md",
+				sourcePages: ["modules/onboarding/pages/index.adoc"],
+			},
+		]);
+		expect(markdownExports[2]?.content).toContain(
+			"# Antora Markdown Exporter: Manual",
+		);
+		expect(markdownExports[2]?.content).toContain(
+			"- [Chapter 2. Core Workflows](#chapter-2-core-workflows)",
+		);
 
 		const result = await exportAntoraModules({
+			keepSource: true,
 			outputRoot,
 			playbookPath: resolve("antora-playbook.yml"),
 		});
@@ -78,9 +122,16 @@ describe("module export library API", () => {
 			resolve(outputRoot, "manual.md"),
 			"utf8",
 		);
+		const manualAssemblySource = await readFile(
+			resolve(outputRoot, "manual.adoc"),
+			"utf8",
+		);
 		expect(manualMarkdown).toContain("# Antora Markdown Exporter: Manual");
 		expect(manualMarkdown).toContain(
 			"- [Chapter 2. Core Workflows](#chapter-2-core-workflows)",
+		);
+		expect(manualAssemblySource).toContain(
+			"= Antora Markdown Exporter: Manual",
 		);
 	});
 });

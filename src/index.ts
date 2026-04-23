@@ -83,13 +83,17 @@ export {
 export {
 	type AntoraAssemblerRunOptions,
 	type AntoraMarkdownExportDefaults,
+	type AntoraMarkdownExportDiagnostic,
 	type AntoraMarkdownModuleExportFile,
 	type AntoraMarkdownModuleExportOptions,
 	type AntoraMarkdownModuleExportResult,
+	type AntoraModuleMarkdownExport,
 	type AssembleAntoraModulesOptions,
 	type AssembledAntoraModuleFile,
 	assembleAntoraModules,
+	type ExportAntoraModulesToMarkdownOptions,
 	exportAntoraModules,
+	exportAntoraModulesToMarkdown,
 	resolveAntoraMarkdownExportDefaults,
 	runAntoraAssembler,
 } from "./module-export.js";
