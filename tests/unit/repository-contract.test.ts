@@ -320,7 +320,9 @@ describe("repository contract", () => {
 
 	it("keeps the shipped extension runtime on the structured exporter path", () => {
 		expect(extensionEntrypoint).toContain("./adapter/asciidoctor-structure.js");
-		expect(extensionEntrypoint).toContain("./exporter/structured-to-ir.js");
+		expect(extensionEntrypoint).toContain(
+			"./exporter/structured-to-markdown-ir.js",
+		);
 		expect(extensionEntrypoint).not.toContain("./exporter/convert-assembly.js");
 		expect(packageIndex).not.toContain("./exporter/convert-assembly.js");
 		expect(extensionEntrypoint).toContain("renderAssemblyMarkdown");

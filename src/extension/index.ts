@@ -2,7 +2,7 @@ import { mkdir, writeFile } from "node:fs/promises";
 import { basename, dirname, resolve } from "node:path";
 import { configure } from "@antora/assembler";
 import { extractAssemblyStructure } from "../adapter/asciidoctor-structure.js";
-import { convertAssemblyStructureToMarkdownIR } from "../exporter/structured-to-ir.js";
+import { convertAssemblyStructureToMarkdownIR } from "../exporter/structured-to-markdown-ir.js";
 import type { MarkdownFlavorName } from "../markdown/flavor.js";
 import { normalizeMarkdownIR } from "../markdown/normalize.js";
 import { renderMarkdown } from "../markdown/render/index.js";

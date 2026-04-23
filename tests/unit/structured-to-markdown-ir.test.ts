@@ -1,10 +1,10 @@
 import { describe, expect, it } from "vitest";
 import { extractAssemblyStructure } from "../../src/adapter/asciidoctor-structure.js";
 import { defineAssemblyDocument } from "../../src/adapter/assembly-structure.js";
-import { convertAssemblyStructureToMarkdownIR } from "../../src/exporter/structured-to-ir.js";
+import { convertAssemblyStructureToMarkdownIR } from "../../src/exporter/structured-to-markdown-ir.js";
 
 describe("structured assembly to markdown ir", () => {
-	it("lowers repository-owned structured assembly nodes into markdown ir", () => {
+	it("converts repository-owned structured assembly nodes into markdown ir", () => {
 		const ir = convertAssemblyStructureToMarkdownIR(
 			defineAssemblyDocument({
 				type: "document",

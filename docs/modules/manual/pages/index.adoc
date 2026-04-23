@@ -456,7 +456,7 @@ Status legend used in this and later proof sections:
 |Section structure and headings
 |Supported
 |Headings, section numbering metadata, and table-of-contents render options stay semantic until rendering.
-|`src/adapter/asciidoctor-structure.ts`; `src/exporter/structured-to-ir.ts`; `tests/unit/asciidoctor-structure.test.ts`; `tests/integration/module-export-golden.test.ts`
+|`src/adapter/asciidoctor-structure.ts`; `src/exporter/structured-to-markdown-ir.ts`; `tests/unit/asciidoctor-structure.test.ts`; `tests/integration/module-export-golden.test.ts`
 |`make markdown`; documentation module export review
 
 |Xrefs, anchors, and page aliases
@@ -480,7 +480,7 @@ Status legend used in this and later proof sections:
 |MultiMarkdown flavor support
 |Supported
 |The `multimarkdown` flavor preserves shared document semantics while rendering MultiMarkdown metadata, definition lists, footnotes, citations, attribute-carrying links and images, and table captions through one semantic pipeline.
-|`src/markdown/flavor.ts`; `src/markdown/render/markdown.ts`; `tests/unit/render-flavor.test.ts`; `tests/unit/asciidoctor-structure.test.ts`; `tests/unit/structured-to-ir.test.ts`
+|`src/markdown/flavor.ts`; `src/markdown/render/markdown.ts`; `tests/unit/render-flavor.test.ts`; `tests/unit/asciidoctor-structure.test.ts`; `tests/unit/structured-to-markdown-ir.test.ts`
 |Flavor-specific fixture review; renderer diff review
 
 |Transparent fenced extensions such as `mermaid`
@@ -519,7 +519,7 @@ The structured rewrite changed what the exporter owns.
 |Keep mapping behavior aligned with `assemblyStructureInvariants`, `assemblyStructureSpecification`, and the support matrix.
 
 |Markdown IR conversion
-|`src/exporter/structured-to-ir.ts`
+|`src/exporter/structured-to-markdown-ir.ts`
 |Change this layer when semantic structure is already present but the IR conversion is wrong or incomplete.
 
 |Inspection surfaces
@@ -536,8 +536,8 @@ This ledger turns the architecture story into reviewable evidence. Use it when a
 |Claim family |Implementation evidence |Test evidence |Workflow evidence |Review note
 
 |Conversion semantics stay centralized
-|`src/adapter/asciidoctor-structure.ts`; `src/exporter/structured-to-ir.ts`
-|`tests/unit/asciidoctor-structure.test.ts`; `tests/unit/structured-to-ir.test.ts`; `tests/unit/ir.test.ts`
+|`src/adapter/asciidoctor-structure.ts`; `src/exporter/structured-to-markdown-ir.ts`
+|`tests/unit/asciidoctor-structure.test.ts`; `tests/unit/structured-to-markdown-ir.test.ts`; `tests/unit/ir.test.ts`
 |`bun run check`
 |Refactors should change structural extraction, conversion, and tests together.
 

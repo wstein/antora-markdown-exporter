@@ -48,7 +48,7 @@ export {
 	type AssemblyStructureSpecSection,
 	assemblyStructureSpecification,
 } from "./adapter/assembly-structure-spec.js";
-export { convertAssemblyStructureToMarkdownIR } from "./exporter/structured-to-ir.js";
+export { convertAssemblyStructureToMarkdownIR } from "./exporter/structured-to-markdown-ir.js";
 export {
 	type AssemblerRootLevel,
 	createMarkdownConverter,

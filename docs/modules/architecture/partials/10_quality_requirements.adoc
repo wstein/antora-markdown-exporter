@@ -63,8 +63,8 @@
 |Claim family |Implementation evidence |Test evidence |Workflow evidence |Boundary note
 
 |Semantic conversion stays explicit
-|`src/adapter/assembly-structure.ts`; `src/adapter/assembly-structure-spec.ts`; `src/adapter/asciidoctor-structure.ts`; `src/exporter/structured-to-ir.ts`; `src/markdown/ir.ts`
-|`tests/unit/assembly-structure.test.ts`; `tests/unit/asciidoctor-structure.test.ts`; `tests/unit/asciidoctor-block-helpers.test.ts`; `tests/unit/structured-to-ir.test.ts`; `tests/unit/ir.test.ts`
+|`src/adapter/assembly-structure.ts`; `src/adapter/assembly-structure-spec.ts`; `src/adapter/asciidoctor-structure.ts`; `src/exporter/structured-to-markdown-ir.ts`; `src/markdown/ir.ts`
+|`tests/unit/assembly-structure.test.ts`; `tests/unit/asciidoctor-structure.test.ts`; `tests/unit/asciidoctor-block-helpers.test.ts`; `tests/unit/structured-to-markdown-ir.test.ts`; `tests/unit/ir.test.ts`
 |`bun run check`
 |Semantic extensions should land in structured extraction and IR-aware conversion, not renderer-local rewrites. Adapter invariants, the published specification, and focused helper tests are part of the proof surface.
 
@@ -106,7 +106,7 @@ Traceability:: `Reference testing uses official Antora documentation as a compat
 
 Context/Background:: A source document contains a fenced code block with an authored language tag such as `mermaid`.
 Source/Stimulus:: The exporter encounters a semantically valid but flavor-specific construct.
-Artifact:: `src/adapter/asciidoctor-structure.ts`, `src/exporter/structured-to-ir.ts`, `src/markdown/fallback.ts`, renderer modules
+Artifact:: `src/adapter/asciidoctor-structure.ts`, `src/exporter/structured-to-markdown-ir.ts`, `src/markdown/fallback.ts`, renderer modules
 Response:: The converter emits a semantic `codeBlock`, renderers preserve the language tag verbatim, and fallback is not invoked merely because the downstream tool may interpret that language specially.
 Response Measure:: Rendered output retains the original fence language and contains no `Unsupported` fallback marker for that block.
 

@@ -52,4 +52,4 @@ Do not add Pandoc, DocBook, or HTML-to-Markdown fallback chains to the primary p
 - [[Xref destinations come from assembled hrefs]] - The repository now preserves assembled hrefs instead of rebuilding routes after conversion.
 - src/extension/index.ts - Antora extension registration entrypoint.
 - src/adapter/asciidoctor-structure.ts - Assembled-source to repository-owned structured extraction.
-- src/exporter/structured-to-ir.ts - Structured assembly to Markdown IR conversion boundary.
+- src/exporter/structured-to-markdown-ir.ts - Structured assembly to Markdown IR conversion boundary.

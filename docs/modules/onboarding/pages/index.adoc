@@ -75,7 +75,7 @@ The practical rule is simpler: once content reaches the repository pipeline, sem
 This is why the implementation is split across:
 
 * `src/adapter/asciidoctor-structure.ts`
-* `src/exporter/structured-to-ir.ts`
+* `src/exporter/structured-to-markdown-ir.ts`
 * `src/markdown/ir.ts`
 * `src/markdown/normalize.ts`
 * `src/markdown/render/**`
@@ -103,13 +103,13 @@ Current responsibility split:
 
 * Antora Assembler resolves include expansion, most low-level inline interpretation, and block formation before repository conversion starts
 * `src/adapter/asciidoctor-structure.ts` and its helper modules convert assembled content into the repository-owned adapter contract
-* `src/exporter/structured-to-ir.ts` converts that contract into Markdown IR
+* `src/exporter/structured-to-markdown-ir.ts` converts that contract into Markdown IR
 * `src/markdown/inspection.ts` inspects normalized Markdown semantics such as xrefs rather than reviving include-directive transport
 
 Use this routing guide:
 
 * to add a new structural mapping, start in `src/adapter/asciidoctor-structure.ts`
-* to change semantic conversion, work in `src/exporter/structured-to-ir.ts`
+* to change semantic conversion, work in `src/exporter/structured-to-markdown-ir.ts`
 * to change normalized semantic shape, work in `src/markdown/ir.ts` or `src/markdown/normalize.ts`
 * to change rendered syntax only, stay in `src/markdown/render/**`
 * to change rendered xref formatting, stay in `src/markdown/render/**`
@@ -224,7 +224,7 @@ Start here when you need to make a code change:
 
 * add a structural mapping: `src/adapter/asciidoctor-structure.ts`
 * adjust helper extraction logic: `src/adapter/asciidoctor-structure/*.ts`
-* fix semantic conversion: `src/exporter/structured-to-ir.ts`
+* fix semantic conversion: `src/exporter/structured-to-markdown-ir.ts`
 * change semantic node shapes: `src/markdown/ir.ts`
 * change normalization: `src/markdown/normalize.ts`
 * change xref rendering: `src/markdown/render/**`
