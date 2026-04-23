@@ -14,7 +14,8 @@
   - [3.1. Primary Commands](#31-primary-commands)
   - [3.2. Inspection Script Behavior](#32-inspection-script-behavior)
   - [3.3. Fallback Behavior For Review Exports](#33-fallback-behavior-for-review-exports)
-  - [3.4. Canonical Contract Family](#34-canonical-contract-family)
+  - [3.4. Library Runtime Logging Overrides](#34-library-runtime-logging-overrides)
+  - [3.5. Canonical Contract Family](#35-canonical-contract-family)
 - [Chapter 4. Validation And Troubleshooting](#chapter-4-validation-and-troubleshooting)
   - [4.1. Golden Tests: What Counts And What Does Not](#41-golden-tests-what-counts-and-what-does-not)
   - [4.2. Use Inspection Helpers Instead Of Ad-Hoc Traversal](#42-use-inspection-helpers-instead-of-ad-hoc-traversal)
@@ -267,7 +268,68 @@ Current policy is intentionally strict:
 
 This means a reader may still see explicit unsupported markers in flavors or contexts that cannot faithfully carry the source semantics. That is a conscious evidence-preservation choice today, not an accidental renderer quirk.
 
-## 3.4. Canonical Contract Family
+## 3.4. Library Runtime Logging Overrides
+
+The package API can override Antora runtime logging without editing the playbook file.
+
+Use the `runtimeLog` option on library entrypoints such as:
+
+- `exportAntoraModulesToMarkdown`
+- `exportAntoraModules`
+- `assembleAntoraModules`
+- `runAntoraAssembler`
+- `resolveAntoraMarkdownExportDefaults`
+
+Example:
+
+```ts
+import { exportAntoraModulesToMarkdown } from "@wsmy/antora-markdown-exporter";
+
+const exports = await exportAntoraModulesToMarkdown({
+  playbookPath: "/workspace/antora-playbook.yml",
+  runtimeLog: {
+    level: "warn",
+    format: "json",
+    destination: {
+      file: "/workspace/build/logs/export.log",
+      append: true,
+      sync: true,
+    },
+  },
+});
+```
+
+This API surface maps directly onto Antora&#8217;s `runtime.log` model:
+
+| Library API key | Antora playbook key |
+| --- | --- |
+| `runtimeLog.level` | `runtime.log.level` |
+| `runtimeLog.levelFormat` | `runtime.log.level_format` |
+| `runtimeLog.failureLevel` | `runtime.log.failure_level` |
+| `runtimeLog.format` | `runtime.log.format` |
+| `runtimeLog.destination.file` | `runtime.log.destination.file` |
+| `runtimeLog.destination.append` | `runtime.log.destination.append` |
+| `runtimeLog.destination.bufferSize` | `runtime.log.destination.buffer_size` |
+| `runtimeLog.destination.sync` | `runtime.log.destination.sync` |
+
+Operational rule:
+
+- use playbook `runtime.log` when you want repository- or site-level defaults
+- use `runtimeLog` when an embedding tool or test harness needs per-call overrides
+
+Merge behavior:
+
+- the playbook remains the base configuration
+- `runtimeLog` overrides only the provided `runtime.log` fields
+- nested destination values are merged field-by-field rather than replacing the whole destination object
+
+Logging behavior:
+
+- the library runtime configures Antora&#8217;s centralized logger before the export starts
+- exporter messages still flow through Antora&#8217;s standard logging facility under the exporter logger name
+- if the selected export run emits no log events at the configured severity or higher, the configured destination may remain empty
+
+## 3.5. Canonical Contract Family
 
 The repository exposes one coherent contract family rather than separate ad-hoc tools:
 
